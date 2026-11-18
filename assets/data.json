@@ -6,6 +6,7 @@
     "kaisa": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Kaisa_14.jpg",
     "squad": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Seraphine_2.jpg"
   },
+  "cards": "./cards.json",
   "bosses": [
     "./bosses/godzilla_w1.json",
     "./bosses/mothra_w2.json",

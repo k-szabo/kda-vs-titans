@@ -1,0 +1,241 @@
+{
+  "starterDeck": [
+    "foxfire_chord",
+    "foxfire_chord",
+    "foxfire_chord",
+    "hologram_barrier",
+    "hologram_barrier",
+    "hologram_barrier",
+    "smoke_shroud",
+    "smoke_shroud",
+    "allure_strike",
+    "allure_strike"
+  ],
+  "cards": [
+    {
+      "id": "foxfire_chord",
+      "name": "Foxfire Chord",
+      "member": "ahri",
+      "memberName": "AHRI",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": true,
+      "desc": "Deal <b>6</b> damage to the Kaiju.",
+      "effects": [
+        { "type": "damage", "amount": 6 }
+      ],
+      "log": {
+        "template": "🦊 Ahri fired Foxfire Chord for {damage} DMG!",
+        "colorClass": "text-pink-300"
+      }
+    },
+    {
+      "id": "hologram_barrier",
+      "name": "Hologram Barrier",
+      "member": "kaisa",
+      "memberName": "KAI'SA",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": true,
+      "desc": "Gain <b>5</b> Holo Shield.",
+      "effects": [
+        { "type": "gainBlock", "amount": 5 }
+      ],
+      "log": {
+        "template": "🦋 Kai'Sa projected +5 Holo Shield.",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "smoke_shroud",
+      "name": "Neon Smoke Shroud",
+      "member": "akali",
+      "memberName": "AKALI",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": true,
+      "desc": "Gain <b>4</b> Holo Shield and draw <b>1</b> card.",
+      "effects": [
+        { "type": "gainBlock", "amount": 4 },
+        { "type": "draw", "count": 1 }
+      ],
+      "log": {
+        "template": "⚡ Akali dropped Neon Smoke (+4 Shield, +1 Card).",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "allure_strike",
+      "name": "Velvet Allure",
+      "member": "evelynn",
+      "memberName": "EVELYNN",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": true,
+      "desc": "Deal <b>4</b> damage and apply <b>2 Charm</b> (-25% Kaiju DMG).",
+      "effects": [
+        { "type": "damage", "amount": 4 },
+        { "type": "applyEnemyStatus", "status": "charm", "turns": 2 }
+      ],
+      "log": {
+        "template": "🕶️ Evelynn struck for {damage} DMG & applied 2 Charm!",
+        "colorClass": "text-purple-300"
+      }
+    },
+    {
+      "id": "icathian_rain",
+      "name": "Icathian Laser Rain",
+      "member": "kaisa",
+      "memberName": "KAI'SA",
+      "type": "ATTACK",
+      "cost": 2,
+      "starter": false,
+      "desc": "Deal <b>4</b> damage <b>3 times</b>.",
+      "effects": [
+        { "type": "damage", "amount": 4, "hits": 3 }
+      ],
+      "log": {
+        "template": "🦋 Kai'Sa unleashed Icathian Laser Rain ({damage} total DMG)!",
+        "colorClass": "text-indigo-300"
+      }
+    },
+    {
+      "id": "starlight_aria",
+      "name": "Starlight Aria",
+      "member": "ahri",
+      "memberName": "AHRI",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": false,
+      "desc": "Restore <b>6 HP</b>, gain <b>4</b> Holo Shield, and <b>+15%</b> Crowd Cheer.",
+      "effects": [
+        { "type": "healPlayer", "amount": 6 },
+        { "type": "gainBlock", "amount": 4 },
+        { "type": "addCheer", "amount": 15 }
+      ],
+      "log": {
+        "template": "🦊 Ahri sang Starlight Aria (+6 HP, +4 Shield, +15% Cheer).",
+        "colorClass": "text-pink-300"
+      }
+    },
+    {
+      "id": "perfect_execution",
+      "name": "Perfect Execution",
+      "member": "akali",
+      "memberName": "AKALI",
+      "type": "ATTACK",
+      "cost": 2,
+      "starter": false,
+      "desc": "Deal <b>15</b> damage. Apply <b>2 Marked</b> (+50% DMG taken).",
+      "effects": [
+        { "type": "damage", "amount": 15 },
+        { "type": "applyEnemyStatus", "status": "marked", "turns": 2 }
+      ],
+      "log": {
+        "template": "⚡ Akali executed a lethal dash for {damage} DMG + 2 Marked!",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "last_caress",
+      "name": "Last Caress",
+      "member": "evelynn",
+      "memberName": "EVELYNN",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": false,
+      "desc": "Deal <b>9</b> damage. If Kaiju is Charmed, gain <b>+1 Hype Energy</b>.",
+      "effects": [
+        { "type": "damage", "amount": 9 },
+        {
+          "type": "gainEnergy",
+          "amount": 1,
+          "when": { "target": "enemy", "status": "charm" }
+        }
+      ],
+      "log": {
+        "template": "🕶️ Evelynn's Last Caress hit for {damage} DMG!",
+        "colorClass": "text-purple-300",
+        "alternatives": [
+          {
+            "when": { "target": "enemy", "status": "charm" },
+            "template": "🕶️ Evelynn's Last Caress hit for {damage} DMG & refunded +1 Energy!"
+          }
+        ]
+      }
+    },
+    {
+      "id": "popstars_encore",
+      "name": "POP/STARS Drop",
+      "member": "squad",
+      "memberName": "K/DA SQUAD",
+      "type": "POWER",
+      "cost": 1,
+      "starter": false,
+      "exhaust": true,
+      "desc": "Gain <b>+3 Encore Power</b> (+3 DMG on all Attacks) & <b>+20%</b> Cheer. <i>Exhaust.</i>",
+      "effects": [
+        { "type": "addPlayerStatus", "status": "encore", "amount": 3 },
+        { "type": "addCheer", "amount": 20 }
+      ],
+      "log": {
+        "template": "🌟 K/DA activated POP/STARS Drop (+3 permanent Attack DMG)!",
+        "colorClass": "text-amber-300 font-bold"
+      }
+    },
+    {
+      "id": "firestarter_finale",
+      "name": "FIRESTARTER Finale",
+      "member": "squad",
+      "memberName": "K/DA SQUAD",
+      "type": "ATTACK",
+      "cost": 3,
+      "starter": false,
+      "desc": "Deal <b>24</b> damage and gain <b>12</b> Holo Shield.",
+      "effects": [
+        { "type": "damage", "amount": 24 },
+        { "type": "gainBlock", "amount": 12 }
+      ],
+      "log": {
+        "template": "🔥 K/DA detonated FIRESTARTER Finale ({damage} DMG + 12 Shield)!",
+        "colorClass": "text-amber-300 font-bold"
+      }
+    },
+    {
+      "id": "kunai_flurry",
+      "name": "Five-Point Kunai",
+      "member": "akali",
+      "memberName": "AKALI",
+      "type": "ATTACK",
+      "cost": 0,
+      "starter": false,
+      "desc": "Deal <b>4</b> damage and draw <b>1</b> card.",
+      "effects": [
+        { "type": "damage", "amount": 4 },
+        { "type": "draw", "count": 1 }
+      ],
+      "log": {
+        "template": "⚡ Akali threw Five-Point Kunai ({damage} DMG + 1 Card).",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "crystal_prism_wall",
+      "name": "Void Prism Bastion",
+      "member": "kaisa",
+      "memberName": "KAI'SA",
+      "type": "SKILL",
+      "cost": 2,
+      "starter": false,
+      "desc": "Gain <b>14</b> Holo Shield and remove player Weak.",
+      "effects": [
+        { "type": "gainBlock", "amount": 14 },
+        { "type": "clearPlayerStatus", "status": "weak" }
+      ],
+      "log": {
+        "template": "🦋 Kai'Sa raised Void Prism Bastion (+14 Shield, Cleansed Weak).",
+        "colorClass": "text-indigo-300"
+      }
+    }
+  ]
+}

@@ -2,13 +2,14 @@
 
 A zero-build, turn-based deckbuilding roguelike inspired by *Slay the Spire*, starring **K/DA** defending a world-tour dome against an 8-wave gauntlet of **Toho / MonsterVerse Kaiju**. The project is split into static HTML, CSS, and JavaScript files and can be served directly or deployed to GitHub Pages.
 
-> **Note for GitHub Copilot / AI Agents:** The page markup lives in `index.html`, custom styles in `css/styles.css`, and game behavior in `js/app.js`. The app uses Tailwind CSS (via CDN), Google Fonts (`Orbitron` and `Inter`), and vanilla JavaScript wrapped in an IIFE. Keep references relative so the site works from a GitHub Pages project subpath.
+> **Note for GitHub Copilot / AI Agents:** The page markup lives in `index.html`, custom styles in `css/styles.css`, and game behavior is split across ES modules under `js/`. The app uses Tailwind CSS (via CDN) and Google Fonts (`Orbitron` and `Inter`). Keep references relative so the site works from a GitHub Pages project subpath.
 
 ---
 
 ## 1. Quick Start & Controls
 
 - **Run:** Serve the project root with a static web server (for example, `python -m http.server 8000`) and open `http://localhost:8000` (no build step required). Fetching JSON data does not work when opening the page directly with `file://`.
+- **Save:** The current run autosaves to this browser's local storage and resumes after reload. It is not shared across browsers or devices.
 - **GitHub Pages:** Publish the repository root using GitHub Pages' branch deployment (Settings → Pages). The relative CSS and JavaScript URLs work from project sites.
 - **Keyboard Shortcuts:**
   - `1` – `5`: Play the corresponding card in hand.
@@ -21,7 +22,7 @@ A zero-build, turn-based deckbuilding roguelike inspired by *Slay the Spire*, st
 
 1. **Player Turn:**
    - Starts with `3 / 3` Hype Energy (`state.player.maxEnergy`) and draws `5` cards from `state.drawPile` (reshuffling `state.discardPile` when empty; max hand size `8`).
-   - Playing a card deducts `card.cost` energy, moves the card to `discardPile` (or `exhaustPile` if `card.exhaust === true`), executes `card.play(ctx)`, and charges **Crowd Cheer** by `8 + (card.cost * 6)%`.
+   - Playing a card deducts `card.cost` energy, moves the card to `discardPile` (or `exhaustPile` if `card.exhaust === true`), executes its ordered effects through `executeCardEffects(card, ctx)`, and charges **Crowd Cheer** by `8 + (card.cost * 6)%`.
 2. **Crowd Cheer // Joint Finale (`triggerJointAttack`):**
    - At `100%` Crowd Cheer, the button `#btnJointAttack` unlocks for a free (`0` Energy) 4-member synchronized ultimate: deals `28` base attack damage, grants `+10` Holo Shield, applies `2` Charm to the Kaiju, and refunds `+1` Hype Energy.
 3. **Enemy Intent & End Turn (`endPlayerTurn`):**
@@ -40,58 +41,57 @@ The app is organized into these files:
 | :--- | :--- |
 | `index.html` | Page structure, controls, and modal containers. Loads Tailwind CSS, Google Fonts, the custom stylesheet, and the game script. |
 | `css/styles.css` | Custom theme, card styling, and combat animations. |
-| `js/app.js` | Vanilla JavaScript game logic, rendering, and event wiring. Loads external data from `assets/`. |
-| `assets/data.json` | Portrait and Kaiju backdrop URLs, plus the ordered list of boss JSON files. |
+| `js/app.js` | Run state, combat rules, persistence integration, and event wiring. |
+| `js/game-data.js` | Loads and validates the manifest, cards, and boss encounters. |
+| `js/card-effects.js` | Executes card effect actions and formats card logs. |
+| `js/run-storage.js` | Reads and writes versioned run saves in browser `localStorage`. |
+| `js/ui.js` | Rendering, card views, combat animation, and modal behavior. |
+| `assets/data.json` | Portrait/backdrop URLs and ordered card/boss data paths. |
+| `assets/cards.json` | Card metadata, declarative effects, log templates, and starter deck. |
 | `assets/bosses/*.json` | Individual boss stats, intent patterns, backdrop and illustration paths, and arena fallback styling. |
 | `assets/kaiju/*.svg` | Standalone Kaiju illustrations, including a separate Burning Godzilla variant. |
 
-The game logic in `js/app.js` has the following sections:
+Run state autosaves after each rendered state change and restores on reload. Saves are local to the current browser and site origin; starting a new run overwrites the active save.
 
 | Section | Identifier(s) | Responsibility |
 | :--- | :--- | :--- |
-| **1. Data Loading** | `ART_ASSETS`, `ENCOUNTERS`, `loadGameData`, `loadJson` | Loads portraits and backdrops from `assets/data.json` and boss definitions in manifest order; resolves illustration paths relative to each boss JSON file. |
-| **2. Card Database** | `CARD_DB` | Dictionary of all playable cards (`id`, `name`, `member`, `memberName`, `type`, `cost`, `starter`, `exhaust`, `desc`, `play(ctx)`). |
-| **3. Boss Data** | `assets/bosses/*.json` | Encounter definitions are external data, not JavaScript constants. Each entry provides combat patterns, asset paths, and arena styling. |
-| **4. Combat Engine** | `state`, `startStage`, `playCardAtIndex`, `createEffectContext`, `endPlayerTurn` | Core state machine, damage calculation (`computeCardAttackDamage`), status math, and turn resolution. |
-| **5. Draft & Modals** | `openDraftModal`, `showRunEndModal` | Post-wave card reward selection and victory/defeat overlays. |
-| **6. UI Rendering** | `renderAll`, `createCardElement`, `spawnPopup` | Full DOM re-render of header wave pills, squad portraits, Crowd Cheer bar, Kaiju SVG/backdrop layers, hand grid, and battle log. |
-| **7. Event Wiring** | `openPileModal`, keyboard & button listeners | Binds `End Turn`, `Joint Finale`, `Draw/Discard` pile viewers, `New Run`, and `1-5`/`E` hotkeys. |
+| **Data Loading** | `js/game-data.js` | Loads portraits, card definitions, and boss files from the manifest; resolves boss artwork paths. |
+| **Card Database** | `assets/cards.json` | Stores card presentation, cost, starter membership, effect actions, and log templates without executable code. |
+| **Card Effects** | `js/card-effects.js` | Interprets ordered actions such as damage, block, draw, healing, statuses, cheer, and conditional energy. |
+| **Combat Engine** | `js/app.js` | Owns run state, stage progression, damage calculation, enemy intents, and turn resolution. |
+| **Persistence** | `js/run-storage.js` | Versioned local save access; `js/app.js` validates state and restores draft/end-of-run screens. |
+| **UI** | `js/ui.js` | Renders wave pills, squad portraits, status, Kaiju layers, cards, and battle log; displays draft and run-end modals. |
+| **Event Wiring** | `js/app.js` | Binds `End Turn`, `Joint Finale`, pile viewers, `New Run`, and `1-5`/`E` hotkeys. |
 
 ---
 
 ## 4. Data Schemas for Extending Content
 
-### Adding a New Card (`CARD_DB`)
-Add a new key to `CARD_DB`. Any card with `starter: false` automatically enters the post-battle draft pool:
+### Adding a New Card (`assets/cards.json`)
+Add an entry to the `cards` array. Any card with `starter: false` automatically enters the post-battle draft pool. Add its ID to `starterDeck` if it should appear in a new run:
 
-```js
-seraphine_encore: {
-  id: 'seraphine_encore',
-  name: 'Harmonic Resonance',
-  member: 'squad',           // 'ahri' | 'akali' | 'evelynn' | 'kaisa' | 'squad'
-  memberName: 'K/DA SQUAD',
-  type: 'SKILL',             // 'ATTACK' | 'SKILL' | 'POWER'
-  cost: 1,
-  starter: false,
-  exhaust: false,
-  desc: 'Gain <b>6</b> Holo Shield and <b>+15%</b> Crowd Cheer.',
-  play: (ctx) => {
-    ctx.gainBlock(6);
-    ctx.addCheer(15);
-    ctx.log('🎶 Harmonic Resonance boosted shields & crowd cheer!', 'text-amber-300');
+```json
+{
+  "id": "seraphine_encore",
+  "name": "Harmonic Resonance",
+  "member": "squad",
+  "memberName": "K/DA SQUAD",
+  "type": "SKILL",
+  "cost": 1,
+  "starter": false,
+  "desc": "Gain <b>6</b> Holo Shield and <b>+15%</b> Crowd Cheer.",
+  "effects": [
+    { "type": "gainBlock", "amount": 6 },
+    { "type": "addCheer", "amount": 15 }
+  ],
+  "log": {
+    "template": "🎶 Harmonic Resonance boosted shields & crowd cheer!",
+    "colorClass": "text-amber-300"
   }
 }
 ```
 
-**Available `ctx` helpers inside `card.play(ctx)`:**
-- `ctx.calcDmg(base)` — Applies `+encore` bonus, `-25%` player `weak`, and `+50%` enemy `marked`.
-- `ctx.dealEnemyDmg(amount)` — Subtracts from `enemy.block` first, then `enemy.hp`, triggering hit flash & floating damage popups.
-- `ctx.gainBlock(amount)` — Adds to `player.block`.
-- `ctx.healPlayer(amount)` — Restores `player.hp` up to `player.maxHp`.
-- `ctx.applyEnemyStatus(statusKey, turns)` — Supports `'charm'` (`-25%` Kaiju attack) and `'marked'` (`+50%` damage taken).
-- `ctx.addCheer(pct)` — Increments `player.cheer` (capped at `100`).
-- `ctx.draw(count)` — Draws cards into `state.hand`.
-- `ctx.log(msg, tailwindColorClass)` — Appends an entry to `#combatLog`.
+Supported effect types are `damage` (optional `hits`), `gainBlock`, `healPlayer`, `applyEnemyStatus`, `addPlayerStatus`, `clearPlayerStatus`, `addCheer`, `draw`, and `gainEnergy`. Effects execute in array order. An effect or log alternative can use `"when": { "target": "enemy", "status": "charm" }` to require an active status. Log templates support the `{damage}` placeholder.
 
 ### Adding a New Kaiju Boss
 Create a JSON file in `assets/bosses/` with the encounter's combat stats, intent patterns, asset references, and arena fallback background. Add its backdrop URL to `assets/data.json`'s `backdrops`, then add its JSON path to the manifest's `bosses` array to control its position in the setlist. The illustration path is relative to `assets/data.json` and should point to an SVG under `assets/kaiju/`. The renderer reads the boss configuration directly, so no boss-specific code change is needed:

@@ -8,6 +8,7 @@ A browser-based, turn-based deckbuilding roguelike. Build a K/DA deck, manage Hy
 - Draftable cards, energy management, shields, and status effects
 - Crowd Cheer-powered K/DA Joint Finale
 - Keyboard shortcuts and clickable wave selectors
+- Current run autosaves to this browser (not synced across devices); starting a new run replaces the save
 - Responsive, static web app
 
 ## Controls
