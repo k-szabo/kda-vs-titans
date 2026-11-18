@@ -27,7 +27,7 @@
   ],
   "assets": {
     "backdrop": "mothra",
-    "illustration": "../kaiju/mothra.svg"
+    "illustration": "./kaiju/mothra.svg"
   },
   "visuals": {
     "background": "radial-gradient(circle at 50% 40%, rgba(250, 204, 21, 0.3), rgba(56, 189, 248, 0.25) 45%, rgba(15, 23, 42, 0.98) 80%)"

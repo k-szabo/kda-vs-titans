@@ -37,7 +37,7 @@
             ...boss,
             assets: {
               backdrop: new URL(backdrop, DATA_MANIFEST_URL).href,
-              illustration: new URL(boss.assets.illustration, bossUrl).href
+              illustration: new URL(boss.assets.illustration, DATA_MANIFEST_URL).href
             }
           };
         }));

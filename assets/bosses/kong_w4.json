@@ -26,7 +26,7 @@
   ],
   "assets": {
     "backdrop": "kong",
-    "illustration": "../kaiju/kong.svg"
+    "illustration": "./kaiju/kong.svg"
   },
   "visuals": {
     "background": "radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.25), rgba(41, 37, 36, 0.65) 50%, rgba(12, 10, 9, 0.98) 82%)"

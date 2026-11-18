@@ -28,7 +28,7 @@
   ],
   "assets": {
     "backdrop": "destoroyah",
-    "illustration": "../kaiju/destoroyah.svg"
+    "illustration": "./kaiju/destoroyah.svg"
   },
   "visuals": {
     "background": "radial-gradient(circle at 50% 45%, rgba(225, 29, 72, 0.4), rgba(76, 5, 25, 0.6) 50%, rgba(9, 3, 8, 0.98) 82%)"

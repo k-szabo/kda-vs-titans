@@ -27,7 +27,7 @@
   ],
   "assets": {
     "backdrop": "ghidorah",
-    "illustration": "../kaiju/ghidorah.svg"
+    "illustration": "./kaiju/ghidorah.svg"
   },
   "visuals": {
     "background": "radial-gradient(circle at 50% 35%, rgba(250, 204, 21, 0.32), rgba(88, 28, 135, 0.45) 45%, rgba(15, 23, 42, 0.98) 80%)"

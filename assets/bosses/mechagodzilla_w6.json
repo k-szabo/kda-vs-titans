@@ -27,7 +27,7 @@
   ],
   "assets": {
     "backdrop": "mechagodzilla",
-    "illustration": "../kaiju/mechagodzilla.svg"
+    "illustration": "./kaiju/mechagodzilla.svg"
   },
   "visuals": {
     "background": "radial-gradient(circle at 50% 45%, rgba(244, 63, 94, 0.32), rgba(51, 65, 85, 0.5) 48%, rgba(15, 23, 42, 0.98) 82%)"

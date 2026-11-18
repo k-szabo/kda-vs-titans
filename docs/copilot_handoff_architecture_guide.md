@@ -94,7 +94,7 @@ seraphine_encore: {
 - `ctx.log(msg, tailwindColorClass)` — Appends an entry to `#combatLog`.
 
 ### Adding a New Kaiju Boss
-Create a JSON file in `assets/bosses/` with the encounter's combat stats, intent patterns, asset references, and arena fallback background. Add its backdrop URL to `assets/data.json`'s `backdrops`, then add its JSON path to the manifest's `bosses` array to control its position in the setlist. The illustration path is relative to that boss JSON file and should point to an SVG under `assets/kaiju/`. The renderer reads the boss configuration directly, so no boss-specific code change is needed:
+Create a JSON file in `assets/bosses/` with the encounter's combat stats, intent patterns, asset references, and arena fallback background. Add its backdrop URL to `assets/data.json`'s `backdrops`, then add its JSON path to the manifest's `bosses` array to control its position in the setlist. The illustration path is relative to `assets/data.json` and should point to an SVG under `assets/kaiju/`. The renderer reads the boss configuration directly, so no boss-specific code change is needed:
 
 ```json
 {
@@ -106,7 +106,7 @@ Create a JSON file in `assets/bosses/` with the encounter's combat stats, intent
   "burning": false,
   "assets": {
     "backdrop": "biollante",
-    "illustration": "../kaiju/biollante.svg"
+    "illustration": "./kaiju/biollante.svg"
   },
   "visuals": {
     "background": "radial-gradient(circle, #14532d, #020617)"

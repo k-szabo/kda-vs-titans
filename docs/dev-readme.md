@@ -43,7 +43,7 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 
 1. Add its backdrop URL to `assets/data.json` under `backdrops`.
 2. Add an SVG illustration under `assets/kaiju/`.
-3. Add a JSON encounter file under `assets/bosses/`, including its stats, intent patterns, backdrop key, illustration path, and fallback background.
+3. Add a JSON encounter file under `assets/bosses/`, including its stats, intent patterns, backdrop key, illustration path, and fallback background. Set the illustration path relative to `assets/data.json`, such as `./kaiju/new-boss.svg`.
 4. Add the boss JSON path to the `bosses` array in `assets/data.json` at the desired wave position.
 
 See the [architecture guide](copilot_handoff_architecture_guide.md) for the boss schema, card definitions, and gameplay architecture.
