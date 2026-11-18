@@ -5,12 +5,27 @@
   "maxHp": 135,
   "spriteType": "destoroyah",
   "burning": false,
+  "passives": [
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 3,
+      "block": 20,
+      "desc": "Oxygen Collapse: below 50% HP, clears debuffs and gains +3 Strength and +20 Block."
+    }
+  ],
   "patterns": [
     {
       "type": "debuff_atk",
       "dmg": 13,
       "weak": 2,
       "label": "☠️ MICRO-OXYGEN: 13 DMG + 2 WEAK"
+    },
+    {
+      "type": "injectStatus",
+      "cardId": "micro_oxygen",
+      "count": 1,
+      "label": "☠️ MICRO-OXYGEN CLOUD: 1 MICRO-OXYGEN"
     },
     {
       "type": "multi",
@@ -23,6 +38,23 @@
       "type": "atomic",
       "dmg": 28,
       "label": "🗡️ LASER HORN KATANA: 28 DMG",
+      "charged": true
+    }
+  ],
+  "phase2Patterns": [
+    {
+      "type": "multi",
+      "dmg": 8,
+      "hits": 3,
+      "label": "🦇 AGGREGATE SWARM: 8x3 DMG",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 35,
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35,
+      "label": "🗡️ LASER HORN KATANA: 35 DMG (18 DMG TO STUN)",
       "charged": true
     }
   ],

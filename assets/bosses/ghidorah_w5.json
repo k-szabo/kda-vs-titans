@@ -5,12 +5,27 @@
   "maxHp": 110,
   "spriteType": "ghidorah",
   "burning": false,
+  "passives": [
+    {
+      "trigger": "onPlayerAttack",
+      "effect": "gainBlock",
+      "value": 3,
+      "desc": "Reactive Carapace: gains +3 Block each time K/DA plays an Attack."
+    }
+  ],
   "patterns": [
     {
       "type": "multi",
       "dmg": 5,
       "hits": 3,
       "label": "⚡ TRI-BITE: 5x3 DMG"
+    },
+    {
+      "type": "injectStatus",
+      "cardId": "emp_static",
+      "count": 1,
+      "block": 10,
+      "label": "⚡ STATIC STORM: +10 BLOCK & 1 EMP STATIC"
     },
     {
       "type": "debuff_atk",

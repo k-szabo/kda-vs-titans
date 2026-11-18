@@ -5,12 +5,35 @@
   "maxHp": 120,
   "spriteType": "mechagodzilla",
   "burning": false,
+  "passives": [
+    {
+      "trigger": "onPlayerAttack",
+      "effect": "gainBlock",
+      "value": 3,
+      "desc": "Reactive Armor: gains +3 Block each time K/DA plays an Attack."
+    },
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 3,
+      "block": 20,
+      "desc": "Apex Override: below 50% HP, clears debuffs and gains +3 Strength and +20 Block."
+    }
+  ],
   "patterns": [
     {
       "type": "multi",
       "dmg": 7,
       "hits": 2,
       "label": "🚀 SHOULDER MISSILES: 7x2 DMG"
+    },
+    {
+      "type": "injectStatus",
+      "cardId": "emp_static",
+      "count": 2,
+      "block": 14,
+      "label": "⚡ EMP JAMMER: +14 BLOCK & 2 EMP STATIC",
+      "charged": true
     },
     {
       "type": "charge",
@@ -22,6 +45,23 @@
       "type": "atomic",
       "dmg": 26,
       "label": "🔴 PROTON SCREAM: 26 DMG",
+      "charged": true
+    }
+  ],
+  "phase2Patterns": [
+    {
+      "type": "multi",
+      "dmg": 9,
+      "hits": 2,
+      "label": "🚀 APEX MISSILES: 9x2 DMG",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 34,
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35,
+      "label": "🔴 APEX PROTON SCREAM: 34 DMG (18 DMG TO STUN)",
       "charged": true
     }
   ],

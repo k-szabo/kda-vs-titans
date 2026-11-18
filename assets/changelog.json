@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.2.0_89a7e679",
+  "currentVersion": "v1.3.0_b3cae8d5",
   "releases": [
+    {
+      "version": "v1.3.0_b3cae8d5",
+      "date": "2026-11-18",
+      "changes": [
+        "Added reactive passives, Strength scaling, and one-time enrage phases for Waves 4–10.",
+        "Added EMP Static and Micro-Oxygen Status cards, boss Status injection, and charged-attack interrupts.",
+        "Added boss passive and Strength indicators while preserving existing run saves."
+      ]
+    },
     {
       "version": "v1.2.0_89a7e679",
       "date": "2026-11-18",

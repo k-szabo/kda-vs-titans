@@ -5,6 +5,21 @@
   "maxHp": 155,
   "spriteType": "godzilla",
   "burning": true,
+  "passives": [
+    {
+      "trigger": "onTurnEnd",
+      "effect": "gainStrength",
+      "value": 2,
+      "desc": "Meltdown Escalation: gains +2 Strength at the end of every turn."
+    },
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 3,
+      "block": 25,
+      "desc": "Thermonuclear Phase: below 50% HP, clears debuffs and gains +3 Strength and +25 Block."
+    }
+  ],
   "patterns": [
     {
       "type": "attack",
@@ -18,9 +33,35 @@
       "charged": true
     },
     {
+      "type": "injectStatus",
+      "cardId": "micro_oxygen",
+      "count": 2,
+      "label": "☠️ OXYGEN MELTDOWN: 2 MICRO-OXYGEN"
+    },
+    {
       "type": "atomic",
       "dmg": 32,
-      "label": "💥 THERMONUCLEAR PULSE: 32 DMG",
+      "label": "💥 THERMONUCLEAR PULSE: 32 DMG (18 DMG TO STUN)",
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35,
+      "pierce": 0.5,
+      "charged": true
+    }
+  ],
+  "phase2Patterns": [
+    {
+      "type": "attack",
+      "dmg": 22,
+      "pierce": 0.5,
+      "label": "🔥 MELTDOWN CLAW: 22 PIERCING DMG"
+    },
+    {
+      "type": "atomic",
+      "dmg": 38,
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35,
+      "pierce": 0.5,
+      "label": "💥 THERMONUCLEAR ENCORE: 38 DMG (18 DMG TO STUN)",
       "charged": true
     }
   ],

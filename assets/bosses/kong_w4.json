@@ -5,6 +5,15 @@
   "maxHp": 95,
   "spriteType": "kong",
   "burning": false,
+  "passives": [
+    {
+      "trigger": "onSkillPlayed",
+      "effect": "gainStrengthEvery",
+      "value": 1,
+      "every": 2,
+      "desc": "Acoustic Jamming: gains +1 Strength for every 2 Skills K/DA plays in a turn."
+    }
+  ],
   "patterns": [
     {
       "type": "attack",

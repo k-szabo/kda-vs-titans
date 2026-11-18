@@ -5,6 +5,14 @@
   "maxHp": 150,
   "spriteType": "female_muto",
   "burning": false,
+  "passives": [
+    {
+      "trigger": "onTurnEnd",
+      "effect": "gainStrength",
+      "value": 2,
+      "desc": "Matriarch's Fury: gains +2 Strength at the end of every turn."
+    }
+  ],
   "patterns": [
     {
       "type": "attack",
@@ -21,6 +29,9 @@
       "type": "atomic",
       "dmg": 31,
       "label": "🌩️ PULSE-WAVE RUPTURE: 31 DMG",
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35,
+      "pierce": 0.5,
       "charged": true
     }
   ],

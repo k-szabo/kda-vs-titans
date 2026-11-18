@@ -104,6 +104,10 @@ export async function loadGameData() {
       typeof card.id !== 'string' ||
       !Array.isArray(card.effects) ||
       !card.log ||
+      card.draftable !== undefined && typeof card.draftable !== 'boolean' ||
+      card.ethereal !== undefined && typeof card.ethereal !== 'boolean' ||
+      card.endTurnDamage !== undefined &&
+        (!Number.isFinite(card.endTurnDamage) || card.endTurnDamage <= 0 || card.type !== 'STATUS' || card.ethereal !== true) ||
       (card.upgrade !== undefined && (
         !card.upgrade ||
         typeof card.upgrade !== 'object' ||
@@ -123,6 +127,61 @@ export async function loadGameData() {
     cardData.starterDeck.some((cardId) => !Object.hasOwn(cardDatabase, cardId))
   ) {
     throw new Error('The card file contains invalid or duplicate card data.');
+  }
+
+  const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const validIntent = (intent) =>
+    isRecord(intent) &&
+    (intent.interruptThreshold === undefined ||
+      Number.isFinite(intent.interruptThreshold) &&
+        intent.interruptThreshold > 0 &&
+        intent.charged === true &&
+        Number.isFinite(intent.dmg)) &&
+    (intent.interruptBonus === undefined ||
+      Number.isFinite(intent.interruptBonus) && intent.interruptBonus >= 0) &&
+    (intent.pierce === undefined ||
+      Number.isFinite(intent.pierce) && intent.pierce >= 0 && intent.pierce <= 1) &&
+    (intent.type !== 'injectStatus' ||
+      Object.hasOwn(cardDatabase, intent.cardId) &&
+        cardDatabase[intent.cardId].type === 'STATUS' &&
+        cardDatabase[intent.cardId].draftable === false &&
+        Number.isInteger(intent.count) &&
+        intent.count > 0 &&
+        (intent.block === undefined || Number.isFinite(intent.block) && intent.block >= 0));
+  const validPassive = (passive) => {
+    if (!isRecord(passive) || typeof passive.desc !== 'string' || !passive.desc.trim()) return false;
+    if (passive.trigger === 'onPlayerAttack' && passive.effect === 'gainBlock') {
+      return Number.isInteger(passive.value) && passive.value > 0;
+    }
+    if (passive.trigger === 'onSkillPlayed' && passive.effect === 'gainStrengthEvery') {
+      return Number.isInteger(passive.value) &&
+        passive.value > 0 &&
+        Number.isInteger(passive.every) &&
+        passive.every > 0;
+    }
+    if (passive.trigger === 'onTurnEnd' && passive.effect === 'gainStrength') {
+      return Number.isInteger(passive.value) && passive.value > 0;
+    }
+    return passive.trigger === 'onHpBelowHalf' &&
+      passive.effect === 'enrage' &&
+      Number.isInteger(passive.strength) &&
+      passive.strength > 0 &&
+      Number.isInteger(passive.block) &&
+      passive.block >= 0;
+  };
+  if (encounters.some((encounter) =>
+    !Array.isArray(encounter.patterns) ||
+    encounter.patterns.length === 0 ||
+    encounter.strength !== undefined && !Number.isFinite(encounter.strength) ||
+    encounter.patterns.some((intent) => !validIntent(intent)) ||
+    encounter.passives !== undefined &&
+      (!Array.isArray(encounter.passives) || encounter.passives.some((passive) => !validPassive(passive))) ||
+    encounter.phase2Patterns !== undefined &&
+      (!Array.isArray(encounter.phase2Patterns) ||
+        encounter.phase2Patterns.length === 0 ||
+        encounter.phase2Patterns.some((intent) => !validIntent(intent)))
+  )) {
+    throw new Error('The boss file contains invalid passive or intent data.');
   }
 
   if (!Array.isArray(relicData.relics) || relicData.relics.length === 0) {
@@ -154,7 +213,6 @@ export async function loadGameData() {
     throw new Error('The relic file contains invalid or duplicate relic data.');
   }
 
-  const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
   const versionPattern = /^v\d+\.\d+\.\d+_[0-9a-f]{8}$/;
   if (
     !isRecord(changelogData) ||

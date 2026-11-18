@@ -179,6 +179,9 @@
         <div class="flex items-center justify-between text-xs font-display mb-1">
           <span class="text-sky-400 font-bold flex items-center gap-2">
             <span>☢️ TITAN VITALITY</span>
+            <span id="enemyStrengthBadge" class="hidden px-2 py-0.5 rounded bg-rose-500/25 text-rose-200 border border-rose-400/40 text-[10px]">
+              💪 0 STRENGTH
+            </span>
             <span id="enemyBlockBadge" class="hidden px-2 py-0.5 rounded bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 text-[10px]">
               🛡️ 0 BLOCK
             </span>
@@ -191,6 +194,7 @@
         <p id="enemyIntentHint" class="text-[11px] text-slate-400 mt-2">
           Telegraphed attack resolves when you click End Turn.
         </p>
+        <div id="enemyPassives" class="flex flex-col gap-1 mt-2 text-[10px] text-amber-200/90"></div>
       </div>
     </section>
   </main>

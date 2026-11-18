@@ -7,7 +7,11 @@ import {
   playKaijuRoarSfx,
   setSoundEnabled
 } from './audio.js';
-import { applyPlayerDamage } from './combat-rules.js';
+import {
+  applyPlayerDamage,
+  calculateEnemyAttackDamage,
+  shouldInterruptChargedIntent
+} from './combat-rules.js';
 import { loadGameData } from './game-data.js';
 import {
   createDefaultProfileStats,
@@ -58,6 +62,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }));
         return {
           stageIndex: 0,
+          damageDealtThisTurn: 0,
+          skillsPlayedThisTurn: 0,
           leader,
           leaderAbilityUsed: false,
           turn: 1,
@@ -96,6 +102,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
         state.stageIndex = stageIdx;
         state.turn = 1;
+        state.damageDealtThisTurn = 0;
+        state.skillsPlayedThisTurn = 0;
         state.runStatus = 'playing';
         state.draftChoices = [];
         state.relicChoices = [];
@@ -112,6 +120,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           ...enc,
           hp: enc.maxHp,
           block: 0,
+          strength: enc.strength || 0,
+          enrageTriggered: false,
           patternStep: 0,
           statuses: { charm: 0, marked: 0 }
         };
@@ -152,17 +162,23 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const intent = { ...raw };
 
         if (typeof intent.dmg === 'number') {
-          let eff = intent.dmg;
+          let eff = calculateEnemyAttackDamage(e, intent.dmg);
           if (e.statuses.charm > 0) {
             eff = Math.floor(eff * 0.75);
           }
           intent.effectiveDmg = eff;
+          if (Number.isFinite(intent.interruptThreshold)) {
+            intent.uninterruptedDmg = Math.ceil(eff * (1 + (intent.interruptBonus ?? 0.35)));
+          }
+          const thresholdText = Number.isFinite(intent.interruptThreshold)
+            ? ` // ${intent.interruptThreshold} DMG TO STUN`
+            : '';
           if (intent.type === 'multi') {
-            intent.displayText = `${intent.label.split(':')[0]}: ${eff}x${intent.hits} DMG`;
+            intent.displayText = `${intent.label.split(':')[0]}: ${eff}x${intent.hits} DMG${thresholdText}`;
           } else if (intent.type === 'debuff_atk') {
-            intent.displayText = `${intent.label.split(':')[0]}: ${eff} DMG + WEAK`;
+            intent.displayText = `${intent.label.split(':')[0]}: ${eff} DMG + WEAK${thresholdText}`;
           } else {
-            intent.displayText = `${intent.label.split(':')[0]}: ${eff} DMG`;
+            intent.displayText = `${intent.label.split(':')[0]}: ${eff} DMG${thresholdText}`;
           }
         } else {
           intent.displayText = intent.label;
@@ -199,6 +215,11 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const ctx = createEffectContext();
         executeCardEffects(card, ctx, cardInstance.upgradeLevel);
         applyRelicEffects('attackPlayed', card);
+        if (card.type === 'ATTACK') triggerEnemyPassives('onPlayerAttack');
+        if (card.type === 'SKILL') {
+          state.skillsPlayedThisTurn += 1;
+          triggerEnemyPassives('onSkillPlayed');
+        }
 
         // Check if Kaiju was defeated mid-turn
         if (state.enemy.hp <= 0) {
@@ -223,8 +244,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             }
             if (remaining > 0) {
               state.enemy.hp = Math.max(0, state.enemy.hp - remaining);
+              state.damageDealtThisTurn += remaining;
               ui.triggerKaijuHitAnim();
               ui.spawnPopup('enemyArenaCard', `-${remaining}`, 'text-amber-300 font-display font-black text-xl');
+              triggerEnemyPassives('onHpBelowHalf');
             } else {
               ui.spawnPopup('enemyArenaCard', 'BLOCKED', 'text-cyan-300 font-display font-bold text-sm');
             }
@@ -339,30 +362,69 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         if (!state.isPlayerTurn) return;
         state.isPlayerTurn = false;
 
-        // Discard remaining hand
+        // Ethereal hazards resolve before ordinary cards leave the hand.
+        for (let index = state.hand.length - 1; index >= 0; index--) {
+          const cardInstance = state.hand[index];
+          const card = CARD_DB[cardInstance.cardId];
+          if (!card?.endTurnDamage) continue;
+          applyDamageToPlayer(card.endTurnDamage, 1);
+          state.exhaustPile.push(...state.hand.splice(index, 1));
+          addLog(card.log.template, card.log.colorClass);
+        }
+
         while (state.hand.length > 0) {
           state.discardPile.push(state.hand.pop());
         }
 
-        const intent = getCurrentEnemyIntent();
+        if (state.player.hp <= 0) {
+          finishPlayerDefeat();
+          return;
+        }
+
         const e = state.enemy;
         e.block = 0; // Enemy block resets at start of its turn
+        triggerEnemyPassives('onTurnEnd');
+        const intent = getCurrentEnemyIntent();
 
         addLog(`--- ${e.name} executes ${intent.displayText} ---`, 'text-sky-300 font-bold');
 
         if (typeof intent.effectiveDmg === 'number') playSoundEffect(playKaijuRoarSfx);
-        if (intent.type === 'charge') {
+        const interrupted = shouldInterruptChargedIntent(intent, state.damageDealtThisTurn);
+        if (interrupted) {
+          addLog(`💥 K/DA dealt ${state.damageDealtThisTurn} damage and interrupted ${e.name}'s charged attack!`, 'text-cyan-300 font-bold');
+        } else if (intent.type === 'charge') {
           e.block += intent.block;
           ui.spawnPopup('enemyArenaCard', `+${intent.block} 🛡️`, 'text-sky-300 font-display font-black text-lg');
+        } else if (intent.type === 'injectStatus') {
+          if (intent.block) {
+            e.block += intent.block;
+            ui.spawnPopup('enemyArenaCard', `+${intent.block} 🛡️`, 'text-sky-300 font-display font-black text-lg');
+          }
+          for (let count = 0; count < intent.count; count++) {
+            state.discardPile.push({
+              instanceId: state.nextCardInstanceId++,
+              cardId: intent.cardId,
+              upgradeLevel: 0
+            });
+          }
+          addLog(`⚠️ ${e.name} added ${intent.count} ${CARD_DB[intent.cardId].name} card${intent.count === 1 ? '' : 's'} to your discard pile!`, 'text-rose-300');
         } else if (intent.type === 'attack' || intent.type === 'atomic' || intent.type === 'debuff_atk') {
-          applyDamageToPlayer(intent.effectiveDmg);
+          const damage = intent.uninterruptedDmg ?? intent.effectiveDmg;
+          if (!interrupted && intent.interruptThreshold) {
+            addLog(`⚠️ The charged attack hit harder because K/DA missed the ${intent.interruptThreshold}-damage interrupt!`, 'text-rose-300');
+          }
+          applyDamageToPlayer(damage, intent.pierce || 0);
           if (intent.weak) {
             state.player.statuses.weak += intent.weak;
             addLog(`⚠️ K/DA afflicted with ${intent.weak} Weak (-25% Attack DMG)!`, 'text-rose-300');
           }
         } else if (intent.type === 'multi') {
+          const damage = intent.uninterruptedDmg ?? intent.effectiveDmg;
+          if (!interrupted && intent.interruptThreshold) {
+            addLog(`⚠️ The charged attack hit harder because K/DA missed the ${intent.interruptThreshold}-damage interrupt!`, 'text-rose-300');
+          }
           for (let h = 0; h < intent.hits; h++) {
-            applyDamageToPlayer(intent.effectiveDmg);
+            applyDamageToPlayer(damage, intent.pierce || 0);
           }
         }
 
@@ -373,23 +435,22 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         if (state.player.statuses.weak > 0) state.player.statuses.weak -= 1;
 
         if (state.player.hp <= 0) {
-          state.player.hp = 0;
-          state.runStatus = 'defeat';
-          renderAll();
-          ui.showRunEndModal(false);
+          finishPlayerDefeat();
           return;
         }
 
         // Carry remaining Holo Shield forward into the next player turn.
         state.turn += 1;
+        state.damageDealtThisTurn = 0;
+        state.skillsPlayedThisTurn = 0;
         state.player.energy = state.player.maxEnergy;
         state.isPlayerTurn = true;
         drawCards(5);
         renderAll();
       }
 
-      function applyDamageToPlayer(rawDmg) {
-        const { damageAfterBlock, hpLost, cheerLost } = applyPlayerDamage(state.player, rawDmg);
+      function applyDamageToPlayer(rawDmg, pierce = 0) {
+        const { damageAfterBlock, hpLost, cheerLost } = applyPlayerDamage(state.player, rawDmg, pierce);
         if (damageAfterBlock > 0) {
           ui.triggerScreenShake();
           ui.spawnPopup('playerArenaCard', `-${hpLost} HP`, 'text-rose-400 font-display font-black text-xl');
@@ -398,6 +459,45 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         } else {
           ui.spawnPopup('playerArenaCard', 'SHIELDED!', 'text-cyan-300 font-display font-bold text-sm');
           addLog(`🛡️ Holo Shield completely absorbed ${rawDmg} damage!`, 'text-cyan-300');
+        }
+      }
+
+      function finishPlayerDefeat() {
+        state.player.hp = 0;
+        state.runStatus = 'defeat';
+        renderAll();
+        ui.showRunEndModal(false);
+      }
+
+      function triggerEnemyPassives(trigger) {
+        const e = state.enemy;
+        if (e.hp <= 0) return;
+        for (const passive of e.passives || []) {
+          if (passive.trigger !== trigger) continue;
+
+          if (passive.effect === 'gainBlock') {
+            e.block += passive.value;
+            ui.spawnPopup('enemyArenaCard', `+${passive.value} 🛡️`, 'text-sky-300 font-display font-black text-lg');
+          } else if (passive.effect === 'gainStrength') {
+            e.strength += passive.value;
+            addLog(`⚠️ ${e.name} gained ${passive.value} Strength!`, 'text-rose-300');
+          } else if (passive.effect === 'gainStrengthEvery') {
+            if (state.skillsPlayedThisTurn > 0 && state.skillsPlayedThisTurn % passive.every === 0) {
+              e.strength += passive.value;
+              addLog(`⚠️ ${e.name} gained ${passive.value} Strength from K/DA's Skills!`, 'text-rose-300');
+            }
+          } else if (passive.effect === 'enrage' && !e.enrageTriggered && e.hp * 2 < e.maxHp) {
+            e.enrageTriggered = true;
+            e.statuses.charm = 0;
+            e.statuses.marked = 0;
+            e.strength += passive.strength;
+            e.block += passive.block;
+            if (Array.isArray(e.phase2Patterns) && e.phase2Patterns.length > 0) {
+              e.patterns = e.phase2Patterns;
+              e.patternStep = 0;
+            }
+            addLog(`🔥 ${e.name} enraged: cleared debuffs, gained ${passive.strength} Strength and ${passive.block} Block!`, 'text-rose-300 font-bold');
+          }
         }
       }
 
@@ -413,7 +513,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           return;
         }
 
-        const draftPool = Object.values(CARD_DB).filter((c) => !c.starter);
+        const draftPool = Object.values(CARD_DB).filter((c) => !c.starter && c.draftable !== false);
         state.runStatus = 'draft';
         state.draftChoices = shuffle(draftPool).slice(0, 3).map((card) => card.id);
         const ownedRelics = new Set(state.relics);
@@ -716,6 +816,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               savedRun = migrateSavedRun(savedRun, {
                 cardDatabase: CARD_DB,
                 relicDatabase: RELIC_DB,
+                encounters: ENCOUNTERS,
                 shuffle
               });
             }

@@ -4,8 +4,70 @@ import { LEADERS } from './leader-data.js';
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
 
-export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, shuffle }) {
-  if (savedRun?.version === RUN_SAVE_VERSION) return savedRun;
+export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encounters, shuffle }) {
+  if (savedRun?.version === RUN_SAVE_VERSION) {
+    const state = savedRun.state;
+    const encounter = encounters?.[state?.stageIndex];
+    if (!isRecord(state) || !isRecord(state.enemy) || !encounter || state.enemy.id !== encounter.id) return savedRun;
+
+    const enragePassive = encounter.passives?.find((passive) =>
+      passive.trigger === 'onHpBelowHalf' && passive.effect === 'enrage'
+    );
+    const applySavedEnrage = state.enemy.enrageTriggered !== true &&
+      state.runStatus === 'playing' &&
+      enragePassive &&
+      isFiniteNumber(state.enemy.hp) &&
+      isFiniteNumber(state.enemy.maxHp) &&
+      state.enemy.hp > 0 &&
+      state.enemy.hp * 2 < state.enemy.maxHp;
+    const enrageTriggered = state.enemy.enrageTriggered === true || Boolean(applySavedEnrage);
+    const enemyStrength = isFiniteNumber(state.enemy.strength)
+      ? state.enemy.strength
+      : encounter.strength || 0;
+    const patterns = enrageTriggered && encounter.phase2Patterns?.length
+      ? encounter.phase2Patterns
+      : encounter.patterns;
+    const activeInstances = [
+      ...(Array.isArray(state.drawPile) ? state.drawPile : []),
+      ...(Array.isArray(state.hand) ? state.hand : []),
+      ...(Array.isArray(state.discardPile) ? state.discardPile : []),
+      ...(Array.isArray(state.exhaustPile) ? state.exhaustPile : [])
+    ];
+    const highestCardInstanceId = Math.max(
+      0,
+      ...activeInstances.map((instance) => Number.isInteger(instance?.instanceId) ? instance.instanceId : 0),
+      ...(Array.isArray(state.masterDeck)
+        ? state.masterDeck.map((instance) => Number.isInteger(instance?.instanceId) ? instance.instanceId : 0)
+        : [])
+    );
+
+    return {
+      ...savedRun,
+      state: {
+        ...state,
+        damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
+        skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
+          ? state.skillsPlayedThisTurn
+          : 0,
+        nextCardInstanceId: Number.isInteger(state.nextCardInstanceId) && state.nextCardInstanceId > highestCardInstanceId
+          ? state.nextCardInstanceId
+          : highestCardInstanceId + 1,
+        enemy: {
+          ...state.enemy,
+          strength: enemyStrength + (applySavedEnrage ? enragePassive.strength : 0),
+          block: (isFiniteNumber(state.enemy.block) ? state.enemy.block : 0) +
+            (applySavedEnrage ? enragePassive.block : 0),
+          statuses: applySavedEnrage
+            ? { ...state.enemy.statuses, charm: 0, marked: 0 }
+            : state.enemy.statuses,
+          enrageTriggered,
+          passives: encounter.passives || [],
+          phase2Patterns: encounter.phase2Patterns || [],
+          patterns
+        }
+      }
+    };
+  }
   if (savedRun?.version !== 1 || !isRecord(savedRun.state)) return savedRun;
 
   const oldState = savedRun.state;
@@ -44,19 +106,25 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, shuffle
     : oldState.runStatus === 'draft'
       ? shuffle(Object.keys(relicDatabase).filter((id) => !relics.includes(id))).slice(0, 3)
       : [];
-  return {
-    version: RUN_SAVE_VERSION,
-    state: {
-      ...oldState,
-      ...piles,
-      masterDeck,
-      nextCardInstanceId,
-      startedAt: Number.isFinite(oldState.startedAt) ? oldState.startedAt : Date.now(),
-      draftChoices: Array.isArray(oldState.draftChoices) ? oldState.draftChoices : [],
-      relics,
-      relicChoices
-    }
+  const migratedState = {
+    ...oldState,
+    ...piles,
+    masterDeck,
+    nextCardInstanceId,
+    stageIndex: Number.isInteger(oldState.stageIndex) ? oldState.stageIndex : 0,
+    leader: LEADERS.some(({ id }) => id === oldState.leader) ? oldState.leader : LEADERS[0].id,
+    leaderAbilityUsed: oldState.leaderAbilityUsed === true,
+    damageDealtThisTurn: 0,
+    skillsPlayedThisTurn: 0,
+    startedAt: Number.isFinite(oldState.startedAt) ? oldState.startedAt : Date.now(),
+    draftChoices: Array.isArray(oldState.draftChoices) ? oldState.draftChoices : [],
+    relics,
+    relicChoices
   };
+  return migrateSavedRun({
+    version: RUN_SAVE_VERSION,
+    state: migratedState
+  }, { cardDatabase, relicDatabase, encounters, shuffle });
 }
 
 export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encounters }) {
@@ -88,15 +156,17 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     !allInstances.every(isCardInstance) ||
     !allInstances.every((instance) => {
       const masterInstance = masterById.get(instance.instanceId);
-      return masterInstance &&
-        masterInstance.cardId === instance.cardId &&
-        masterInstance.upgradeLevel === instance.upgradeLevel;
+      if (masterInstance) {
+        return masterInstance.cardId === instance.cardId &&
+          masterInstance.upgradeLevel === instance.upgradeLevel;
+      }
+      const card = cardDatabase[instance.cardId];
+      return card.type === 'STATUS' && card.draftable === false && instance.upgradeLevel === 0;
     }) ||
     masterIds.size !== saved.masterDeck.length ||
     activeIds.size !== allInstances.length ||
-    activeIds.size !== masterIds.size ||
     [...masterIds].some((id) => !activeIds.has(id)) ||
-    !saved.draftChoices.every((id) => typeof id === 'string' && Object.hasOwn(cardDatabase, id) && !cardDatabase[id].starter) ||
+    !saved.draftChoices.every((id) => typeof id === 'string' && Object.hasOwn(cardDatabase, id) && !cardDatabase[id].starter && cardDatabase[id].draftable !== false) ||
     !saved.relics.every((id) => typeof id === 'string' && Object.hasOwn(relicDatabase, id)) ||
     new Set(saved.relics).size !== saved.relics.length ||
     !saved.relicChoices.every((id) => typeof id === 'string' && Object.hasOwn(relicDatabase, id) && !saved.relics.includes(id)) ||
@@ -109,7 +179,7 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     !isFiniteNumber(saved.startedAt) ||
     saved.startedAt < 0 ||
     !Number.isInteger(saved.nextCardInstanceId) ||
-    saved.nextCardInstanceId <= Math.max(0, ...saved.masterDeck.map((instance) => instance.instanceId)) ||
+    saved.nextCardInstanceId <= Math.max(0, ...allInstances.map((instance) => instance?.instanceId || 0)) ||
     !['playing', 'draft', 'victory', 'defeat'].includes(saved.runStatus) ||
     typeof saved.isPlayerTurn !== 'boolean' ||
     !LEADERS.some(({ id }) => id === saved.leader) ||
@@ -121,6 +191,8 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     !isRecord(saved.enemy.statuses) ||
     !Array.isArray(saved.enemy.patterns) ||
     saved.enemy.patterns.length === 0 ||
+    !Array.isArray(saved.enemy.passives) ||
+    !Array.isArray(saved.enemy.phase2Patterns) ||
     !isRecord(saved.enemy.assets) ||
     !isRecord(saved.enemy.visuals) ||
     typeof saved.enemy.assets.backdrop !== 'string' ||
@@ -129,6 +201,12 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     !['hp', 'maxHp', 'block', 'energy', 'maxEnergy', 'cheer'].every((key) => isFiniteNumber(saved.player[key])) ||
     !['encore', 'weak'].every((key) => isFiniteNumber(saved.player.statuses[key])) ||
     !['hp', 'maxHp', 'block', 'patternStep'].every((key) => isFiniteNumber(saved.enemy[key])) ||
+    !isFiniteNumber(saved.enemy.strength) ||
+    typeof saved.enemy.enrageTriggered !== 'boolean' ||
+    !isFiniteNumber(saved.damageDealtThisTurn) ||
+    saved.damageDealtThisTurn < 0 ||
+    !Number.isInteger(saved.skillsPlayedThisTurn) ||
+    saved.skillsPlayedThisTurn < 0 ||
     !['charm', 'marked'].every((key) => isFiniteNumber(saved.enemy.statuses[key])) ||
     !saved.logs.every((entry) => isRecord(entry) && typeof entry.text === 'string' && typeof entry.colorClass === 'string' && Number.isInteger(entry.turn))
   ) {

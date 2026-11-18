@@ -242,6 +242,22 @@ export function createGameUI({
       eBlockBadge.classList.add('hidden');
     }
 
+    const eStrengthBadge = document.getElementById('enemyStrengthBadge');
+    if (e.strength > 0) {
+      eStrengthBadge.classList.remove('hidden');
+      eStrengthBadge.textContent = `💪 ${e.strength} STRENGTH`;
+    } else {
+      eStrengthBadge.classList.add('hidden');
+    }
+
+    const passiveEl = document.getElementById('enemyPassives');
+    passiveEl.replaceChildren();
+    for (const passive of e.passives || []) {
+      const description = document.createElement('span');
+      description.textContent = `◆ ${passive.desc}`;
+      passiveEl.appendChild(description);
+    }
+
     const eStatusEl = document.getElementById('enemyStatusBadges');
     eStatusEl.innerHTML = '';
     if (e.statuses.charm > 0) {

@@ -5,6 +5,15 @@
   "maxHp": 145,
   "spriteType": "male_muto",
   "burning": false,
+  "passives": [
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 2,
+      "block": 16,
+      "desc": "Predator's Adaptation: below 50% HP, clears debuffs and gains +2 Strength and +16 Block."
+    }
+  ],
   "patterns": [
     {
       "type": "multi",
@@ -12,6 +21,12 @@
       "hits": 3,
       "label": "🦅 RAZOR TALON SWARM: 8x3 DMG",
       "charged": true
+    },
+    {
+      "type": "injectStatus",
+      "cardId": "micro_oxygen",
+      "count": 1,
+      "label": "☠️ OXYGEN BOMBS: 1 MICRO-OXYGEN"
     },
     {
       "type": "debuff_atk",
@@ -23,6 +38,23 @@
       "type": "atomic",
       "dmg": 30,
       "label": "⚡ EMPEROR'S DIVE: 30 DMG",
+      "charged": true
+    }
+  ],
+  "phase2Patterns": [
+    {
+      "type": "multi",
+      "dmg": 10,
+      "hits": 3,
+      "label": "🦅 PREDATOR'S FURY: 10x3 DMG",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 34,
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35,
+      "label": "⚡ EMPEROR'S DIVE: 34 DMG (18 DMG TO STUN)",
       "charged": true
     }
   ],

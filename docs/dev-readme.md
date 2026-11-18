@@ -22,6 +22,19 @@ Each new run starts with a leader selection. A leader's special ability can be u
 
 Leader art uses official League of Legends Data Dragon splash assets configured in `assets/data.json`.
 
+## Reactive boss mechanics
+
+Bosses may define optional `passives` in their encounter JSON:
+
+- `onPlayerAttack` can grant Block when an Attack card is played.
+- `onSkillPlayed` can grant Strength at a configured Skill cadence.
+- `onTurnEnd` can grant Strength before the boss acts.
+- `onHpBelowHalf` supports a one-time enrage that clears Charm/Marked and grants Strength and Block; an optional `phase2Patterns` array replaces the normal pattern.
+
+Enemy Strength is added to each hit. Charged intents may define `interruptThreshold` to be skipped when K/DA deals that much HP damage during the player turn; `interruptBonus` sets the extra damage if the interrupt is missed, and `pierce` controls the share of damage that bypasses Holo Shield. The `injectStatus` intent adds non-draftable Status card copies to the discard pile.
+
+Status cards may set `endTurnDamage` and `ethereal` to deal direct HP damage and exhaust if left in hand. Boss mechanics and temporary Status instances are normalized in existing v3 run saves; no save reset or save-version bump is needed.
+
 ## Deploy to GitHub Pages
 
 1. Push the project to a GitHub repository.
