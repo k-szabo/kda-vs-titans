@@ -28,7 +28,8 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 ├── assets/
 │   ├── bosses/       # One JSON encounter definition per boss
 │   ├── kaiju/        # Kaiju SVG illustrations
-│   └── data.json     # Portrait/backdrop URLs and boss order
+│   ├── data.json     # Portrait/backdrop URLs and boss order
+│   └── favicon.svg   # Browser tab icon
 ├── css/
 │   └── styles.css
 ├── docs/
