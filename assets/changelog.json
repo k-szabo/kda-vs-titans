@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.0.0_660e8b03",
+  "currentVersion": "v1.0.1_707eaab6",
   "releases": [
+    {
+      "version": "v1.0.1_707eaab6",
+      "date": "2026-11-18",
+      "changes": [
+        "Fixed the version dropdown layering behind the enemy block."
+      ]
+    },
     {
       "version": "v1.0.0_660e8b03",
       "date": "2026-11-18",
