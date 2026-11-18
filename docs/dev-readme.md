@@ -55,7 +55,7 @@ Run and profile data stay in the same browser and site origin; they are not sync
 
 ## Version and changelog
 
-The current version and newest-first release history live in `assets/changelog.json` and appear in the header dropdown. Use `vMAJOR.MINOR.PATCH_<8 lowercase hex characters>`. Bump the SemVer portion for a release and set the 8-character suffix to the first eight characters of the SHA-256 digest of the compact JSON object `{ "date": "<YYYY-MM-DD>", "changes": ["...", "..."] }`. Keep `currentVersion` equal to the newest release's version.
+The current version and newest-first release history live in `assets/changelog.json` and appear in the header dropdown. Use `vMAJOR.MINOR.PATCH_<8 lowercase hex characters>`. Bump the SemVer portion for a release and set the 8-character suffix to the first eight characters of the SHA-256 digest of the compact JSON object `{ "date": "<YYYY-MM-DD>", "changes": ["...", "..."] }`. Keep `currentVersion` equal to the newest release's version and set `assets/data.json`'s `version` field to the same value. This version is used to clear app caches and cache-bust JSON asset requests.
 
 Generate the suffix for the exact date and change notes with:
 

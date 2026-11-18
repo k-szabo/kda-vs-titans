@@ -1,16 +1,43 @@
 const DATA_MANIFEST_URL = new URL('../assets/data.json', import.meta.url);
+const CACHE_VERSION_KEY = 'kda-vs-titans:cache-version';
 
-async function loadJson(url) {
-  const response = await fetch(url);
+async function loadJson(url, cacheVersion) {
+  const requestUrl = new URL(url);
+  if (cacheVersion) requestUrl.searchParams.set('v', cacheVersion);
+  const response = await fetch(requestUrl, cacheVersion ? undefined : { cache: 'no-store' });
   if (!response.ok) {
     throw new Error(`Request failed for ${url}: ${response.status} ${response.statusText}`);
   }
   return response.json();
 }
 
+async function resetCacheForVersion(version) {
+  try {
+    if (window.localStorage.getItem(CACHE_VERSION_KEY) === version) return;
+  } catch {
+    return;
+  }
+
+  try {
+    if ('caches' in window) {
+      const cacheNames = await window.caches.keys();
+      await Promise.all(cacheNames.map((name) => window.caches.delete(name)));
+    }
+  } catch (error) {
+    console.warn('Unable to clear the previous app cache.', error);
+  }
+
+  try {
+    window.localStorage.setItem(CACHE_VERSION_KEY, version);
+  } catch (error) {
+    console.warn('Unable to record the app cache version.', error);
+  }
+}
+
 export async function loadGameData() {
   const manifest = await loadJson(DATA_MANIFEST_URL);
   if (
+    typeof manifest.version !== 'string' ||
     !manifest.portraits ||
     !manifest.backdrops ||
     !manifest.cards ||
@@ -22,16 +49,18 @@ export async function loadGameData() {
     throw new Error('The asset manifest must define portraits, backdrops, card, relic, changelog, and boss files.');
   }
 
+  await resetCacheForVersion(manifest.version);
+
   const cardDataUrl = new URL(manifest.cards, DATA_MANIFEST_URL);
   const relicDataUrl = new URL(manifest.relics, DATA_MANIFEST_URL);
   const changelogUrl = new URL(manifest.changelog, DATA_MANIFEST_URL);
   const [cardData, relicData, changelogData, encounters] = await Promise.all([
-    loadJson(cardDataUrl),
-    loadJson(relicDataUrl),
-    loadJson(changelogUrl),
+    loadJson(cardDataUrl, manifest.version),
+    loadJson(relicDataUrl, manifest.version),
+    loadJson(changelogUrl, manifest.version),
     Promise.all(manifest.bosses.map(async (bossPath) => {
       const bossUrl = new URL(bossPath, DATA_MANIFEST_URL);
-      const boss = await loadJson(bossUrl);
+      const boss = await loadJson(bossUrl, manifest.version);
       const backdrop = boss.assets && manifest.backdrops[boss.assets.backdrop];
       if (!backdrop || !boss.assets.illustration || !boss.visuals || !boss.visuals.background) {
         throw new Error(`Boss data is missing required assets or visuals: ${bossPath}`);
@@ -111,6 +140,7 @@ export async function loadGameData() {
   if (
     !isRecord(changelogData) ||
     typeof changelogData.currentVersion !== 'string' ||
+    changelogData.currentVersion !== manifest.version ||
     !Array.isArray(changelogData.releases) ||
     changelogData.releases.length === 0 ||
     !changelogData.releases.every((release) => isRecord(release) && typeof release.version === 'string') ||

@@ -1,6 +1,22 @@
 {
-  "currentVersion": "v1.0.1_707eaab6",
+  "currentVersion": "v1.0.3_d7951f2f",
   "releases": [
+    {
+      "version": "v1.0.3_d7951f2f",
+      "date": "2026-11-18",
+      "changes": [
+        "Connected browser cache reset behavior to app version changes.",
+        "Added version-bound cache-busting for JSON assets."
+      ]
+    },
+    {
+      "version": "v1.0.2_1c1fbb4c",
+      "date": "2026-11-18",
+      "changes": [
+        "Fixed stale changelog data by disabling browser caching for JSON asset loads.",
+        "Fixed the version dropdown layering behind the enemy block."
+      ]
+    },
     {
       "version": "v1.0.1_707eaab6",
       "date": "2026-11-18",
