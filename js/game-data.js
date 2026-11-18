@@ -39,6 +39,7 @@ export async function loadGameData() {
   if (
     typeof manifest.version !== 'string' ||
     !manifest.portraits ||
+    !manifest.leaderArts ||
     !manifest.backdrops ||
     !manifest.cards ||
     !manifest.relics ||
@@ -46,8 +47,26 @@ export async function loadGameData() {
     !Array.isArray(manifest.bosses) ||
     manifest.bosses.length === 0
   ) {
-    throw new Error('The asset manifest must define portraits, backdrops, card, relic, changelog, and boss files.');
+    throw new Error('The asset manifest must define portraits, leader art, backdrops, card, relic, changelog, and boss files.');
   }
+
+  const leaderIds = ['ahri', 'akali', 'evelynn', 'kaisa'];
+  const leaderArts = Object.fromEntries(leaderIds.map((leaderId) => {
+    const additionalArts = manifest.leaderArts[leaderId];
+    if (
+      !manifest.portraits[leaderId] ||
+      !additionalArts ||
+      typeof additionalArts.more !== 'string' ||
+      typeof additionalArts.firestarter !== 'string'
+    ) {
+      throw new Error(`The asset manifest is missing leader art for ${leaderId}.`);
+    }
+    return [leaderId, {
+      popstars: manifest.portraits[leaderId],
+      more: additionalArts.more,
+      firestarter: additionalArts.firestarter
+    }];
+  }));
 
   await resetCacheForVersion(manifest.version);
 
@@ -160,7 +179,7 @@ export async function loadGameData() {
   }
 
   return {
-    artAssets: manifest.portraits,
+    artAssets: { ...manifest.portraits, leaderArts },
     cardDatabase,
     changelog: changelogData,
     encounters,

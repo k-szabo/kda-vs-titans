@@ -9,6 +9,8 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Ten boss encounters with telegraphed attacks and distinct artwork
 - Draftable cards, individual card upgrades, passive relics, shields, and status effects
 - Crowd Cheer-powered K/DA Joint Finale
+- Four selectable run leaders, each with a once-per-run special ability
+- Unlockable POP/STARS, MORE, and FIRESTARTER leader art with ranked portrait borders
 - Synthesized sound effects and persistent run records / Kaiju codex
 - In-app version number and release changelog
 - Keyboard shortcuts and a testing-only wave selector on the `#devtools` subpage
@@ -22,8 +24,10 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 | Click a playable card | Play that card |
 | `1`–`5` | Play the matching card in your hand |
 | `E` | End your turn |
+| Leader ability button | Use your chosen leader's special ability once per run |
 
 For testing, open the `#devtools` subpage (for example, append `#devtools` to the game URL) to jump directly to a wave.
+Choose a leader when starting a new run. Clear all 10 waves with that leader to unlock MORE art; a second full clear unlocks FIRESTARTER. Use **ART STUDIO** to equip unlocked art. Each 10 waves cleared while an art style is equipped advances its ranked border.
 
 ## Development
 

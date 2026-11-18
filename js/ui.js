@@ -1,8 +1,10 @@
 import { getEffectiveCardCost } from './card-effects.js';
+import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
 
 export function createGameUI({
   getState,
   getArtAssets,
+  getLeaderArts,
   getCardDatabase,
   getRelicDatabase,
   getProfileStats,
@@ -12,7 +14,8 @@ export function createGameUI({
   onJumpToStage,
   onChooseDraftCard,
   onChooseRelic,
-  onUpgradeCard
+  onUpgradeCard,
+  onSelectLeaderArt
 }) {
   function triggerScreenShake() {
     const root = document.getElementById('appRoot');
@@ -115,6 +118,7 @@ export function createGameUI({
     const encounters = getEncounters();
     const cardDatabase = getCardDatabase();
     const relicDatabase = getRelicDatabase();
+    const profileStats = getProfileStats();
 
     document.getElementById('turnNumberDisplay').textContent = state.turn;
     const setlistEl = document.getElementById('setlistTracker');
@@ -148,14 +152,36 @@ export function createGameUI({
       });
     }
 
-    ['ahri', 'akali', 'evelynn', 'kaisa'].forEach((member) => {
+    LEADERS.forEach(({ id: member, name }) => {
       const slot = document.getElementById(`portrait-${member}`);
       const artAssets = getArtAssets();
-      if (slot && !slot.dataset.loaded) {
-        slot.innerHTML = `<img src="${artAssets[member]}" alt="${member}" class="w-full h-full object-cover object-[50%_18%]" />`;
-        slot.dataset.loaded = 'true';
+      const artId = profileStats.selectedArts[member];
+      const rank = getArtRank(profileStats.artWaveClears[member][artId]);
+      if (slot) {
+        slot.classList.add('border-2', 'border-white/10');
+        if (slot.dataset.artUrl !== artAssets[member]) {
+          const image = document.createElement('img');
+          image.src = artAssets[member];
+          image.alt = `${name} ${LEADER_ART_STYLES.find((style) => style.id === artId).name} art`;
+          image.className = 'w-full h-full object-cover object-[50%_18%]';
+          slot.replaceChildren(image);
+          slot.dataset.artUrl = artAssets[member];
+        }
+        slot.dataset.rankTier = rank?.id || 'unranked';
+        slot.title = rank
+          ? `${name} ${LEADER_ART_STYLES.find((style) => style.id === artId).name} // ${rank.name} rank (${profileStats.artWaveClears[member][artId]} waves)`
+          : `${name} ${LEADER_ART_STYLES.find((style) => style.id === artId).name}`;
       }
     });
+
+    const leader = LEADERS.find(({ id }) => id === state.leader);
+    const leaderAbilityButton = document.getElementById('btnLeaderAbility');
+    leaderAbilityButton.disabled = state.leaderAbilityUsed || !state.isPlayerTurn;
+    leaderAbilityButton.textContent = `★ ${leader.name.toUpperCase()} // ${leader.abilityName.toUpperCase()}${state.leaderAbilityUsed ? ' — USED' : ' — ONCE PER RUN'}`;
+    leaderAbilityButton.title = leader.abilityDescription;
+    leaderAbilityButton.className = state.leaderAbilityUsed || !state.isPlayerTurn
+      ? 'w-full mt-2 py-1.5 px-3 rounded-xl font-display text-[10px] sm:text-xs font-black tracking-wider transition border border-white/10 bg-white/5 text-slate-400 cursor-not-allowed'
+      : 'w-full mt-2 py-1.5 px-3 rounded-xl font-display text-[10px] sm:text-xs font-black tracking-wider transition border border-fuchsia-300/60 bg-fuchsia-500/15 text-fuchsia-100 hover:bg-fuchsia-500/25 cursor-pointer';
 
     const cheerPct = Math.min(100, Math.round(state.player.cheer));
     document.getElementById('crowdCheerText').textContent = `${cheerPct}%`;
@@ -352,6 +378,130 @@ export function createGameUI({
     document.getElementById('statsModal').classList.remove('hidden');
   }
 
+  function showArtStudio() {
+    const profileStats = getProfileStats();
+    const leaderArts = getLeaderArts();
+    const grid = document.getElementById('leaderArtGrid');
+    grid.replaceChildren();
+
+    LEADERS.forEach(({ id, name }) => {
+      const leaderWins = profileStats.leaderWins[id];
+      const section = document.createElement('section');
+      section.className = 'rounded-2xl bg-black/35 border border-white/10 p-4';
+      const heading = document.createElement('div');
+      heading.className = 'flex flex-wrap items-baseline justify-between gap-2 mb-3';
+      const title = document.createElement('h3');
+      title.className = 'font-display text-sm font-black text-white';
+      title.textContent = name;
+      const progress = document.createElement('p');
+      progress.className = 'text-[11px] text-slate-400';
+      progress.textContent = `${leaderWins} full ${leaderWins === 1 ? 'clear' : 'clears'} // ${
+        leaderWins < 2 ? `${2 - leaderWins} ${leaderWins === 1 ? 'more clear' : 'clears'} to FIRESTARTER` : 'all art unlocked'
+      }`;
+      heading.append(title, progress);
+
+      const artChoices = document.createElement('div');
+      artChoices.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3';
+      const unlockedStyles = getUnlockedArtStyles(leaderWins);
+      LEADER_ART_STYLES.forEach((style) => {
+        const unlocked = unlockedStyles.some(({ id: unlockedId }) => unlockedId === style.id);
+        const selected = profileStats.selectedArts[id] === style.id;
+        const clearedWaves = profileStats.artWaveClears[id][style.id];
+        const rank = getArtRank(clearedWaves);
+        const choice = document.createElement('button');
+        choice.type = 'button';
+        choice.disabled = !unlocked;
+        choice.setAttribute('aria-pressed', String(selected));
+        choice.className = `overflow-hidden rounded-xl border text-left transition ${
+          selected ? 'border-amber-300 ring-2 ring-amber-300/30' : 'border-white/15'
+        } ${unlocked ? 'hover:border-cyan-300' : 'opacity-55 cursor-not-allowed'}`;
+
+        const image = document.createElement('img');
+        image.src = leaderArts[id][style.id];
+        image.alt = `${name} ${style.name}`;
+        image.className = 'h-28 w-full object-cover object-[50%_20%]';
+        const details = document.createElement('span');
+        details.className = 'block p-3';
+        const artName = document.createElement('span');
+        artName.className = 'block font-display text-[10px] font-black text-white';
+        artName.textContent = `${style.name}${selected ? ' // EQUIPPED' : ''}`;
+        const status = document.createElement('span');
+        status.className = 'mt-1 block text-[10px] text-slate-300';
+        status.textContent = unlocked
+          ? `${clearedWaves} waves with this art${rank ? ` // ${rank.name} rank` : ''}`
+          : `Unlock after ${style.winsRequired} full ${style.winsRequired === 1 ? 'clear' : 'clears'} with ${name}`;
+        details.append(artName, status);
+        choice.append(image, details);
+        if (rank) choice.style.borderColor = rank.color;
+        if (unlocked) {
+          choice.addEventListener('click', () => {
+            onSelectLeaderArt(id, style.id);
+            showArtStudio();
+          });
+        }
+        artChoices.appendChild(choice);
+      });
+
+      section.append(heading, artChoices);
+      grid.appendChild(section);
+    });
+
+    document.getElementById('artStudioModal').classList.remove('hidden');
+  }
+
+  let selectedLeader = LEADERS[0].id;
+
+  function renderLeaderChoices() {
+    const profileStats = getProfileStats();
+    const leaderArts = getLeaderArts();
+    const choices = document.getElementById('leaderChoicesGrid');
+    choices.replaceChildren();
+
+    LEADERS.forEach((leader) => {
+      const choice = document.createElement('button');
+      choice.type = 'button';
+      choice.setAttribute('aria-pressed', String(selectedLeader === leader.id));
+      choice.className = `flex items-center gap-3 rounded-2xl border p-3 text-left transition ${
+        selectedLeader === leader.id
+          ? 'border-amber-300 bg-amber-400/10 ring-2 ring-amber-300/25'
+          : 'border-white/15 bg-black/25 hover:border-cyan-300/60'
+      }`;
+      const image = document.createElement('img');
+      image.src = leaderArts[leader.id][profileStats.selectedArts[leader.id]];
+      image.alt = '';
+      image.className = 'h-20 w-20 shrink-0 rounded-xl object-cover object-[50%_18%]';
+      const description = document.createElement('span');
+      description.className = 'min-w-0';
+      const name = document.createElement('span');
+      name.className = 'block font-display text-sm font-black text-white';
+      name.textContent = leader.name;
+      const ability = document.createElement('span');
+      ability.className = 'mt-1 block font-display text-[10px] font-bold text-fuchsia-200';
+      ability.textContent = leader.abilityName;
+      const details = document.createElement('span');
+      details.className = 'mt-1 block text-[11px] leading-relaxed text-slate-300';
+      details.textContent = leader.abilityDescription;
+      const wins = document.createElement('span');
+      wins.className = 'mt-1 block text-[9px] text-slate-500';
+      wins.textContent = `${profileStats.leaderWins[leader.id]} full clears`;
+      description.append(name, ability, details, wins);
+      choice.append(image, description);
+      choice.addEventListener('click', () => {
+        selectedLeader = leader.id;
+        renderLeaderChoices();
+      });
+      choices.appendChild(choice);
+    });
+  }
+
+  function openLeaderSelection(canCancel, currentLeader) {
+    selectedLeader = LEADERS.some(({ id }) => id === currentLeader) ? currentLeader : LEADERS[0].id;
+    document.getElementById('btnCancelLeaderSelection').classList.toggle('hidden', !canCancel);
+    document.getElementById('leaderSelectionWarning').classList.toggle('hidden', !canCancel);
+    renderLeaderChoices();
+    document.getElementById('leaderSelectionModal').classList.remove('hidden');
+  }
+
   function updateSoundButton(enabled, supported) {
     const button = document.getElementById('btnSound');
     button.disabled = !supported;
@@ -397,12 +547,24 @@ export function createGameUI({
       article.append(heading, changes);
       entries.appendChild(article);
     });
+    fitChangelogToFour();
+  }
+
+  function fitChangelogToFour() {
+    const entries = document.getElementById('changelogEntries');
+    const itemCount = Math.min(4, entries.children.length);
+    if (itemCount === 0) return;
+    const first = entries.children[0].getBoundingClientRect();
+    const fourth = entries.children[itemCount - 1].getBoundingClientRect();
+    const height = fourth.bottom - first.top;
+    entries.style.maxHeight = `${Math.min(height, window.innerHeight * 0.7)}px`;
   }
 
   function setChangelogOpen(open) {
     const button = document.getElementById('btnVersion');
     document.getElementById('changelogDropdown').classList.toggle('hidden', !open);
     button.setAttribute('aria-expanded', String(open));
+    if (open) requestAnimationFrame(fitChangelogToFour);
   }
 
   function showRunEndModal(isVictory) {
@@ -445,6 +607,8 @@ export function createGameUI({
     document.getElementById('runEndModal').classList.add('hidden');
     document.getElementById('draftModal').classList.add('hidden');
     document.getElementById('statsModal').classList.add('hidden');
+    document.getElementById('leaderSelectionModal').classList.add('hidden');
+    document.getElementById('artStudioModal').classList.add('hidden');
   }
 
   function showSaveNotice(message) {
@@ -466,16 +630,27 @@ export function createGameUI({
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') setChangelogOpen(false);
   });
+  window.addEventListener('resize', fitChangelogToFour);
+  document.getElementById('btnArtStudio').addEventListener('click', showArtStudio);
+  document.getElementById('btnCloseArtStudio').addEventListener('click', () => {
+    document.getElementById('artStudioModal').classList.add('hidden');
+  });
+  document.getElementById('btnCancelLeaderSelection').addEventListener('click', () => {
+    document.getElementById('leaderSelectionModal').classList.add('hidden');
+  });
 
   return {
     hideRunModals,
+    openLeaderSelection,
     openDraftModal,
     openPileModal,
     renderAll,
     setChangelog,
     showStatsModal,
+    showArtStudio,
     showRunEndModal,
     showSaveNotice,
+    getSelectedLeader: () => selectedLeader,
     updateSoundButton,
     spawnPopup,
     triggerKaijuHitAnim,

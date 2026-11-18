@@ -1,4 +1,6 @@
-export const PROFILE_VERSION = 1;
+import { getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
+
+export const PROFILE_VERSION = 2;
 const PROFILE_KEY = 'encore-spire.profile';
 
 export class ProfileStorageError extends Error {
@@ -16,11 +18,20 @@ export class InvalidProfileStatsError extends Error {
 }
 
 export function createDefaultProfileStats() {
+  const leaderWins = Object.fromEntries(LEADERS.map(({ id }) => [id, 0]));
+  const selectedArts = Object.fromEntries(LEADERS.map(({ id }) => [id, 'popstars']));
+  const artWaveClears = Object.fromEntries(LEADERS.map(({ id }) => [
+    id,
+    Object.fromEntries(LEADER_ART_STYLES.map(({ id: artId }) => [artId, 0]))
+  ]));
   return {
     version: PROFILE_VERSION,
     highestWaveCleared: 0,
     fastestWinMs: null,
-    unlockedKaiju: []
+    unlockedKaiju: [],
+    leaderWins,
+    selectedArts,
+    artWaveClears
   };
 }
 
@@ -41,6 +52,16 @@ export function loadProfileStats() {
     throw new InvalidProfileStatsError('Saved profile stats are not valid JSON.', error);
   }
 
+  const isNonNegativeInteger = (value) => Number.isInteger(value) && value >= 0;
+  const hasLeaderProgress = LEADERS.every(({ id }) =>
+    isNonNegativeInteger(profile?.leaderWins?.[id]) &&
+    getUnlockedArtStyles(profile.leaderWins[id]).some((style) =>
+      style.id === profile.selectedArts?.[id]
+    ) &&
+    LEADER_ART_STYLES.every(({ id: artId }) =>
+      isNonNegativeInteger(profile.artWaveClears?.[id]?.[artId])
+    )
+  );
   if (
     !profile ||
     profile.version !== PROFILE_VERSION ||
@@ -48,7 +69,11 @@ export function loadProfileStats() {
     profile.highestWaveCleared < 0 ||
     !(profile.fastestWinMs === null || (Number.isFinite(profile.fastestWinMs) && profile.fastestWinMs >= 0)) ||
     !Array.isArray(profile.unlockedKaiju) ||
-    profile.unlockedKaiju.some((id) => typeof id !== 'string')
+    profile.unlockedKaiju.some((id) => typeof id !== 'string') ||
+    !profile.leaderWins ||
+    !profile.selectedArts ||
+    !profile.artWaveClears ||
+    !hasLeaderProgress
   ) {
     throw new InvalidProfileStatsError('Saved profile stats have an unsupported shape.');
   }
@@ -57,7 +82,16 @@ export function loadProfileStats() {
     version: PROFILE_VERSION,
     highestWaveCleared: profile.highestWaveCleared,
     fastestWinMs: profile.fastestWinMs,
-    unlockedKaiju: [...new Set(profile.unlockedKaiju)]
+    unlockedKaiju: [...new Set(profile.unlockedKaiju)],
+    leaderWins: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.leaderWins[id]])),
+    selectedArts: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.selectedArts[id]])),
+    artWaveClears: Object.fromEntries(LEADERS.map(({ id }) => [
+      id,
+      Object.fromEntries(LEADER_ART_STYLES.map(({ id: artId }) => [
+        artId,
+        profile.artWaveClears[id][artId]
+      ]))
+    ]))
   };
 }
 

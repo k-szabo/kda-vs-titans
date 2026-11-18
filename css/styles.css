@@ -42,6 +42,24 @@
       display: none;
     }
 
+    #changelogEntries {
+      max-height: min(70vh, 28rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+
+    [id^="portrait-"][data-rank-tier="iron"] { border-color: #777777; box-shadow: 0 0 10px #77777788; }
+    [id^="portrait-"][data-rank-tier="bronze"] { border-color: #a97142; box-shadow: 0 0 10px #a9714288; }
+    [id^="portrait-"][data-rank-tier="silver"] { border-color: #aeb9c7; box-shadow: 0 0 10px #aeb9c788; }
+    [id^="portrait-"][data-rank-tier="gold"] { border-color: #d8a22e; box-shadow: 0 0 10px #d8a22e88; }
+    [id^="portrait-"][data-rank-tier="platinum"] { border-color: #54c7c4; box-shadow: 0 0 10px #54c7c488; }
+    [id^="portrait-"][data-rank-tier="emerald"] { border-color: #2baf69; box-shadow: 0 0 10px #2baf6988; }
+    [id^="portrait-"][data-rank-tier="diamond"] { border-color: #5ebeff; box-shadow: 0 0 10px #5ebeff88; }
+    [id^="portrait-"][data-rank-tier="master"] { border-color: #9f50e6; box-shadow: 0 0 10px #9f50e688; }
+    [id^="portrait-"][data-rank-tier="grandmaster"] { border-color: #d74a4a; box-shadow: 0 0 10px #d74a4a88; }
+    [id^="portrait-"][data-rank-tier="challenger"] { border-color: #f5d76e; box-shadow: 0 0 10px #f5d76e88; }
+
     .glass-panel {
       background: var(--panel-glass);
       backdrop-filter: blur(14px);

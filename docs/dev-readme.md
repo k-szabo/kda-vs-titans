@@ -16,6 +16,12 @@ Open <http://localhost:8000>.
 
 Open <http://localhost:8000/#devtools> to use the testing-only wave selector. Selecting a wave resets the current wave and loads the chosen encounter. Remove `#devtools` to return to the game.
 
+## Leader and art progression
+
+Each new run starts with a leader selection. A leader's special ability can be used once during that run. Completing all 10 waves with a leader unlocks that member's MORE art; completing a second full run with the same leader unlocks FIRESTARTER. Choose unlocked character art in the in-game Art Studio. Every wave cleared while an art style is equipped counts toward that member/art's ranked portrait border, which advances once per 10 waves.
+
+Leader art uses official League of Legends Data Dragon splash assets configured in `assets/data.json`.
+
 ## Deploy to GitHub Pages
 
 1. Push the project to a GitHub repository.

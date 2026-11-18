@@ -1,4 +1,5 @@
 import { InvalidSavedRunError, RUN_SAVE_VERSION } from './run-storage.js';
+import { LEADERS } from './leader-data.js';
 
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -111,6 +112,8 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.nextCardInstanceId <= Math.max(0, ...saved.masterDeck.map((instance) => instance.instanceId)) ||
     !['playing', 'draft', 'victory', 'defeat'].includes(saved.runStatus) ||
     typeof saved.isPlayerTurn !== 'boolean' ||
+    !LEADERS.some(({ id }) => id === saved.leader) ||
+    typeof saved.leaderAbilityUsed !== 'boolean' ||
     !Array.isArray(saved.logs) ||
     !isRecord(saved.player) ||
     !isRecord(saved.player.statuses) ||

@@ -24,6 +24,7 @@ import {
 } from './run-storage.js';
 import { isValidSavedRun, migrateSavedRun } from './run-state.js';
 import { createGameUI } from './ui.js';
+import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
 (function () {
   'use strict';
@@ -48,7 +49,7 @@ import { createGameUI } from './ui.js';
         return copy;
       }
 
-      function createNewRunState() {
+      function createNewRunState(leader) {
         let nextCardInstanceId = 1;
         const masterDeck = STARTER_DECK.map((cardId) => ({
           instanceId: nextCardInstanceId++,
@@ -57,6 +58,8 @@ import { createGameUI } from './ui.js';
         }));
         return {
           stageIndex: 0,
+          leader,
+          leaderAbilityUsed: false,
           turn: 1,
           startedAt: Date.now(),
           nextCardInstanceId,
@@ -291,6 +294,47 @@ import { createGameUI } from './ui.js';
         renderAll();
       }
 
+      function useLeaderAbility() {
+        if (!state.isPlayerTurn || state.leaderAbilityUsed) return;
+
+        state.leaderAbilityUsed = true;
+        playSoundEffect(playCardSfx);
+        const ctx = createEffectContext();
+        switch (state.leader) {
+          case 'ahri':
+            ctx.dealEnemyDmg(18);
+            ctx.healPlayer(12);
+            addLog('🦊 Ahri used Spirit Rush: 18 damage and restored up to 12 HP!', 'text-pink-300 font-bold');
+            break;
+          case 'akali':
+            ctx.dealEnemyDmg(26);
+            ctx.gainBlock(8);
+            addLog('🥷 Akali used Shuriken Flip: 26 damage and gained 8 Holo Shield!', 'text-cyan-300 font-bold');
+            break;
+          case 'evelynn':
+            ctx.applyEnemyStatus('charm', 3);
+            ctx.addCheer(25);
+            addLog('💜 Evelynn used Allure: charmed the enemy for 3 turns and gained 25% Crowd Cheer!', 'text-purple-300 font-bold');
+            break;
+          case 'kaisa':
+            ctx.draw(3);
+            ctx.gainEnergy(2);
+            ctx.addCheer(15);
+            addLog("✨ Kai'Sa used Killer Instinct: drew 3 cards, gained 2 Hype Energy and 15% Crowd Cheer!", 'text-indigo-300 font-bold');
+            break;
+          default:
+            throw new Error(`Unknown run leader: ${state.leader}`);
+        }
+
+        if (state.enemy.hp <= 0) {
+          state.enemy.hp = 0;
+          renderAll();
+          handleKaijuDefeated();
+          return;
+        }
+        renderAll();
+      }
+
       function endPlayerTurn() {
         if (!state.isPlayerTurn) return;
         state.isPlayerTurn = false;
@@ -380,15 +424,24 @@ import { createGameUI } from './ui.js';
 
       function recordStageClear() {
         profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
+        LEADERS.forEach(({ id }) => {
+          const artId = profileStats.selectedArts[id];
+          profileStats.artWaveClears[id][artId] += 1;
+        });
         if (!profileStats.unlockedKaiju.includes(state.enemy.id)) {
           profileStats.unlockedKaiju.push(state.enemy.id);
         }
         if (state.stageIndex === ENCOUNTERS.length - 1) {
+          profileStats.leaderWins[state.leader] += 1;
           const duration = Math.max(0, Date.now() - state.startedAt);
           if (profileStats.fastestWinMs === null || duration < profileStats.fastestWinMs) {
             profileStats.fastestWinMs = duration;
           }
         }
+        persistProfileStats();
+      }
+
+      function persistProfileStats() {
         if (!profileStorageAvailable) return;
         try {
           saveProfileStats(profileStats);
@@ -437,7 +490,7 @@ import { createGameUI } from './ui.js';
       }
 
       function syncPage() {
-        const devtoolsOpen = window.location.hash === '#devtools';
+        const devtoolsOpen = window.location.hash === '#devtools' && state !== null;
         document.getElementById('gamePage').classList.toggle('hidden', devtoolsOpen);
         document.getElementById('devtoolsPage').classList.toggle('hidden', !devtoolsOpen);
         if (ui && state) ui.renderAll();
@@ -458,10 +511,29 @@ import { createGameUI } from './ui.js';
       // =========================================================================
       // Run flow and event wiring
       // =========================================================================
-      function startNewRun() {
+      function startNewRun(leader) {
+        if (!LEADERS.some(({ id }) => id === leader)) {
+          throw new Error(`Unknown run leader: ${leader}`);
+        }
         ui.hideRunModals();
-        state = createNewRunState();
+        state = createNewRunState(leader);
         startStage(0);
+        syncPage();
+      }
+
+      function selectLeaderArt(leader, artId) {
+        const leaderWins = profileStats.leaderWins[leader];
+        if (!Number.isInteger(leaderWins)) throw new Error(`Unknown art leader: ${leader}`);
+        if (!getUnlockedArtStyles(leaderWins).some((style) => style.id === artId)) {
+          throw new Error(`Art style ${artId} is not unlocked for ${leader}.`);
+        }
+        profileStats.selectedArts[leader] = artId;
+        persistProfileStats();
+        renderAll();
+      }
+
+      function openNewRunSelection() {
+        ui.openLeaderSelection(Boolean(state), state?.leader);
       }
 
       function chooseDraftCard(cardId) {
@@ -521,8 +593,12 @@ import { createGameUI } from './ui.js';
       function wireEvents() {
         document.getElementById('btnEndTurn').addEventListener('click', endPlayerTurn);
         document.getElementById('btnJointAttack').addEventListener('click', triggerJointAttack);
-        document.getElementById('btnNewRun').addEventListener('click', startNewRun);
-        document.getElementById('btnRestartRunEnd').addEventListener('click', startNewRun);
+        document.getElementById('btnLeaderAbility').addEventListener('click', useLeaderAbility);
+        document.getElementById('btnNewRun').addEventListener('click', openNewRunSelection);
+        document.getElementById('btnRestartRunEnd').addEventListener('click', openNewRunSelection);
+        document.getElementById('btnStartNewRun').addEventListener('click', () => {
+          startNewRun(ui.getSelectedLeader());
+        });
         document.getElementById('btnStats').addEventListener('click', () => ui.showStatsModal());
         document.getElementById('btnCloseStats').addEventListener('click', () => {
           document.getElementById('statsModal').classList.add('hidden');
@@ -585,7 +661,14 @@ import { createGameUI } from './ui.js';
           STARTER_DECK = gameData.starterDeck;
           ui = createGameUI({
             getState: () => state,
-            getArtAssets: () => ART_ASSETS,
+            getArtAssets: () => ({
+              ...ART_ASSETS,
+              ...Object.fromEntries(LEADERS.map(({ id }) => [
+                id,
+                ART_ASSETS.leaderArts[id][profileStats.selectedArts[id]]
+              ]))
+            }),
+            getLeaderArts: () => ART_ASSETS.leaderArts,
             getCardDatabase: () => CARD_DB,
             getRelicDatabase: () => RELIC_DB,
             getProfileStats: () => profileStats,
@@ -595,7 +678,8 @@ import { createGameUI } from './ui.js';
             onJumpToStage: startStage,
             onChooseDraftCard: chooseDraftCard,
             onChooseRelic: chooseRelic,
-            onUpgradeCard: upgradeCard
+            onUpgradeCard: upgradeCard,
+            onSelectLeaderArt: selectLeaderArt
           });
           ui.setChangelog(gameData.changelog);
           wireEvents();
@@ -610,7 +694,7 @@ import { createGameUI } from './ui.js';
               ui.showSaveNotice('Profile statistics are unavailable in this browser.');
             } else if (error instanceof InvalidProfileStatsError) {
               console.error('Saved profile stats could not be restored.', error);
-              ui.showSaveNotice('Saved profile statistics were invalid and have been reset.');
+              ui.showSaveNotice('Saved profile statistics could not be restored and have been reset.');
               profileStats = createDefaultProfileStats();
               try {
                 saveProfileStats(profileStats);
@@ -642,7 +726,7 @@ import { createGameUI } from './ui.js';
               ui.showSaveNotice('Browser storage is unavailable. This run cannot be saved between visits.');
             } else if (error instanceof InvalidSavedRunError) {
               console.error('The saved run could not be restored.', error);
-              ui.showSaveNotice('The previous saved run could not be restored. A new run will start and autosave from here.');
+              ui.showSaveNotice('The previous saved run could not be restored. Choose a leader to start a new run.');
               savedRun = null;
             } else {
               throw error;
@@ -654,7 +738,7 @@ import { createGameUI } from './ui.js';
             relicDatabase: RELIC_DB,
             encounters: ENCOUNTERS
           })) {
-            ui.showSaveNotice('The previous saved run is incompatible or damaged. A new run will start and autosave from here.');
+            ui.showSaveNotice('The previous saved run could not be restored. Choose a leader to start a new run.');
             savedRun = null;
           }
 
@@ -662,8 +746,9 @@ import { createGameUI } from './ui.js';
             state = savedRun.state;
             renderAll();
             restoreRunModal();
+            syncPage();
           } else {
-            startNewRun();
+            ui.openLeaderSelection(false, null);
           }
         } catch (error) {
           console.error('Unable to load game data and assets.', error);
