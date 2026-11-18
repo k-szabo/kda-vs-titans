@@ -2,6 +2,8 @@
 
 A browser-based, turn-based deckbuilding roguelike. Build a K/DA deck, manage Hype Energy and Crowd Cheer, and fight through an eight-wave kaiju setlist.
 
+Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
+
 ## Features
 
 - Eight boss encounters with telegraphed attacks and distinct artwork
