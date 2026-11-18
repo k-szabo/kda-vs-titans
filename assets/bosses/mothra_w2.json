@@ -1,0 +1,35 @@
+{
+  "id": "mothra_w2",
+  "name": "MOTHRA: LUMINOUS SERAPH",
+  "subtitle": "WAVE 2 // DIVINE RESONANCE",
+  "maxHp": 75,
+  "spriteType": "mothra",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "debuff_atk",
+      "dmg": 8,
+      "weak": 1,
+      "label": "✨ SILK POLLEN: 8 DMG + WEAK"
+    },
+    {
+      "type": "charge",
+      "block": 14,
+      "label": "🦋 COCOON BARRIER: +14 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 16,
+      "label": "🌟 GOD RAYS: 16 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "mothra",
+    "illustration": "../kaiju/mothra.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 40%, rgba(250, 204, 21, 0.3), rgba(56, 189, 248, 0.25) 45%, rgba(15, 23, 42, 0.98) 80%)"
+  }
+}

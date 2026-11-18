@@ -1,0 +1,35 @@
+{
+  "id": "ghidorah_w5",
+  "name": "KING GHIDORAH: GRAVITY STORM",
+  "subtitle": "WAVE 5 // THREE-HEADED USURPER",
+  "maxHp": 110,
+  "spriteType": "ghidorah",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 5,
+      "hits": 3,
+      "label": "⚡ TRI-BITE: 5x3 DMG"
+    },
+    {
+      "type": "debuff_atk",
+      "dmg": 11,
+      "weak": 1,
+      "label": "🌪️ HURRICANE ROAR: 11 DMG + WEAK"
+    },
+    {
+      "type": "atomic",
+      "dmg": 24,
+      "label": "🌩️ GRAVITY BEAMS: 24 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "ghidorah",
+    "illustration": "../kaiju/ghidorah.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 35%, rgba(250, 204, 21, 0.32), rgba(88, 28, 135, 0.45) 45%, rgba(15, 23, 42, 0.98) 80%)"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "kong_w4",
+  "name": "KING KONG: SKULL SOVEREIGN",
+  "subtitle": "WAVE 4 // CHARGED TITAN AXE",
+  "maxHp": 95,
+  "spriteType": "kong",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "attack",
+      "dmg": 13,
+      "label": "🦍 GROUND POUND: 13 DMG"
+    },
+    {
+      "type": "charge",
+      "block": 12,
+      "label": "🪓 AXE ABSORB: +12 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 22,
+      "label": "⚡ OVERCHARGED CLEAVE: 22 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "kong",
+    "illustration": "../kaiju/kong.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.25), rgba(41, 37, 36, 0.65) 50%, rgba(12, 10, 9, 0.98) 82%)"
+  }
+}

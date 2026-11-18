@@ -1,0 +1,26 @@
+<svg viewBox="0 0 280 190" width="100%" height="100%" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+          <defs>
+            <radialGradient id="mothWingGrad" cx="50%" cy="50%" r="55%">
+              <stop offset="0%" stop-color="#fef08a"/>
+              <stop offset="45%" stop-color="#f59e0b"/>
+              <stop offset="80%" stop-color="#ec4899"/>
+              <stop offset="100%" stop-color="#312e81"/>
+            </radialGradient>
+          </defs>
+          <!-- Upper Forewings -->
+          <path d="M134,86 C95,22 28,12 16,44 C6,70 46,98 128,98 Z" fill="url(#mothWingGrad)" stroke="#fef9c3" stroke-width="1.5"/>
+          <path d="M146,86 C185,22 252,12 264,44 C274,70 234,98 152,98 Z" fill="url(#mothWingGrad)" stroke="#fef9c3" stroke-width="1.5"/>
+          <!-- Lower Hindwings -->
+          <path d="M132,102 C74,104 34,126 44,154 C54,178 102,162 134,118 Z" fill="url(#mothWingGrad)" opacity="0.9" stroke="#fde047" stroke-width="1.3"/>
+          <path d="M148,102 C206,104 246,126 236,154 C226,178 178,162 146,118 Z" fill="url(#mothWingGrad)" opacity="0.9" stroke="#fde047" stroke-width="1.3"/>
+          <!-- Wing Eyespots -->
+          <circle cx="64" cy="54" r="14" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+          <circle cx="64" cy="54" r="6" fill="#fef08a" class="kaiju-spines"/>
+          <circle cx="216" cy="54" r="14" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/>
+          <circle cx="216" cy="54" r="6" fill="#fef08a" class="kaiju-spines"/>
+          <!-- Fuzzy Thorax, Abdomen & Feathered Antennae -->
+          <ellipse cx="140" cy="108" rx="12" ry="38" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <path d="M134,72 C124,52 112,46 104,48 M146,72 C156,52 168,46 176,48" stroke="#fde047" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="135" cy="76" r="3" fill="#38bdf8"/>
+          <circle cx="145" cy="76" r="3" fill="#38bdf8"/>
+        </svg>

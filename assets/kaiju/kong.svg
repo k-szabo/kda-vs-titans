@@ -1,0 +1,27 @@
+<svg viewBox="0 0 260 190" width="100%" height="100%" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+          <defs>
+            <linearGradient id="kongFur" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#57534e"/>
+              <stop offset="55%" stop-color="#292524"/>
+              <stop offset="100%" stop-color="#0c0a09"/>
+            </linearGradient>
+            <linearGradient id="kongAxe" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#e0f2fe"/>
+              <stop offset="50%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#0284c7"/>
+            </linearGradient>
+          </defs>
+          <!-- Massive Broad Shoulders & Knuckle-Walking Gorilla Frame -->
+          <path d="M74,182 L64,126 C52,110 56,78 78,64 C90,54 104,48 114,32 C122,22 140,22 148,32 C158,48 172,54 184,64 C206,78 210,110 198,126 L188,182 L162,182 L158,136 L104,136 L100,182 Z" fill="url(#kongFur)" stroke="#78716c" stroke-width="1.4"/>
+          <!-- Pectoral Scarred Chest -->
+          <path d="M98,74 C116,84 146,84 164,74 L158,116 C140,122 122,122 104,116 Z" fill="#44403c" stroke="#a8a29e" stroke-width="1"/>
+          <path d="M112,86 L138,104" stroke="#ef4444" stroke-width="1.8" opacity="0.75"/>
+          <!-- Roaring Gorilla Face & Glowing Amber Eyes -->
+          <path d="M114,38 L148,38 L152,62 L110,62 Z" fill="#1c1917" stroke="#a8a29e" stroke-width="1.1"/>
+          <circle cx="123" cy="46" r="2.3" fill="#fbbf24"/>
+          <circle cx="139" cy="46" r="2.3" fill="#fbbf24"/>
+          <polygon points="122,56 140,56 137,62 125,62" fill="#f8fafc"/>
+          <!-- Charged Godzilla-Spine Battle Axe -->
+          <line x1="176" y1="164" x2="218" y2="38" stroke="#a8a29e" stroke-width="5" stroke-linecap="round"/>
+          <path d="M196,42 L236,24 L244,54 L204,64 Z" fill="url(#kongAxe)" stroke="#bae6fd" stroke-width="1.5" class="kaiju-spines"/>
+        </svg>

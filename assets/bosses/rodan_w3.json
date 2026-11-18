@@ -1,0 +1,35 @@
+{
+  "id": "rodan_w3",
+  "name": "RODAN: VOLCANIC SKY-FIEND",
+  "subtitle": "WAVE 3 // SUPERSONIC SHOCKWAVE",
+  "maxHp": 85,
+  "spriteType": "rodan",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 5,
+      "hits": 2,
+      "label": "🔥 TALON DIVE: 5x2 DMG"
+    },
+    {
+      "type": "debuff_atk",
+      "dmg": 10,
+      "weak": 1,
+      "label": "🌪️ SONIC BOOM: 10 DMG + WEAK",
+      "charged": true
+    },
+    {
+      "type": "attack",
+      "dmg": 17,
+      "label": "🌋 MAGMA WING GUST: 17 DMG"
+    }
+  ],
+  "assets": {
+    "backdrop": "rodan",
+    "illustration": "../kaiju/rodan.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(249, 115, 22, 0.35), rgba(153, 27, 27, 0.4) 48%, rgba(15, 23, 42, 0.98) 80%)"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "destoroyah_w7",
+  "name": "DESTOROYAH: OXYGEN DEMON",
+  "subtitle": "WAVE 7 // MICRO-OXYGEN CATACLYSM",
+  "maxHp": 135,
+  "spriteType": "destoroyah",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "debuff_atk",
+      "dmg": 13,
+      "weak": 2,
+      "label": "☠️ MICRO-OXYGEN: 13 DMG + 2 WEAK"
+    },
+    {
+      "type": "multi",
+      "dmg": 6,
+      "hits": 3,
+      "label": "🦇 AGGREGATE SWARM: 6x3 DMG",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 28,
+      "label": "🗡️ LASER HORN KATANA: 28 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "destoroyah",
+    "illustration": "../kaiju/destoroyah.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(225, 29, 72, 0.4), rgba(76, 5, 25, 0.6) 50%, rgba(9, 3, 8, 0.98) 82%)"
+  }
+}

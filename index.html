@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K/DA VS. GODZILLA // ENCORE SPIRE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body id="appRoot" class="p-3 sm:p-5 flex flex-col justify-between">
+
+  <div id="loadError" role="alert" class="hidden w-full max-w-6xl mx-auto mb-3 rounded-xl border border-rose-400/50 bg-rose-950/80 px-4 py-3 text-sm text-rose-200"></div>
+
+  <!-- TOP SETLIST & RUN HEADER -->
+  <header class="w-full max-w-6xl mx-auto glass-panel rounded-2xl px-4 py-3 mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/30 via-purple-500/30 to-cyan-400/30 border border-pink-400/50 flex items-center justify-center font-display font-black text-cyan-300 text-sm">
+        K/DA
+      </div>
+      <div>
+        <h1 class="font-display text-sm sm:text-lg font-black tracking-wider holo-text">
+          K/DA VS. GODZILLA // ENCORE SPIRE
+        </h1>
+        <p class="text-[11px] text-slate-400">Turn-Based Deckbuilder • Zero Timers • Draft Cards &amp; Counter Atomic Breath</p>
+      </div>
+    </div>
+
+    <!-- 8-Stage Setlist Progress -->
+    <div id="setlistTracker" class="flex items-center gap-1.5 sm:gap-2 bg-black/45 px-3 py-1.5 rounded-xl border border-white/10"></div>
+
+    <!-- Deck & Turn Info -->
+    <div class="flex items-center gap-3">
+      <div class="text-right">
+        <div class="text-[9px] font-display tracking-widest text-slate-400">TURN</div>
+        <div id="turnNumberDisplay" class="font-display text-sm font-black text-white">1</div>
+      </div>
+      <button id="btnNewRun" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
+        ↺ NEW RUN
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN BATTLE ARENA: K/DA SQUAD (LEFT) VS. KAIJU BOSS (RIGHT) -->
+  <main class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch my-auto">
+
+    <!-- LEFT: K/DA SQUAD STAGE PANEL (5 cols) -->
+    <section class="lg:col-span-5 glass-panel rounded-3xl p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden" id="playerArenaCard">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <span class="text-[10px] font-display tracking-widest text-pink-400 uppercase">HEADLINERS</span>
+          <h2 class="font-display text-base sm:text-lg font-black text-white">K/DA STAGE SQUAD</h2>
+        </div>
+        <!-- Active Player Buffs / Debuffs -->
+        <div id="playerStatusBadges" class="flex flex-wrap gap-1.5 justify-end"></div>
+      </div>
+
+      <!-- 4-Member Vector Emblem Showcase -->
+      <div class="grid grid-cols-4 gap-2 my-2">
+        <div class="rounded-2xl bg-pink-500/10 border border-pink-400/35 p-1.5 flex flex-col items-center">
+          <div id="portrait-ahri" class="w-11 h-11 sm:w-12 sm:h-12 overflow-hidden rounded-xl"></div>
+          <span class="font-display text-[10px] font-bold text-pink-300 mt-1">AHRI</span>
+        </div>
+        <div class="rounded-2xl bg-cyan-500/10 border border-cyan-400/35 p-1.5 flex flex-col items-center">
+          <div id="portrait-akali" class="w-11 h-11 sm:w-12 sm:h-12 overflow-hidden rounded-xl"></div>
+          <span class="font-display text-[10px] font-bold text-cyan-300 mt-1">AKALI</span>
+        </div>
+        <div class="rounded-2xl bg-purple-500/10 border border-purple-400/35 p-1.5 flex flex-col items-center">
+          <div id="portrait-evelynn" class="w-11 h-11 sm:w-12 sm:h-12 overflow-hidden rounded-xl"></div>
+          <span class="font-display text-[10px] font-bold text-purple-300 mt-1">EVELYNN</span>
+        </div>
+        <div class="rounded-2xl bg-indigo-500/10 border border-indigo-400/35 p-1.5 flex flex-col items-center">
+          <div id="portrait-kaisa" class="w-11 h-11 sm:w-12 sm:h-12 overflow-hidden rounded-xl"></div>
+          <span class="font-display text-[10px] font-bold text-indigo-300 mt-1">KAI'SA</span>
+        </div>
+      </div>
+
+      <!-- CROWD CHEER / JOINT ENCORE ULTIMATE METER -->
+      <div class="bg-gradient-to-r from-pink-950/50 via-purple-950/50 to-amber-950/40 rounded-2xl p-2.5 mb-2.5 border border-amber-400/30">
+        <div class="flex items-center justify-between text-[10px] font-display mb-1">
+          <span class="text-amber-300 font-bold tracking-wider">📣 CROWD CHEER // JOINT FINALE</span>
+          <span id="crowdCheerText" class="font-black text-white tabular-nums">0%</span>
+        </div>
+        <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-white/10 mb-2">
+          <div id="crowdCheerBar" class="h-full bg-gradient-to-r from-pink-500 via-purple-400 to-amber-300 transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <button id="btnJointAttack" disabled class="w-full py-1.5 px-3 rounded-xl font-display text-[10px] sm:text-xs font-black tracking-wider transition border border-white/10 bg-white/5 text-slate-400 cursor-not-allowed">
+          ✨ PLAY CARDS TO CHARGE CROWD CHEER (0%)
+        </button>
+      </div>
+
+      <!-- Player HP, Shield (Block) & Energy (Hype) Bars -->
+      <div class="space-y-2.5 bg-black/45 rounded-2xl p-3.5 border border-white/10">
+        <!-- HP Bar -->
+        <div>
+          <div class="flex items-center justify-between text-xs font-display mb-1">
+            <span class="text-rose-400 font-bold">❤️ STAGE INTEGRITY (HP)</span>
+            <span id="playerHpText" class="font-black text-white tabular-nums">80 / 80</span>
+          </div>
+          <div class="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-white/10">
+            <div id="playerHpBar" class="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-300" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Shield & Energy Row -->
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <div class="rounded-xl bg-cyan-500/15 border border-cyan-400/40 px-3 py-2 flex items-center justify-between">
+            <div>
+              <div class="text-[9px] font-display tracking-widest text-cyan-300">HOLO SHIELD</div>
+              <div class="text-[10px] text-slate-400">Blocks DMG</div>
+            </div>
+            <div id="playerBlockText" class="font-display text-xl font-black text-cyan-300 tabular-nums">0</div>
+          </div>
+
+          <div class="rounded-xl bg-amber-400/15 border border-amber-400/45 px-3 py-2 flex items-center justify-between">
+            <div>
+              <div class="text-[9px] font-display tracking-widest text-amber-300">HYPE ENERGY</div>
+              <div class="text-[10px] text-slate-400">Per Turn</div>
+            </div>
+            <div id="playerEnergyText" class="font-display text-xl font-black text-amber-300 tabular-nums">3 / 3</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER: TACTICAL TELEMETRY LOG (2 cols on lg) -->
+    <section class="lg:col-span-2 glass-panel rounded-3xl p-3.5 flex min-h-0 flex-col justify-between max-h-[340px] overflow-hidden">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-display text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">BATTLE LOG</span>
+        <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+      </div>
+      <div id="combatLog" class="combat-log pr-1 text-[11px] text-slate-300" aria-label="Battle log"></div>
+    </section>
+
+    <!-- RIGHT: KAIJU BOSS STAGE PANEL (5 cols) -->
+    <section class="lg:col-span-5 glass-panel rounded-3xl p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden border-sky-400/30" id="enemyArenaCard">
+      <!-- Boss Header & Telegraphed Next Intent -->
+      <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+        <div>
+          <span id="enemySubtitle" class="text-[10px] font-display tracking-widest text-sky-400 uppercase">WAVE 1 // TITAN EMERGENCE</span>
+          <h2 id="enemyName" class="font-display text-base sm:text-lg font-black text-white">GODZILLA: AWAKENING</h2>
+        </div>
+
+        <!-- Telegraphed Intent Pill -->
+        <div id="enemyIntentBox" class="px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-400/60 text-right shadow-[0_0_16px_rgba(244,63,94,0.25)]">
+          <div class="text-[9px] font-display tracking-widest text-rose-300 uppercase">NEXT INTENT</div>
+          <div id="enemyIntentText" class="font-display text-xs sm:text-sm font-black text-white">
+            ⚔️ TAIL SLAM: 10 DMG
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Vector Kaiju Illustration + Status Badges -->
+      <div class="relative flex flex-col items-center justify-center my-1">
+        <div id="enemyStatusBadges" class="flex flex-wrap gap-1.5 justify-center mb-1 min-h-[22px]"></div>
+        <div id="kaijuSpriteContainer" class="w-full h-36 sm:h-44 rounded-xl overflow-hidden border-2 shadow-lg transition-all duration-300"></div>
+      </div>
+
+      <!-- Boss HP & Shield Bar -->
+      <div class="bg-black/45 rounded-2xl p-3.5 border border-white/10">
+        <div class="flex items-center justify-between text-xs font-display mb-1">
+          <span class="text-sky-400 font-bold flex items-center gap-2">
+            <span>☢️ TITAN VITALITY</span>
+            <span id="enemyBlockBadge" class="hidden px-2 py-0.5 rounded bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 text-[10px]">
+              🛡️ 0 BLOCK
+            </span>
+          </span>
+          <span id="enemyHpText" class="font-black text-white tabular-nums">65 / 65</span>
+        </div>
+        <div class="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-white/10">
+          <div id="enemyHpBar" class="h-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 transition-all duration-300" style="width: 100%"></div>
+        </div>
+        <p id="enemyIntentHint" class="text-[11px] text-slate-400 mt-2">
+          Telegraphed attack resolves when you click End Turn.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM DECK HAND & PILE CONTROLS -->
+  <footer class="w-full max-w-6xl mx-auto mt-3 glass-panel rounded-3xl p-3.5 sm:p-4">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <!-- Draw & Discard Pile Viewers -->
+      <div class="flex items-center gap-2">
+        <button id="btnViewDraw" class="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 font-display text-[11px] font-bold text-cyan-200 transition">
+          🗂️ DRAW: <span id="drawCountText">5</span>
+        </button>
+        <button id="btnViewDiscard" class="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/40 font-display text-[11px] font-bold text-purple-200 transition">
+          ♻️ DISCARD: <span id="discardCountText">0</span>
+        </button>
+      </div>
+
+      <span class="text-[11px] text-slate-400 hidden sm:inline">
+        Click any glowing card in hand to perform it • Keys <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">1-5</kbd> or <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">E</kbd> to End Turn
+      </span>
+
+      <!-- End Turn Button -->
+      <button id="btnEndTurn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-500 hover:brightness-110 border border-amber-300/60 font-display text-xs sm:text-sm font-black tracking-wider text-white shadow-[0_0_20px_rgba(255,42,133,0.45)] active:scale-95 transition">
+        END TURN ▶
+      </button>
+    </div>
+
+    <!-- Active Hand Grid -->
+    <div id="handContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3 min-h-[195px]"></div>
+  </footer>
+
+  <!-- POST-BATTLE CARD DRAFT & REST MODAL -->
+  <div id="draftModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-3xl w-full p-6 sm:p-7 border border-amber-400/45">
+      <div class="text-center mb-5">
+        <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-display text-[10px] tracking-widest mb-2">
+          STAGE CLEARED // BACKSTAGE ENCORE PREP
+        </span>
+        <h2 class="font-display text-xl sm:text-2xl font-black holo-text">
+          DRAFT A NEW K/DA PERFORMANCE CARD
+        </h2>
+        <p class="text-xs text-slate-300 mt-1">
+          Pick <strong>1 card</strong> to add to your deck (and restore <span class="text-rose-300 font-bold">+18 HP</span> before the next Kaiju wave):
+        </p>
+      </div>
+
+      <div id="draftChoicesGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5"></div>
+
+      <div class="text-center">
+        <button id="btnSkipDraft" class="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 font-display text-xs font-bold text-slate-200 transition">
+          SKIP DRAFT (+25 HP HEAL INSTEAD) ▶
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILE INSPECTOR MODAL (VIEW DRAW / DISCARD DECK) -->
+  <div id="pileModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-3xl w-full p-6 border border-cyan-400/40 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 id="pileModalTitle" class="font-display text-base font-black text-cyan-300">DRAW PILE</h3>
+        <button id="btnClosePileModal" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 font-display text-xs font-bold text-white">
+          CLOSE ✕
+        </button>
+      </div>
+      <div id="pileModalGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- VICTORY / GAME OVER MODAL -->
+  <div id="runEndModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-md w-full p-6 sm:p-7 border border-pink-500/45 text-center">
+      <div id="runEndBadge" class="inline-block px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 font-display text-[10px] tracking-widest mb-3">
+        WORLD TOUR COMPLETE
+      </div>
+      <h2 id="runEndTitle" class="font-display text-2xl font-black holo-text mb-2">
+        ENCORE VICTORY!
+      </h2>
+      <p id="runEndDesc" class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-5">
+        K/DA contained Burning Godzilla and finished the setlist without missing a beat!
+      </p>
+      <button id="btnRestartRunEnd" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-500 font-display text-xs sm:text-sm font-black tracking-widest text-white hover:brightness-110 transition">
+        PLAY NEW RUN ▶
+      </button>
+    </div>
+  </div>
+
+  <script src="./js/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "id": "mechagodzilla_w6",
+  "name": "MECHAGODZILLA: APEX CYBORG",
+  "subtitle": "WAVE 6 // PROTON SCREAM PROTOCOL",
+  "maxHp": 120,
+  "spriteType": "mechagodzilla",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 7,
+      "hits": 2,
+      "label": "🚀 SHOULDER MISSILES: 7x2 DMG"
+    },
+    {
+      "type": "charge",
+      "block": 18,
+      "label": "🛡️ TITANIUM PLATING: +18 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 26,
+      "label": "🔴 PROTON SCREAM: 26 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "mechagodzilla",
+    "illustration": "../kaiju/mechagodzilla.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(244, 63, 94, 0.32), rgba(51, 65, 85, 0.5) 48%, rgba(15, 23, 42, 0.98) 82%)"
+  }
+}
