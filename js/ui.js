@@ -125,16 +125,28 @@ export function createGameUI({
         ? 'bg-pink-500 text-white border-amber-300 shadow-[0_0_10px_rgba(255,42,133,0.6)]'
         : cleared
         ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
-        : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/15';
-      return `<button data-jump-wave="${idx}" title="${enc.name}" class="px-2 py-0.5 rounded-lg border font-display text-[10px] font-black transition cursor-pointer ${cls}">W${idx + 1}</button>`;
+        : 'bg-white/5 text-slate-400 border-white/10';
+      return `<span${active ? ' aria-current="step"' : ''} title="${enc.name}" class="px-2 py-0.5 rounded-lg border font-display text-[10px] font-black ${cls}">W${idx + 1}</span>`;
     }).join('');
 
-    setlistEl.querySelectorAll('[data-jump-wave]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const waveIdx = parseInt(btn.getAttribute('data-jump-wave'), 10);
-        onJumpToStage(waveIdx);
+    const devtoolsWaveSelector = document.getElementById('devtoolsWaveSelector');
+    devtoolsWaveSelector.replaceChildren();
+    if (window.location.hash === '#devtools') {
+      encounters.forEach((enc, idx) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = `W${idx + 1}`;
+        button.title = enc.name;
+        button.setAttribute('aria-pressed', String(idx === state.stageIndex));
+        button.className = `px-3 py-2 rounded-xl border font-display text-xs font-black transition ${
+          idx === state.stageIndex
+            ? 'bg-pink-500 text-white border-amber-300'
+            : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/15'
+        }`;
+        button.addEventListener('click', () => onJumpToStage(idx));
+        devtoolsWaveSelector.appendChild(button);
       });
-    });
+    }
 
     ['ahri', 'akali', 'evelynn', 'kaisa'].forEach((member) => {
       const slot = document.getElementById(`portrait-${member}`);

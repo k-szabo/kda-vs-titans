@@ -11,7 +11,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Crowd Cheer-powered K/DA Joint Finale
 - Synthesized sound effects and persistent run records / Kaiju codex
 - In-app version number and release changelog
-- Keyboard shortcuts and clickable wave selectors
+- Keyboard shortcuts and a testing-only wave selector on the `#devtools` subpage
 - Current run and profile statistics save to this browser (not synced across devices); starting a new run replaces the active run
 - Responsive, static web app
 
@@ -22,7 +22,8 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 | Click a playable card | Play that card |
 | `1`–`5` | Play the matching card in your hand |
 | `E` | End your turn |
-| `W1`–`W10` | Jump to an encounter |
+
+For testing, open the `#devtools` subpage (for example, append `#devtools` to the game URL) to jump directly to a wave.
 
 ## Development
 

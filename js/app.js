@@ -436,6 +436,13 @@ import { createGameUI } from './ui.js';
         saveRunState();
       }
 
+      function syncPage() {
+        const devtoolsOpen = window.location.hash === '#devtools';
+        document.getElementById('gamePage').classList.toggle('hidden', devtoolsOpen);
+        document.getElementById('devtoolsPage').classList.toggle('hidden', !devtoolsOpen);
+        if (ui && state) ui.renderAll();
+      }
+
       function playSoundEffect(play) {
         if (!isSoundEnabled()) return;
         try {
@@ -666,5 +673,7 @@ import { createGameUI } from './ui.js';
         }
       }
 
+      window.addEventListener('hashchange', syncPage);
+      syncPage();
       initializeGame();
     })();

@@ -38,6 +38,10 @@
       margin-inline: auto;
     }
 
+    #gamePage.hidden {
+      display: none;
+    }
+
     .glass-panel {
       background: var(--panel-glass);
       backdrop-filter: blur(14px);

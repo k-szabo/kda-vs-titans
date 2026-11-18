@@ -12,6 +12,10 @@ python -m http.server 8000
 
 Open <http://localhost:8000>.
 
+## Testing tools
+
+Open <http://localhost:8000/#devtools> to use the testing-only wave selector. Selecting a wave resets the current wave and loads the chosen encounter. Remove `#devtools` to return to the game.
+
 ## Deploy to GitHub Pages
 
 1. Push the project to a GitHub repository.

@@ -16,6 +16,7 @@
   <div id="loadError" role="alert" class="app-width hidden mb-3 rounded-xl border border-rose-400/50 bg-rose-950/80 px-4 py-3 text-sm text-rose-200"></div>
   <div id="saveNotice" role="alert" class="app-width hidden mb-3 rounded-xl border border-amber-400/50 bg-amber-950/80 px-4 py-3 text-sm text-amber-200"></div>
 
+  <div id="gamePage" class="contents">
   <!-- TOP SETLIST & RUN HEADER -->
   <header class="app-width glass-panel relative z-[70] rounded-2xl px-4 py-3 mb-3 flex flex-wrap items-center justify-between gap-3">
     <div class="flex items-center gap-3">
@@ -310,6 +311,24 @@
       </button>
     </div>
   </div>
+  </div>
+
+  <main id="devtoolsPage" class="hidden app-width glass-panel rounded-3xl p-5 sm:p-7 my-auto">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div>
+        <span class="text-[10px] font-display tracking-widest text-amber-300">TESTING ONLY</span>
+        <h1 class="font-display text-xl sm:text-2xl font-black holo-text">DEVELOPER TOOLS</h1>
+      </div>
+      <a href="#" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
+        RETURN TO GAME
+      </a>
+    </div>
+    <section aria-labelledby="devtoolsWaveHeading" class="rounded-2xl bg-black/35 border border-white/10 p-4">
+      <h2 id="devtoolsWaveHeading" class="font-display text-sm font-black text-cyan-200 mb-1">WAVE SELECTOR</h2>
+      <p class="text-xs text-slate-400 mb-3">Jump directly to an encounter for testing. This resets the current wave.</p>
+      <div id="devtoolsWaveSelector" class="flex flex-wrap gap-2" aria-label="Select a wave"></div>
+    </section>
+  </main>
 
   <script type="module" src="./js/app.js"></script>
 </body>
