@@ -1,0 +1,13 @@
+{
+  "currentVersion": "v1.0.0_660e8b03",
+  "releases": [
+    {
+      "version": "v1.0.0_660e8b03",
+      "date": "2026-11-18",
+      "changes": [
+        "Unspent Holo Shield now carries over into the next player turn.",
+        "Added a version badge and changelog dropdown to the header."
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ A browser-based, turn-based deckbuilding roguelike. Build a K/DA deck, manage Hy
 - Draftable cards, individual card upgrades, passive relics, shields, and status effects
 - Crowd Cheer-powered K/DA Joint Finale
 - Synthesized sound effects and persistent run records / Kaiju codex
+- In-app version number and release changelog
 - Keyboard shortcuts and clickable wave selectors
 - Current run and profile statistics save to this browser (not synced across devices); starting a new run replaces the active run
 - Responsive, static web app

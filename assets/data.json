@@ -8,6 +8,7 @@
   },
   "cards": "./cards.json",
   "relics": "./relics.json",
+  "changelog": "./changelog.json",
   "bosses": [
     "./bosses/godzilla_w1.json",
     "./bosses/mothra_w2.json",

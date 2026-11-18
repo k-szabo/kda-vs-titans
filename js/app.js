@@ -336,9 +336,8 @@ import { createGameUI } from './ui.js';
           return;
         }
 
-        // Start next player turn
+        // Carry remaining Holo Shield forward into the next player turn.
         state.turn += 1;
-        state.player.block = 0;
         state.player.energy = state.player.maxEnergy;
         state.isPlayerTurn = true;
         drawCards(5);
@@ -591,6 +590,7 @@ import { createGameUI } from './ui.js';
             onChooseRelic: chooseRelic,
             onUpgradeCard: upgradeCard
           });
+          ui.setChangelog(gameData.changelog);
           wireEvents();
           ui.updateSoundButton(isSoundEnabled(), isSoundSupported());
 

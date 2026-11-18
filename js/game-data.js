@@ -15,17 +15,20 @@ export async function loadGameData() {
     !manifest.backdrops ||
     !manifest.cards ||
     !manifest.relics ||
+    !manifest.changelog ||
     !Array.isArray(manifest.bosses) ||
     manifest.bosses.length === 0
   ) {
-    throw new Error('The asset manifest must define portraits, backdrops, card and relic files, and at least one boss file.');
+    throw new Error('The asset manifest must define portraits, backdrops, card, relic, changelog, and boss files.');
   }
 
   const cardDataUrl = new URL(manifest.cards, DATA_MANIFEST_URL);
   const relicDataUrl = new URL(manifest.relics, DATA_MANIFEST_URL);
-  const [cardData, relicData, encounters] = await Promise.all([
+  const changelogUrl = new URL(manifest.changelog, DATA_MANIFEST_URL);
+  const [cardData, relicData, changelogData, encounters] = await Promise.all([
     loadJson(cardDataUrl),
     loadJson(relicDataUrl),
+    loadJson(changelogUrl),
     Promise.all(manifest.bosses.map(async (bossPath) => {
       const bossUrl = new URL(bossPath, DATA_MANIFEST_URL);
       const boss = await loadJson(bossUrl);
@@ -103,9 +106,33 @@ export async function loadGameData() {
     throw new Error('The relic file contains invalid or duplicate relic data.');
   }
 
+  const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const versionPattern = /^v\d+\.\d+\.\d+_[0-9a-f]{8}$/;
+  if (
+    !isRecord(changelogData) ||
+    typeof changelogData.currentVersion !== 'string' ||
+    !Array.isArray(changelogData.releases) ||
+    changelogData.releases.length === 0 ||
+    !changelogData.releases.every((release) => isRecord(release) && typeof release.version === 'string') ||
+    changelogData.releases[0].version !== changelogData.currentVersion ||
+    new Set(changelogData.releases.map((release) => release.version)).size !== changelogData.releases.length ||
+    !versionPattern.test(changelogData.currentVersion) ||
+    changelogData.releases.some((release) =>
+      !versionPattern.test(release.version) ||
+      typeof release.date !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(release.date) ||
+      !Array.isArray(release.changes) ||
+      release.changes.length === 0 ||
+      release.changes.some((change) => typeof change !== 'string' || change.trim().length === 0)
+    )
+  ) {
+    throw new Error('The changelog must contain a valid current version and release history.');
+  }
+
   return {
     artAssets: manifest.portraits,
     cardDatabase,
+    changelog: changelogData,
     encounters,
     relicDatabase,
     starterDeck: cardData.starterDeck

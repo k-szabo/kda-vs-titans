@@ -351,6 +351,48 @@ export function createGameUI({
     button.classList.toggle('cursor-not-allowed', !supported);
   }
 
+  function setChangelog(changelog) {
+    document.getElementById('versionText').textContent = changelog.currentVersion;
+    const entries = document.getElementById('changelogEntries');
+    entries.innerHTML = '';
+    changelog.releases.forEach((release) => {
+      const article = document.createElement('article');
+      article.className = 'rounded-xl border border-white/10 bg-white/5 p-3';
+      const heading = document.createElement('div');
+      heading.className = 'flex flex-wrap items-center justify-between gap-2';
+      const version = document.createElement('h3');
+      version.className = 'font-display text-[10px] font-black text-amber-200';
+      version.textContent = release.version;
+      const date = document.createElement('time');
+      date.className = 'text-[10px] text-slate-400';
+      date.dateTime = release.date;
+      date.textContent = release.date;
+      heading.append(version, date);
+      if (release.version === changelog.currentVersion) {
+        const current = document.createElement('span');
+        current.className = 'rounded-full border border-emerald-400/35 bg-emerald-400/10 px-2 py-0.5 font-display text-[8px] font-bold text-emerald-200';
+        current.textContent = 'CURRENT';
+        heading.append(current);
+      }
+
+      const changes = document.createElement('ul');
+      changes.className = 'mt-2 list-disc space-y-1 pl-4 text-[11px] leading-relaxed text-slate-300';
+      release.changes.forEach((change) => {
+        const item = document.createElement('li');
+        item.textContent = change;
+        changes.appendChild(item);
+      });
+      article.append(heading, changes);
+      entries.appendChild(article);
+    });
+  }
+
+  function setChangelogOpen(open) {
+    const button = document.getElementById('btnVersion');
+    document.getElementById('changelogDropdown').classList.toggle('hidden', !open);
+    button.setAttribute('aria-expanded', String(open));
+  }
+
   function showRunEndModal(isVictory) {
     const state = getState();
     const encounters = getEncounters();
@@ -401,12 +443,23 @@ export function createGameUI({
   document.querySelectorAll('[data-reward-tab]').forEach((tab) => {
     tab.addEventListener('click', () => setRewardTab(tab.dataset.rewardTab));
   });
+  document.getElementById('btnVersion').addEventListener('click', () => {
+    const isOpen = document.getElementById('btnVersion').getAttribute('aria-expanded') === 'true';
+    setChangelogOpen(!isOpen);
+  });
+  document.addEventListener('click', (event) => {
+    if (!document.getElementById('versionMenu').contains(event.target)) setChangelogOpen(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setChangelogOpen(false);
+  });
 
   return {
     hideRunModals,
     openDraftModal,
     openPileModal,
     renderAll,
+    setChangelog,
     showStatsModal,
     showRunEndModal,
     showSaveNotice,

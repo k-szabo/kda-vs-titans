@@ -29,6 +29,7 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 │   ├── bosses/       # One JSON encounter definition per boss
 │   ├── kaiju/        # Kaiju SVG illustrations
 │   ├── cards.json    # Card definitions, upgrades, effects, and starter deck
+│   ├── changelog.json # Version identifiers and release notes
 │   ├── data.json     # Portrait/backdrop URLs and ordered data paths
 │   ├── relics.json   # Passive relic definitions and effects
 │   └── favicon.svg   # Browser tab icon
@@ -51,6 +52,18 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 ```
 
 Run and profile data stay in the same browser and site origin; they are not synced between devices or browsers. Starting a new run replaces only the active run.
+
+## Version and changelog
+
+The current version and newest-first release history live in `assets/changelog.json` and appear in the header dropdown. Use `vMAJOR.MINOR.PATCH_<8 lowercase hex characters>`. Bump the SemVer portion for a release and set the 8-character suffix to the first eight characters of the SHA-256 digest of the compact JSON object `{ "date": "<YYYY-MM-DD>", "changes": ["...", "..."] }`. Keep `currentVersion` equal to the newest release's version.
+
+Generate the suffix for the exact date and change notes with:
+
+```powershell
+node -e "const crypto = require('node:crypto'); const release = { date: '2026-11-18', changes: ['Change one.', 'Change two.'] }; console.log(crypto.createHash('sha256').update(JSON.stringify(release)).digest('hex').slice(0, 8));"
+```
+
+## Add a boss
 
 ## Add a boss
 

@@ -15,6 +15,8 @@ A zero-build, turn-based deckbuilding roguelike inspired by *Slay the Spire*, st
   - `1` – `5`: Play the corresponding card in hand.
   - `E`: End the player's turn and resolve the Kaiju's telegraphed intent.
 - **Debug / Wave Jumpers:** Clicking `W1` through `W8` in the top header immediately jumps to that Kaiju encounter (`startStage(waveIdx)`).
+- **Holo Shield:** Player shield left after an enemy attack carries into the next turn and is only spent by incoming damage. Shield resets when a new Kaiju wave begins.
+- **Version:** The header's version badge opens the release notes from `assets/changelog.json`.
 
 ---
 
@@ -47,7 +49,7 @@ The app is organized into these files:
 | `css/styles.css` | Custom theme, card styling, and combat animations. |
 | `js/app.js` | Run state, combat rules, progression, persistence integration, and event wiring. |
 | `js/combat-rules.js` | Resolves player damage through Holo Shield, HP, and Crowd Cheer. |
-| `js/game-data.js` | Loads and validates the manifest, cards, relics, and boss encounters. |
+| `js/game-data.js` | Loads and validates the manifest, cards, relics, changelog, and boss encounters. |
 | `js/card-effects.js` | Executes card effect actions, applies upgrade values, and formats card logs. |
 | `js/run-storage.js` | Reads and writes versioned run saves in browser `localStorage`. |
 | `js/run-state.js` | Migrates version-1 saves and validates current saved-run state. |
@@ -57,6 +59,7 @@ The app is organized into these files:
 | `assets/data.json` | Portrait/backdrop URLs and ordered data-file paths. |
 | `assets/cards.json` | Card metadata, upgrade effects, log templates, and starter deck. |
 | `assets/relics.json` | Passive relic metadata and declarative trigger effects. |
+| `assets/changelog.json` | Current `vX.Y.Z_<8-char-id>` version and newest-first release notes. |
 | `assets/bosses/*.json` | Individual boss stats, intent patterns, backdrop and illustration paths, and arena fallback styling. |
 | `assets/kaiju/*.svg` | Standalone Kaiju illustrations, including a separate Burning Godzilla variant. |
 
@@ -64,7 +67,8 @@ Run state autosaves after each rendered state change and restores on reload. Ver
 
 | Section | Identifier(s) | Responsibility |
 | :--- | :--- | :--- |
-| **Data Loading** | `js/game-data.js` | Loads portraits, card and relic definitions, and boss files from the manifest; resolves boss artwork paths. |
+| **Data Loading** | `js/game-data.js` | Loads portraits, card and relic definitions, changelog, and boss files from the manifest; resolves boss artwork paths. |
+| **Versioning** | `assets/changelog.json` | Stores the SemVer release string and its eight-character change identifier alongside release notes. |
 | **Card Database** | `assets/cards.json` | Stores card presentation, cost, starter membership, upgrade metadata, effect actions, and log templates without executable code. |
 | **Card Effects** | `js/card-effects.js` | Interprets ordered actions such as damage, block, draw, healing, statuses, cheer, and conditional energy, including upgrade deltas. |
 | **Damage Rules** | `js/combat-rules.js` | Applies incoming damage to shield, then actual HP, and reduces Cheer only by HP lost. |
