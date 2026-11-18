@@ -21,8 +21,9 @@
       "cost": 1,
       "starter": true,
       "desc": "Deal <b>6</b> damage to the Kaiju.",
+      "upgrade": { "description": "Deal 8 damage." },
       "effects": [
-        { "type": "damage", "amount": 6 }
+        { "type": "damage", "amount": 6, "upgradeAmount": 2 }
       ],
       "log": {
         "template": "🦊 Ahri fired Foxfire Chord for {damage} DMG!",
@@ -38,11 +39,12 @@
       "cost": 1,
       "starter": true,
       "desc": "Gain <b>5</b> Holo Shield.",
+      "upgrade": { "description": "Gain 7 Holo Shield." },
       "effects": [
-        { "type": "gainBlock", "amount": 5 }
+        { "type": "gainBlock", "amount": 5, "upgradeAmount": 2 }
       ],
       "log": {
-        "template": "🦋 Kai'Sa projected +5 Holo Shield.",
+        "template": "🦋 Kai'Sa projected +{block} Holo Shield.",
         "colorClass": "text-cyan-300"
       }
     },
@@ -55,12 +57,13 @@
       "cost": 1,
       "starter": true,
       "desc": "Gain <b>4</b> Holo Shield and draw <b>1</b> card.",
+      "upgrade": { "description": "Gain 6 Holo Shield and draw 1 card." },
       "effects": [
-        { "type": "gainBlock", "amount": 4 },
+        { "type": "gainBlock", "amount": 4, "upgradeAmount": 2 },
         { "type": "draw", "count": 1 }
       ],
       "log": {
-        "template": "⚡ Akali dropped Neon Smoke (+4 Shield, +1 Card).",
+        "template": "⚡ Akali dropped Neon Smoke (+{block} Shield, +1 Card).",
         "colorClass": "text-cyan-300"
       }
     },
@@ -73,8 +76,9 @@
       "cost": 1,
       "starter": true,
       "desc": "Deal <b>4</b> damage and apply <b>2 Charm</b> (-25% Kaiju DMG).",
+      "upgrade": { "description": "Deal 6 damage and apply 2 Charm." },
       "effects": [
-        { "type": "damage", "amount": 4 },
+        { "type": "damage", "amount": 4, "upgradeAmount": 2 },
         { "type": "applyEnemyStatus", "status": "charm", "turns": 2 }
       ],
       "log": {
@@ -91,6 +95,7 @@
       "cost": 2,
       "starter": false,
       "desc": "Deal <b>4</b> damage <b>3 times</b>.",
+      "upgrade": { "description": "Cost 1. Deal 4 damage 3 times.", "costReduction": 1 },
       "effects": [
         { "type": "damage", "amount": 4, "hits": 3 }
       ],
@@ -107,14 +112,15 @@
       "type": "SKILL",
       "cost": 1,
       "starter": false,
-      "desc": "Restore <b>6 HP</b>, gain <b>4</b> Holo Shield, and <b>+15%</b> Crowd Cheer.",
+      "desc": "Restore <b>6 HP</b>, gain <b>4</b> Holo Shield, and <b>+10%</b> Crowd Cheer.",
+      "upgrade": { "description": "Restore 8 HP, gain 6 Holo Shield, and +10% Crowd Cheer." },
       "effects": [
-        { "type": "healPlayer", "amount": 6 },
-        { "type": "gainBlock", "amount": 4 },
-        { "type": "addCheer", "amount": 15 }
+        { "type": "healPlayer", "amount": 6, "upgradeAmount": 2 },
+        { "type": "gainBlock", "amount": 4, "upgradeAmount": 2 },
+        { "type": "addCheer", "amount": 10 }
       ],
       "log": {
-        "template": "🦊 Ahri sang Starlight Aria (+6 HP, +4 Shield, +15% Cheer).",
+        "template": "🦊 Ahri sang Starlight Aria (+{heal} HP, +{block} Shield, +10% Cheer).",
         "colorClass": "text-pink-300"
       }
     },
@@ -127,8 +133,9 @@
       "cost": 2,
       "starter": false,
       "desc": "Deal <b>15</b> damage. Apply <b>2 Marked</b> (+50% DMG taken).",
+      "upgrade": { "description": "Deal 18 damage and apply 2 Marked." },
       "effects": [
-        { "type": "damage", "amount": 15 },
+        { "type": "damage", "amount": 15, "upgradeAmount": 3 },
         { "type": "applyEnemyStatus", "status": "marked", "turns": 2 }
       ],
       "log": {
@@ -145,8 +152,9 @@
       "cost": 1,
       "starter": false,
       "desc": "Deal <b>9</b> damage. If Kaiju is Charmed, gain <b>+1 Hype Energy</b>.",
+      "upgrade": { "description": "Deal 12 damage. If the Kaiju is Charmed, gain +1 Hype Energy." },
       "effects": [
-        { "type": "damage", "amount": 9 },
+        { "type": "damage", "amount": 9, "upgradeAmount": 3 },
         {
           "type": "gainEnergy",
           "amount": 1,
@@ -173,13 +181,14 @@
       "cost": 1,
       "starter": false,
       "exhaust": true,
-      "desc": "Gain <b>+3 Encore Power</b> (+3 DMG on all Attacks) & <b>+20%</b> Cheer. <i>Exhaust.</i>",
+      "desc": "Gain <b>+3 Encore Power</b> (+3 DMG on all Attacks) & <b>+13%</b> Cheer. <i>Exhaust.</i>",
+      "upgrade": { "description": "Cost 0. Gain +3 Encore Power and +13% Crowd Cheer.", "costReduction": 1 },
       "effects": [
         { "type": "addPlayerStatus", "status": "encore", "amount": 3 },
-        { "type": "addCheer", "amount": 20 }
+        { "type": "addCheer", "amount": 13 }
       ],
       "log": {
-        "template": "🌟 K/DA activated POP/STARS Drop (+3 permanent Attack DMG)!",
+        "template": "🌟 K/DA activated POP/STARS Drop (+{encore} permanent Attack DMG)!",
         "colorClass": "text-amber-300 font-bold"
       }
     },
@@ -192,12 +201,13 @@
       "cost": 3,
       "starter": false,
       "desc": "Deal <b>24</b> damage and gain <b>12</b> Holo Shield.",
+      "upgrade": { "description": "Deal 28 damage and gain 15 Holo Shield." },
       "effects": [
-        { "type": "damage", "amount": 24 },
-        { "type": "gainBlock", "amount": 12 }
+        { "type": "damage", "amount": 24, "upgradeAmount": 4 },
+        { "type": "gainBlock", "amount": 12, "upgradeAmount": 3 }
       ],
       "log": {
-        "template": "🔥 K/DA detonated FIRESTARTER Finale ({damage} DMG + 12 Shield)!",
+        "template": "🔥 K/DA detonated FIRESTARTER Finale ({damage} DMG + {block} Shield)!",
         "colorClass": "text-amber-300 font-bold"
       }
     },
@@ -210,8 +220,9 @@
       "cost": 0,
       "starter": false,
       "desc": "Deal <b>4</b> damage and draw <b>1</b> card.",
+      "upgrade": { "description": "Deal 6 damage and draw 1 card." },
       "effects": [
-        { "type": "damage", "amount": 4 },
+        { "type": "damage", "amount": 4, "upgradeAmount": 2 },
         { "type": "draw", "count": 1 }
       ],
       "log": {
@@ -228,12 +239,13 @@
       "cost": 2,
       "starter": false,
       "desc": "Gain <b>14</b> Holo Shield and remove player Weak.",
+      "upgrade": { "description": "Gain 17 Holo Shield and remove player Weak." },
       "effects": [
-        { "type": "gainBlock", "amount": 14 },
+        { "type": "gainBlock", "amount": 14, "upgradeAmount": 3 },
         { "type": "clearPlayerStatus", "status": "weak" }
       ],
       "log": {
-        "template": "🦋 Kai'Sa raised Void Prism Bastion (+14 Shield, Cleansed Weak).",
+        "template": "🦋 Kai'Sa raised Void Prism Bastion (+{block} Shield, Cleansed Weak).",
         "colorClass": "text-indigo-300"
       }
     }

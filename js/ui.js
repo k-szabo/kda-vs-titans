@@ -1,12 +1,18 @@
+import { getEffectiveCardCost } from './card-effects.js';
+
 export function createGameUI({
   getState,
   getArtAssets,
   getCardDatabase,
+  getRelicDatabase,
+  getProfileStats,
   getEncounters,
   getCurrentEnemyIntent,
   onPlayCard,
   onJumpToStage,
-  onChooseDraftCard
+  onChooseDraftCard,
+  onChooseRelic,
+  onUpgradeCard
 }) {
   function triggerScreenShake() {
     const root = document.getElementById('appRoot');
@@ -34,13 +40,15 @@ export function createGameUI({
     setTimeout(() => el.remove(), 860);
   }
 
-  function createCardElement(card, isDraftPreview = false, handIndex = -1) {
+  function createCardElement(card, isDraftPreview = false, handIndex = -1, cardInstance = null, previewUpgrade = false) {
     const state = getState();
-    const playable = isDraftPreview || (state.isPlayerTurn && state.player.energy >= card.cost);
+    const upgradeLevel = previewUpgrade ? 1 : (cardInstance?.upgradeLevel || 0);
+    const cost = getEffectiveCardCost(card, upgradeLevel);
+    const playable = isDraftPreview || (state.isPlayerTurn && state.player.energy >= cost);
     const el = document.createElement('div');
     el.className = `spire-card card-${card.member} p-2.5 sm:p-3 flex flex-col justify-between ${
       playable ? 'playable' : 'unplayable'
-    }`;
+    }${upgradeLevel > 0 ? ' card-upgraded' : ''}`;
 
     const badgeColor =
       card.member === 'ahri'
@@ -63,18 +71,18 @@ export function createGameUI({
             ${card.memberName}
           </span>
           <span class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-display text-xs font-black flex items-center justify-center shadow">
-            ${card.cost}
+            ${cost}
           </span>
         </div>
         <div class="w-full h-16 sm:h-20 rounded-lg overflow-hidden mb-1.5 border border-white/10 bg-slate-900">
           <img src="${artUrl}" alt="${card.name}" class="w-full h-full object-cover object-[50%_18%]" />
         </div>
         <div class="font-display text-xs font-black text-white leading-tight mb-1">
-          ${card.name}
+          ${card.name}${upgradeLevel > 0 ? ' +' : ''}
         </div>
       </div>
       <div>
-        <p class="text-[11px] text-slate-300 leading-snug mb-1.5">${card.desc}</p>
+        <p class="text-[11px] text-slate-300 leading-snug mb-1.5">${upgradeLevel > 0 ? card.upgrade.description : card.desc}</p>
         <div class="text-[9px] font-display tracking-widest text-slate-500 uppercase">
           ${card.type}
         </div>
@@ -87,10 +95,26 @@ export function createGameUI({
     return el;
   }
 
+  function setRewardTab(mode) {
+    document.querySelectorAll('[data-reward-panel]').forEach((panel) => {
+      panel.classList.toggle('hidden', panel.dataset.rewardPanel !== mode);
+    });
+    document.querySelectorAll('[data-reward-tab]').forEach((tab) => {
+      const active = tab.dataset.rewardTab === mode;
+      tab.classList.toggle('border-amber-300/50', active);
+      tab.classList.toggle('bg-amber-400/15', active);
+      tab.classList.toggle('text-amber-200', active);
+      tab.classList.toggle('border-white/15', !active);
+      tab.classList.toggle('bg-white/5', !active);
+      tab.classList.toggle('text-slate-300', !active);
+    });
+  }
+
   function renderAll() {
     const state = getState();
     const encounters = getEncounters();
     const cardDatabase = getCardDatabase();
+    const relicDatabase = getRelicDatabase();
 
     document.getElementById('turnNumberDisplay').textContent = state.turn;
     const setlistEl = document.getElementById('setlistTracker');
@@ -142,6 +166,18 @@ export function createGameUI({
     document.getElementById('playerHpBar').style.width = `${Math.max(0, (p.hp / p.maxHp) * 100)}%`;
     document.getElementById('playerBlockText').textContent = p.block;
     document.getElementById('playerEnergyText').textContent = `${p.energy} / ${p.maxEnergy}`;
+
+    const relicBar = document.getElementById('relicBar');
+    relicBar.innerHTML = '';
+    state.relics.forEach((relicId) => {
+      const relic = relicDatabase[relicId];
+      if (!relic) throw new Error(`Unknown owned relic: ${relicId}`);
+      const badge = document.createElement('span');
+      badge.className = 'rounded-full bg-amber-400/15 border border-amber-300/35 px-2 py-1 font-display text-[9px] font-bold text-amber-200';
+      badge.title = relic.description;
+      badge.textContent = `✦ ${relic.name}`;
+      relicBar.appendChild(badge);
+    });
 
     const pStatusEl = document.getElementById('playerStatusBadges');
     pStatusEl.innerHTML = '';
@@ -198,9 +234,9 @@ export function createGameUI({
     document.getElementById('discardCountText').textContent = state.discardPile.length;
     const handEl = document.getElementById('handContainer');
     handEl.innerHTML = '';
-    state.hand.forEach((cardId, idx) => {
-      const card = cardDatabase[cardId];
-      if (card) handEl.appendChild(createCardElement(card, false, idx));
+    state.hand.forEach((cardInstance, idx) => {
+      const card = cardDatabase[cardInstance.cardId];
+      if (card) handEl.appendChild(createCardElement(card, false, idx, cardInstance));
     });
 
     document.getElementById('combatLog').innerHTML = state.logs
@@ -210,21 +246,109 @@ export function createGameUI({
       .join('');
   }
 
-  function openDraftModal(cardIds) {
+  function openDraftModal(cardIds, relicIds, masterDeck) {
     const modal = document.getElementById('draftModal');
-    const grid = document.getElementById('draftChoicesGrid');
+    const cardGrid = document.getElementById('draftChoicesGrid');
+    const relicGrid = document.getElementById('relicChoicesGrid');
+    const upgradeGrid = document.getElementById('upgradeChoicesGrid');
     const cardDatabase = getCardDatabase();
-    grid.innerHTML = '';
+    const relicDatabase = getRelicDatabase();
+    cardGrid.innerHTML = '';
+    relicGrid.innerHTML = '';
+    upgradeGrid.innerHTML = '';
 
     cardIds.forEach((cardId) => {
       const card = cardDatabase[cardId];
       if (!card) throw new Error(`Unknown draft card: ${cardId}`);
-      const cardEl = createCardElement(card, true);
+      const cardEl = createCardElement(card, true, -1, { upgradeLevel: 0 });
       cardEl.addEventListener('click', () => onChooseDraftCard(card.id));
-      grid.appendChild(cardEl);
+      cardGrid.appendChild(cardEl);
     });
 
+    relicIds.forEach((relicId) => {
+      const relic = relicDatabase[relicId];
+      if (!relic) throw new Error(`Unknown relic reward: ${relicId}`);
+      const choice = document.createElement('button');
+      choice.type = 'button';
+      choice.className = 'rounded-2xl border border-amber-300/40 bg-gradient-to-br from-amber-400/15 to-slate-950/80 p-5 text-left transition hover:border-amber-200 hover:bg-amber-400/20';
+      const name = document.createElement('span');
+      name.className = 'block font-display text-sm font-black text-amber-200 mb-2';
+      name.textContent = `✦ ${relic.name}`;
+      const description = document.createElement('span');
+      description.className = 'block text-xs leading-relaxed text-slate-300';
+      description.textContent = relic.description;
+      choice.append(name, description);
+      choice.addEventListener('click', () => onChooseRelic(relic.id));
+      relicGrid.appendChild(choice);
+    });
+
+    const seenCardTypes = new Set();
+    const upgradeableCards = masterDeck.filter((instance) => {
+      const card = cardDatabase[instance.cardId];
+      if (instance.upgradeLevel !== 0 || !card?.upgrade || seenCardTypes.has(instance.cardId)) return false;
+      seenCardTypes.add(instance.cardId);
+      return true;
+    });
+    upgradeableCards.forEach((instance) => {
+      const card = cardDatabase[instance.cardId];
+      const cardEl = createCardElement(card, true, -1, instance, true);
+      cardEl.classList.add('upgrade-choice');
+      cardEl.addEventListener('click', () => onUpgradeCard(instance.instanceId));
+      upgradeGrid.appendChild(cardEl);
+    });
+
+    const tabs = [
+      ['cards', cardIds.length > 0],
+      ['relics', relicIds.length > 0],
+      ['upgrades', upgradeableCards.length > 0]
+    ];
+    tabs.forEach(([mode, available]) => {
+      document.querySelector(`[data-reward-tab="${mode}"]`).classList.toggle('hidden', !available);
+    });
+    const defaultTab = tabs.find(([, available]) => available)?.[0];
+    if (!defaultTab) throw new Error('No post-battle rewards are available.');
+    setRewardTab(defaultTab);
     modal.classList.remove('hidden');
+  }
+
+  function showStatsModal() {
+    const profileStats = getProfileStats();
+    const encounters = getEncounters();
+    document.getElementById('statsHighestWave').textContent =
+      `${profileStats.highestWaveCleared} / ${encounters.length}`;
+    const fastestWin = profileStats.fastestWinMs;
+    document.getElementById('statsFastestWin').textContent = fastestWin === null
+      ? '—'
+      : `${Math.floor(fastestWin / 60000)}m ${Math.floor((fastestWin % 60000) / 1000)}s`;
+
+    const unlocked = new Set(profileStats.unlockedKaiju);
+    const codexGrid = document.getElementById('statsCodexGrid');
+    codexGrid.innerHTML = '';
+    encounters.forEach((encounter, index) => {
+      const cleared = unlocked.has(encounter.id);
+      const entry = document.createElement('div');
+      entry.className = `rounded-xl border p-3 ${cleared ? 'border-sky-400/35 bg-sky-500/10' : 'border-white/10 bg-black/25'}`;
+      const wave = document.createElement('span');
+      wave.className = 'block font-display text-[9px] tracking-widest text-slate-400';
+      wave.textContent = `WAVE ${index + 1} // ${cleared ? 'CONTAINED' : 'UNKNOWN'}`;
+      const name = document.createElement('span');
+      name.className = `block font-display text-xs font-bold ${cleared ? 'text-sky-200' : 'text-slate-500'}`;
+      name.textContent = cleared ? encounter.name : 'UNDISCOVERED KAIJU';
+      entry.append(wave, name);
+      codexGrid.appendChild(entry);
+    });
+    document.getElementById('statsModal').classList.remove('hidden');
+  }
+
+  function updateSoundButton(enabled, supported) {
+    const button = document.getElementById('btnSound');
+    button.disabled = !supported;
+    button.setAttribute('aria-pressed', String(enabled));
+    button.textContent = supported
+      ? `${enabled ? '🔊 SOUND ON' : '🔇 SOUND OFF'}`
+      : '🔇 SOUND UNAVAILABLE';
+    button.classList.toggle('opacity-50', !supported);
+    button.classList.toggle('cursor-not-allowed', !supported);
   }
 
   function showRunEndModal(isVictory) {
@@ -250,14 +374,14 @@ export function createGameUI({
     modal.classList.remove('hidden');
   }
 
-  function openPileModal(title, cardIds) {
+  function openPileModal(title, cardInstances) {
     const cardDatabase = getCardDatabase();
-    document.getElementById('pileModalTitle').textContent = `${title} (${cardIds.length})`;
+    document.getElementById('pileModalTitle').textContent = `${title} (${cardInstances.length})`;
     const grid = document.getElementById('pileModalGrid');
     grid.innerHTML = '';
-    cardIds.forEach((id) => {
-      const card = cardDatabase[id];
-      if (card) grid.appendChild(createCardElement(card, true));
+    cardInstances.forEach((instance) => {
+      const card = cardDatabase[instance.cardId];
+      if (card) grid.appendChild(createCardElement(card, true, -1, instance));
     });
     document.getElementById('pileModal').classList.remove('hidden');
   }
@@ -265,6 +389,7 @@ export function createGameUI({
   function hideRunModals() {
     document.getElementById('runEndModal').classList.add('hidden');
     document.getElementById('draftModal').classList.add('hidden');
+    document.getElementById('statsModal').classList.add('hidden');
   }
 
   function showSaveNotice(message) {
@@ -273,13 +398,19 @@ export function createGameUI({
     notice.classList.remove('hidden');
   }
 
+  document.querySelectorAll('[data-reward-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => setRewardTab(tab.dataset.rewardTab));
+  });
+
   return {
     hideRunModals,
     openDraftModal,
     openPileModal,
     renderAll,
+    showStatsModal,
     showRunEndModal,
     showSaveNotice,
+    updateSoundButton,
     spawnPopup,
     triggerKaijuHitAnim,
     triggerScreenShake

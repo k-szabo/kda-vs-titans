@@ -101,6 +101,10 @@
       filter: grayscale(0.45);
     }
 
+    .spire-card.card-upgraded {
+      box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.45);
+    }
+
     /* Character Accent Borders */
     .card-ahri { border: 1.5px solid rgba(255, 42, 133, 0.7); }
     .card-akali { border: 1.5px solid rgba(0, 240, 255, 0.7); }

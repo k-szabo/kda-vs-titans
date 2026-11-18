@@ -1,0 +1,20 @@
+{
+  "relics": [
+    {
+      "id": "lightstick_amplifier",
+      "name": "Lightstick Amplifier",
+      "description": "Start each wave's first turn with +1 Hype Energy.",
+      "effects": [
+        { "trigger": "stageStart", "type": "startingEnergy", "amount": 1 }
+      ]
+    },
+    {
+      "id": "monarch_subwoofer",
+      "name": "Monarch Sub-Woofer",
+      "description": "Gain +2 Holo Shield whenever you play an Attack.",
+      "effects": [
+        { "trigger": "attackPlayed", "type": "gainBlock", "amount": 2 }
+      ]
+    }
+  ]
+}

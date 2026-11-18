@@ -1,12 +1,28 @@
-import { executeCardEffects } from './card-effects.js';
+import { executeCardEffects, getEffectiveCardCost } from './card-effects.js';
+import {
+  isSoundEnabled,
+  isSoundSupported,
+  playCardSfx,
+  playJointFinaleSfx,
+  playKaijuRoarSfx,
+  setSoundEnabled
+} from './audio.js';
+import { applyPlayerDamage } from './combat-rules.js';
 import { loadGameData } from './game-data.js';
+import {
+  createDefaultProfileStats,
+  InvalidProfileStatsError,
+  loadProfileStats,
+  ProfileStorageError,
+  saveProfileStats
+} from './profile-storage.js';
 import {
   InvalidSavedRunError,
   loadSavedRun,
-  RUN_SAVE_VERSION,
   RunStorageError,
   saveRun
 } from './run-storage.js';
+import { isValidSavedRun, migrateSavedRun } from './run-state.js';
 import { createGameUI } from './ui.js';
 
 (function () {
@@ -14,11 +30,14 @@ import { createGameUI } from './ui.js';
 
   let ART_ASSETS = null;
   let CARD_DB = {};
+  let RELIC_DB = {};
   let ENCOUNTERS = [];
   let STARTER_DECK = [];
+  let profileStats = createDefaultProfileStats();
   let ui = null;
   let state = null;
   let storageAvailable = true;
+  let profileStorageAvailable = true;
 
       function shuffle(arr) {
         const copy = [...arr];
@@ -30,13 +49,23 @@ import { createGameUI } from './ui.js';
       }
 
       function createNewRunState() {
+        let nextCardInstanceId = 1;
+        const masterDeck = STARTER_DECK.map((cardId) => ({
+          instanceId: nextCardInstanceId++,
+          cardId,
+          upgradeLevel: 0
+        }));
         return {
           stageIndex: 0,
           turn: 1,
+          startedAt: Date.now(),
+          nextCardInstanceId,
           runStatus: 'playing',
           draftChoices: [],
+          relicChoices: [],
+          relics: [],
           isPlayerTurn: true,
-          masterDeck: [...STARTER_DECK],
+          masterDeck,
           drawPile: [],
           hand: [],
           discardPile: [],
@@ -66,6 +95,7 @@ import { createGameUI } from './ui.js';
         state.turn = 1;
         state.runStatus = 'playing';
         state.draftChoices = [];
+        state.relicChoices = [];
         state.isPlayerTurn = true;
         state.drawPile = shuffle(state.masterDeck);
         state.hand = [];
@@ -83,6 +113,7 @@ import { createGameUI } from './ui.js';
           statuses: { charm: 0, marked: 0 }
         };
 
+        applyRelicEffects('stageStart');
         addLog(`🚨 WAVE ${stageIdx + 1}: ${enc.name} entered the stadium!`, 'text-sky-300 font-bold');
         drawCards(5);
         renderAll();
@@ -138,31 +169,33 @@ import { createGameUI } from './ui.js';
 
       function playCardAtIndex(handIdx) {
         if (!state.isPlayerTurn) return;
-        const cardId = state.hand[handIdx];
-        const card = CARD_DB[cardId];
+        const cardInstance = state.hand[handIdx];
+        const card = CARD_DB[cardInstance?.cardId];
         if (!card) return;
+        const cost = getEffectiveCardCost(card, cardInstance.upgradeLevel);
 
-        if (state.player.energy < card.cost) {
+        if (state.player.energy < cost) {
           addLog(`⚠️ Not enough Hype Energy for ${card.name}!`, 'text-amber-300');
           renderAll();
           return;
         }
 
-        // Spend Energy & Charge Crowd Cheer (+8% base + 6% per Energy)
-        state.player.energy -= card.cost;
-        state.player.cheer = Math.min(100, state.player.cheer + 8 + card.cost * 6);
+        playSoundEffect(playCardSfx);
+        state.player.energy -= cost;
+        state.player.cheer = Math.min(100, state.player.cheer + 5 + cost * 3);
 
         // Move card from hand to discard/exhaust
         state.hand.splice(handIdx, 1);
         if (card.exhaust) {
-          state.exhaustPile.push(cardId);
+          state.exhaustPile.push(cardInstance);
         } else {
-          state.discardPile.push(cardId);
+          state.discardPile.push(cardInstance);
         }
 
         // Execute Card Effect
         const ctx = createEffectContext();
-        executeCardEffects(card, ctx);
+        executeCardEffects(card, ctx, cardInstance.upgradeLevel);
+        applyRelicEffects('attackPlayed', card);
 
         // Check if Kaiju was defeated mid-turn
         if (state.enemy.hp <= 0) {
@@ -232,6 +265,7 @@ import { createGameUI } from './ui.js';
       function triggerJointAttack() {
         if (!state.isPlayerTurn || state.player.cheer < 100) return;
 
+        playSoundEffect(playJointFinaleSfx);
         state.player.cheer = 0;
         const ctx = createEffectContext();
         const finaleDmg = ctx.calcDmg(28);
@@ -272,6 +306,7 @@ import { createGameUI } from './ui.js';
 
         addLog(`--- ${e.name} executes ${intent.displayText} ---`, 'text-sky-300 font-bold');
 
+        if (typeof intent.effectiveDmg === 'number') playSoundEffect(playKaijuRoarSfx);
         if (intent.type === 'charge') {
           e.block += intent.block;
           ui.spawnPopup('enemyArenaCard', `+${intent.block} 🛡️`, 'text-sky-300 font-display font-black text-lg');
@@ -311,17 +346,12 @@ import { createGameUI } from './ui.js';
       }
 
       function applyDamageToPlayer(rawDmg) {
-        let remaining = rawDmg;
-        if (state.player.block > 0) {
-          const blocked = Math.min(state.player.block, remaining);
-          state.player.block -= blocked;
-          remaining -= blocked;
-        }
-        if (remaining > 0) {
-          state.player.hp = Math.max(0, state.player.hp - remaining);
+        const { damageAfterBlock, hpLost, cheerLost } = applyPlayerDamage(state.player, rawDmg);
+        if (damageAfterBlock > 0) {
           ui.triggerScreenShake();
-          ui.spawnPopup('playerArenaCard', `-${remaining} HP`, 'text-rose-400 font-display font-black text-xl');
-          addLog(`💥 K/DA took ${remaining} damage! (${state.player.hp}/${state.player.maxHp} HP)`, 'text-rose-400');
+          ui.spawnPopup('playerArenaCard', `-${hpLost} HP`, 'text-rose-400 font-display font-black text-xl');
+          addLog(`💥 K/DA took ${hpLost} damage! (${state.player.hp}/${state.player.maxHp} HP)`, 'text-rose-400');
+          if (cheerLost > 0) addLog(`📣 Crowd Cheer fell by ${cheerLost}% from damage.`, 'text-amber-300');
         } else {
           ui.spawnPopup('playerArenaCard', 'SHIELDED!', 'text-cyan-300 font-display font-bold text-sm');
           addLog(`🛡️ Holo Shield completely absorbed ${rawDmg} damage!`, 'text-cyan-300');
@@ -331,6 +361,7 @@ import { createGameUI } from './ui.js';
       function handleKaijuDefeated() {
         state.isPlayerTurn = false;
         addLog(`🏆 ${state.enemy.name} CONTAINED!`, 'text-emerald-300 font-bold');
+        recordStageClear();
 
         if (state.stageIndex >= ENCOUNTERS.length - 1) {
           state.runStatus = 'victory';
@@ -342,8 +373,55 @@ import { createGameUI } from './ui.js';
         const draftPool = Object.values(CARD_DB).filter((c) => !c.starter);
         state.runStatus = 'draft';
         state.draftChoices = shuffle(draftPool).slice(0, 3).map((card) => card.id);
+        const ownedRelics = new Set(state.relics);
+        state.relicChoices = shuffle(Object.keys(RELIC_DB).filter((relicId) => !ownedRelics.has(relicId))).slice(0, 3);
         saveRunState();
-        ui.openDraftModal(state.draftChoices);
+        ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck);
+      }
+
+      function recordStageClear() {
+        profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
+        if (!profileStats.unlockedKaiju.includes(state.enemy.id)) {
+          profileStats.unlockedKaiju.push(state.enemy.id);
+        }
+        if (state.stageIndex === ENCOUNTERS.length - 1) {
+          const duration = Math.max(0, Date.now() - state.startedAt);
+          if (profileStats.fastestWinMs === null || duration < profileStats.fastestWinMs) {
+            profileStats.fastestWinMs = duration;
+          }
+        }
+        if (!profileStorageAvailable) return;
+        try {
+          saveProfileStats(profileStats);
+        } catch (error) {
+          if (!(error instanceof ProfileStorageError)) throw error;
+          profileStorageAvailable = false;
+          console.error('Unable to save player profile stats.', error);
+          ui.showSaveNotice('Run statistics could not be saved in this browser.');
+        }
+      }
+
+      function applyRelicEffects(trigger, playedCard = null) {
+        state.relics.forEach((relicId) => {
+          const relic = RELIC_DB[relicId];
+          if (!relic) throw new Error(`Unknown owned relic: ${relicId}`);
+          relic.effects.filter((effect) => effect.trigger === trigger).forEach((effect) => {
+            if (trigger === 'attackPlayed' && playedCard?.type !== 'ATTACK') return;
+            switch (effect.type) {
+              case 'startingEnergy':
+                state.player.energy += effect.amount;
+                addLog(`✦ ${relic.name}: +${effect.amount} starting Hype Energy.`, 'text-amber-300');
+                break;
+              case 'gainBlock':
+                state.player.block += effect.amount;
+                ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
+                addLog(`✦ ${relic.name}: gained +${effect.amount} Holo Shield.`, 'text-cyan-300');
+                break;
+              default:
+                throw new Error(`Unsupported relic effect type: ${effect.type}`);
+            }
+          });
+        });
       }
 
       // =========================================================================
@@ -359,6 +437,18 @@ import { createGameUI } from './ui.js';
         saveRunState();
       }
 
+      function playSoundEffect(play) {
+        if (!isSoundEnabled()) return;
+        try {
+          play();
+        } catch (error) {
+          setSoundEnabled(false);
+          ui.updateSoundButton(false, isSoundSupported());
+          console.error('A sound effect failed; sound has been disabled.', error);
+          ui.showSaveNotice('A sound effect failed to play and has been disabled. Gameplay can continue normally.');
+        }
+      }
+
       // =========================================================================
       // Run flow and event wiring
       // =========================================================================
@@ -371,12 +461,43 @@ import { createGameUI } from './ui.js';
       function chooseDraftCard(cardId) {
         if (state.runStatus !== 'draft' || !state.draftChoices.includes(cardId)) return;
         const card = CARD_DB[cardId];
-        state.masterDeck.push(cardId);
+        state.masterDeck.push({
+          instanceId: state.nextCardInstanceId++,
+          cardId,
+          upgradeLevel: 0
+        });
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + 18);
         state.runStatus = 'playing';
         state.draftChoices = [];
+        state.relicChoices = [];
         document.getElementById('draftModal').classList.add('hidden');
         addLog(`✨ Drafted "${card.name}" & restored +18 HP!`, 'text-amber-300');
+        startStage(state.stageIndex + 1);
+      }
+
+      function chooseRelic(relicId) {
+        if (state.runStatus !== 'draft' || !state.relicChoices.includes(relicId) || state.relics.includes(relicId)) return;
+        const relic = RELIC_DB[relicId];
+        state.relics.push(relicId);
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 18);
+        state.runStatus = 'playing';
+        state.draftChoices = [];
+        state.relicChoices = [];
+        document.getElementById('draftModal').classList.add('hidden');
+        addLog(`✦ Equipped ${relic.name} & restored +18 HP!`, 'text-amber-300');
+        startStage(state.stageIndex + 1);
+      }
+
+      function upgradeCard(instanceId) {
+        if (state.runStatus !== 'draft') return;
+        const instance = state.masterDeck.find((card) => card.instanceId === instanceId);
+        if (!instance || instance.upgradeLevel !== 0 || !CARD_DB[instance.cardId]?.upgrade) return;
+        instance.upgradeLevel = 1;
+        state.runStatus = 'playing';
+        state.draftChoices = [];
+        state.relicChoices = [];
+        document.getElementById('draftModal').classList.add('hidden');
+        addLog(`⬆️ Upgraded "${CARD_DB[instance.cardId].name}" for the rest of the run.`, 'text-amber-300');
         startStage(state.stageIndex + 1);
       }
 
@@ -385,6 +506,7 @@ import { createGameUI } from './ui.js';
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
         state.runStatus = 'playing';
         state.draftChoices = [];
+        state.relicChoices = [];
         document.getElementById('draftModal').classList.add('hidden');
         addLog('💖 Skipped draft & rested backstage (+25 HP).', 'text-emerald-300');
         startStage(state.stageIndex + 1);
@@ -395,6 +517,14 @@ import { createGameUI } from './ui.js';
         document.getElementById('btnJointAttack').addEventListener('click', triggerJointAttack);
         document.getElementById('btnNewRun').addEventListener('click', startNewRun);
         document.getElementById('btnRestartRunEnd').addEventListener('click', startNewRun);
+        document.getElementById('btnStats').addEventListener('click', () => ui.showStatsModal());
+        document.getElementById('btnCloseStats').addEventListener('click', () => {
+          document.getElementById('statsModal').classList.add('hidden');
+        });
+        document.getElementById('btnSound').addEventListener('click', () => {
+          const enabled = setSoundEnabled(!isSoundEnabled());
+          ui.updateSoundButton(enabled, isSoundSupported());
+        });
 
         document.getElementById('btnSkipDraft').addEventListener('click', skipDraft);
 
@@ -431,83 +561,9 @@ import { createGameUI } from './ui.js';
         }
       }
 
-      function isValidSavedRun(savedRun) {
-        if (!savedRun || savedRun.version !== RUN_SAVE_VERSION || !savedRun.state) return false;
-        const saved = savedRun.state;
-        const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-        const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
-        const cardPiles = [
-          saved.masterDeck,
-          saved.drawPile,
-          saved.hand,
-          saved.discardPile,
-          saved.exhaustPile,
-          saved.draftChoices
-        ];
-        if (!cardPiles.every(Array.isArray)) return false;
-        const cardIds = [
-          ...saved.masterDeck,
-          ...saved.drawPile,
-          ...saved.hand,
-          ...saved.discardPile,
-          ...saved.exhaustPile,
-          ...saved.draftChoices
-        ];
-
-        if (
-          !Number.isInteger(saved.stageIndex) ||
-          saved.stageIndex < 0 ||
-          saved.stageIndex >= ENCOUNTERS.length ||
-          !Number.isInteger(saved.turn) ||
-          saved.turn < 1 ||
-          !['playing', 'draft', 'victory', 'defeat'].includes(saved.runStatus) ||
-          typeof saved.isPlayerTurn !== 'boolean' ||
-          !Array.isArray(saved.logs) ||
-          cardIds.some((cardId) => !CARD_DB[cardId]) ||
-          !isRecord(saved.player) ||
-          !isRecord(saved.player.statuses) ||
-          !isRecord(saved.enemy) ||
-          !isRecord(saved.enemy.statuses) ||
-          !Array.isArray(saved.enemy.patterns) ||
-          saved.enemy.patterns.length === 0 ||
-          !isRecord(saved.enemy.assets) ||
-          !isRecord(saved.enemy.visuals) ||
-          typeof saved.enemy.assets.backdrop !== 'string' ||
-          typeof saved.enemy.assets.illustration !== 'string' ||
-          typeof saved.enemy.visuals.background !== 'string' ||
-          !['hp', 'maxHp', 'block', 'energy', 'maxEnergy', 'cheer'].every((key) => isFiniteNumber(saved.player[key])) ||
-          !['encore', 'weak'].every((key) => isFiniteNumber(saved.player.statuses[key])) ||
-          !['hp', 'maxHp', 'block', 'patternStep'].every((key) => isFiniteNumber(saved.enemy[key])) ||
-          !['charm', 'marked'].every((key) => isFiniteNumber(saved.enemy.statuses[key])) ||
-          !saved.logs.every((entry) => isRecord(entry) && typeof entry.text === 'string' && typeof entry.colorClass === 'string' && Number.isInteger(entry.turn))
-        ) {
-          return false;
-        }
-
-        if (saved.enemy.id !== ENCOUNTERS[saved.stageIndex].id) return false;
-        if (
-          saved.player.maxHp <= 0 ||
-          saved.player.hp < 0 ||
-          saved.player.hp > saved.player.maxHp ||
-          saved.enemy.maxHp <= 0 ||
-          saved.enemy.hp < 0 ||
-          saved.enemy.hp > saved.enemy.maxHp
-        ) {
-          return false;
-        }
-        if (saved.runStatus === 'draft') {
-          return !saved.isPlayerTurn && saved.draftChoices.length > 0 && saved.enemy.hp === 0;
-        }
-        if (saved.runStatus === 'victory') {
-          return !saved.isPlayerTurn && saved.stageIndex === ENCOUNTERS.length - 1;
-        }
-        if (saved.runStatus === 'defeat') return !saved.isPlayerTurn && saved.player.hp === 0;
-        return saved.isPlayerTurn && saved.enemy.hp > 0 && saved.player.hp > 0;
-      }
-
       function restoreRunModal() {
         if (state.runStatus === 'draft') {
-          ui.openDraftModal(state.draftChoices);
+          ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck);
         } else if (state.runStatus === 'victory' || state.runStatus === 'defeat') {
           ui.showRunEndModal(state.runStatus === 'victory');
         }
@@ -518,23 +574,60 @@ import { createGameUI } from './ui.js';
           const gameData = await loadGameData();
           ART_ASSETS = gameData.artAssets;
           CARD_DB = gameData.cardDatabase;
+          RELIC_DB = gameData.relicDatabase;
           ENCOUNTERS = gameData.encounters;
           STARTER_DECK = gameData.starterDeck;
           ui = createGameUI({
             getState: () => state,
             getArtAssets: () => ART_ASSETS,
             getCardDatabase: () => CARD_DB,
+            getRelicDatabase: () => RELIC_DB,
+            getProfileStats: () => profileStats,
             getEncounters: () => ENCOUNTERS,
             getCurrentEnemyIntent,
             onPlayCard: playCardAtIndex,
             onJumpToStage: startStage,
-            onChooseDraftCard: chooseDraftCard
+            onChooseDraftCard: chooseDraftCard,
+            onChooseRelic: chooseRelic,
+            onUpgradeCard: upgradeCard
           });
           wireEvents();
+          ui.updateSoundButton(isSoundEnabled(), isSoundSupported());
+
+          try {
+            profileStats = loadProfileStats();
+          } catch (error) {
+            if (error instanceof ProfileStorageError) {
+              profileStorageAvailable = false;
+              console.error('Unable to read player profile stats.', error);
+              ui.showSaveNotice('Profile statistics are unavailable in this browser.');
+            } else if (error instanceof InvalidProfileStatsError) {
+              console.error('Saved profile stats could not be restored.', error);
+              ui.showSaveNotice('Saved profile statistics were invalid and have been reset.');
+              profileStats = createDefaultProfileStats();
+              try {
+                saveProfileStats(profileStats);
+              } catch (saveError) {
+                if (!(saveError instanceof ProfileStorageError)) throw saveError;
+                profileStorageAvailable = false;
+                console.error('Unable to reset invalid profile stats.', saveError);
+                ui.showSaveNotice('Saved profile stats were invalid and could not be reset in this browser.');
+              }
+            } else {
+              throw error;
+            }
+          }
 
           let savedRun = null;
           try {
             savedRun = loadSavedRun();
+            if (savedRun !== null) {
+              savedRun = migrateSavedRun(savedRun, {
+                cardDatabase: CARD_DB,
+                relicDatabase: RELIC_DB,
+                shuffle
+              });
+            }
           } catch (error) {
             if (error instanceof RunStorageError) {
               storageAvailable = false;
@@ -543,12 +636,17 @@ import { createGameUI } from './ui.js';
             } else if (error instanceof InvalidSavedRunError) {
               console.error('The saved run could not be restored.', error);
               ui.showSaveNotice('The previous saved run could not be restored. A new run will start and autosave from here.');
+              savedRun = null;
             } else {
               throw error;
             }
           }
 
-          if (savedRun !== null && !isValidSavedRun(savedRun)) {
+          if (savedRun !== null && !isValidSavedRun(savedRun, {
+            cardDatabase: CARD_DB,
+            relicDatabase: RELIC_DB,
+            encounters: ENCOUNTERS
+          })) {
             ui.showSaveNotice('The previous saved run is incompatible or damaged. A new run will start and autosave from here.');
             savedRun = null;
           }

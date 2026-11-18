@@ -1,4 +1,4 @@
-export const RUN_SAVE_VERSION = 1;
+export const RUN_SAVE_VERSION = 2;
 const RUN_SAVE_KEY = 'encore-spire.run';
 
 export class RunStorageError extends Error {

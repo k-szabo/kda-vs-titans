@@ -7,6 +7,7 @@
     "squad": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Seraphine_2.jpg"
   },
   "cards": "./cards.json",
+  "relics": "./relics.json",
   "bosses": [
     "./bosses/godzilla_w1.json",
     "./bosses/mothra_w2.json",

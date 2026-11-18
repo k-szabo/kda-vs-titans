@@ -1,6 +1,6 @@
 # Developer guide
 
-Encore Spire is a static HTML, CSS, and JavaScript project. It has no build step or package installation requirements. Active runs are autosaved in the browser's local storage.
+Encore Spire is a static HTML, CSS, and JavaScript project. It has no build step or package installation requirements. Active runs and player profile stats are saved in the browser's local storage.
 
 ## Run locally
 
@@ -28,8 +28,9 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 ├── assets/
 │   ├── bosses/       # One JSON encounter definition per boss
 │   ├── kaiju/        # Kaiju SVG illustrations
-│   ├── cards.json    # Card definitions, effects, and starter deck
-│   ├── data.json     # Portrait/backdrop URLs, card path, and boss order
+│   ├── cards.json    # Card definitions, upgrades, effects, and starter deck
+│   ├── data.json     # Portrait/backdrop URLs and ordered data paths
+│   ├── relics.json   # Passive relic definitions and effects
 │   └── favicon.svg   # Browser tab icon
 ├── css/
 │   └── styles.css
@@ -37,15 +38,19 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 │   ├── copilot_handoff_architecture_guide.md
 │   └── dev-readme.md
 ├── js/
-│   ├── app.js          # Game state, rules, and event wiring
-│   ├── card-effects.js # Data-driven card effect interpreter
-│   ├── game-data.js    # Asset and encounter loading
-│   ├── run-storage.js  # Local storage save/load
-│   └── ui.js           # Rendering, card views, and modals
+│   ├── app.js             # Game state, rules, and event wiring
+│   ├── audio.js           # Synthesized Web Audio effects
+│   ├── card-effects.js    # Data-driven card effect interpreter
+│   ├── combat-rules.js    # Player damage, shield, and Cheer resolution
+│   ├── game-data.js       # Asset and encounter loading
+│   ├── profile-storage.js # Persistent profile stats and codex
+│   ├── run-state.js       # Run-save migration and validation
+│   ├── run-storage.js     # Versioned local run save/load
+│   └── ui.js              # Rendering, card views, and modals
 └── index.html
 ```
 
-The save stays in the same browser and site origin; it is not synced between devices or browsers. Starting a new run replaces the previous save.
+Run and profile data stay in the same browser and site origin; they are not synced between devices or browsers. Starting a new run replaces only the active run.
 
 ## Add a boss
 

@@ -12,43 +12,54 @@ function formatLog(template, values) {
   });
 }
 
-export function executeCardEffects(card, ctx) {
-  const values = { damage: 0 };
+export function getEffectiveCardCost(card, upgradeLevel = 0) {
+  const reduction = (card.upgrade?.costReduction || 0) * upgradeLevel;
+  return Math.max(0, card.cost - reduction);
+}
+
+export function executeCardEffects(card, ctx, upgradeLevel = 0) {
+  const values = { damage: 0, block: 0, heal: 0, encore: 0 };
 
   card.effects.forEach((effect) => {
     if (!matchesCondition(effect.when, ctx)) return;
+    const amount = effect.amount === undefined
+      ? undefined
+      : effect.amount + (effect.upgradeAmount || 0) * upgradeLevel;
 
     switch (effect.type) {
       case 'damage':
         for (let hit = 0; hit < (effect.hits || 1); hit++) {
-          const damage = ctx.calcDmg(effect.amount);
+          const damage = ctx.calcDmg(amount);
           ctx.dealEnemyDmg(damage);
           values.damage += damage;
         }
         break;
       case 'gainBlock':
-        ctx.gainBlock(effect.amount);
+        ctx.gainBlock(amount);
+        values.block += amount;
         break;
       case 'healPlayer':
-        ctx.healPlayer(effect.amount);
+        ctx.healPlayer(amount);
+        values.heal += amount;
         break;
       case 'applyEnemyStatus':
         ctx.applyEnemyStatus(effect.status, effect.turns);
         break;
       case 'addPlayerStatus':
-        ctx.addPlayerStatus(effect.status, effect.amount);
+        ctx.addPlayerStatus(effect.status, amount);
+        if (effect.status === 'encore') values.encore += amount;
         break;
       case 'clearPlayerStatus':
         ctx.clearPlayerStatus(effect.status);
         break;
       case 'addCheer':
-        ctx.addCheer(effect.amount);
+        ctx.addCheer(amount);
         break;
       case 'draw':
         ctx.draw(effect.count);
         break;
       case 'gainEnergy':
-        ctx.gainEnergy(effect.amount);
+        ctx.gainEnergy(amount);
         break;
       default:
         throw new Error(`Unsupported card effect type: ${effect.type}`);
