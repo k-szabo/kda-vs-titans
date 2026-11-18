@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.0.3_d7951f2f",
+  "currentVersion": "v1.1.0_13eb25f1",
   "releases": [
+    {
+      "version": "v1.1.0_13eb25f1",
+      "date": "2026-11-18",
+      "changes": [
+        "Added Male MUTO and Female MUTO encounters to the kaiju setlist.",
+        "Moved Burning Godzilla to Wave 10 and added distinct MUTO artwork and release notes."
+      ]
+    },
     {
       "version": "v1.0.3_d7951f2f",
       "date": "2026-11-18",

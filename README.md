@@ -1,12 +1,12 @@
 # K/DA vs. Godzilla: Encore Spire
 
-A browser-based, turn-based deckbuilding roguelike. Build a K/DA deck, manage Hype Energy and Crowd Cheer, and fight through an eight-wave kaiju setlist.
+A browser-based, turn-based deckbuilding roguelike. Build a K/DA deck, manage Hype Energy and Crowd Cheer, and fight through a ten-wave kaiju setlist.
 
 Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 
 ## Features
 
-- Eight boss encounters with telegraphed attacks and distinct artwork
+- Ten boss encounters with telegraphed attacks and distinct artwork
 - Draftable cards, individual card upgrades, passive relics, shields, and status effects
 - Crowd Cheer-powered K/DA Joint Finale
 - Synthesized sound effects and persistent run records / Kaiju codex
@@ -22,7 +22,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 | Click a playable card | Play that card |
 | `1`–`5` | Play the matching card in your hand |
 | `E` | End your turn |
-| `W1`–`W8` | Jump to an encounter |
+| `W1`–`W10` | Jump to an encounter |
 
 ## Development
 

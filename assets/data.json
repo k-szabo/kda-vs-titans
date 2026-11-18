@@ -1,5 +1,5 @@
 {
-  "version": "v1.0.3_d7951f2f",
+  "version": "v1.1.0_13eb25f1",
   "portraits": {
     "ahri": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_15.jpg",
     "akali": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Akali_9.jpg",
@@ -18,7 +18,9 @@
     "./bosses/ghidorah_w5.json",
     "./bosses/mechagodzilla_w6.json",
     "./bosses/destoroyah_w7.json",
-    "./bosses/burning_w8.json"
+    "./bosses/male-muto_w8.json",
+    "./bosses/female-muto_w9.json",
+    "./bosses/burning_w10.json"
   ],
   "backdrops": {
     "godzilla": "https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=800&auto=format&fit=crop",
@@ -29,6 +31,8 @@
     "mechagodzilla": "https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80&w=800&auto=format&fit=crop",
     "destoroyah": "https://images.unsplash.com/photo-1554232682-b9ef9c92f8de?q=80&w=800&auto=format&fit=crop",
     "burning_godzilla": "https://images.unsplash.com/photo-1554232682-b9ef9c92f8de?q=80&w=800&auto=format&fit=crop",
+    "male_muto": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=800&auto=format&fit=crop",
+    "female_muto": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop",
     "minus_zero": "https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80&w=800&auto=format&fit=crop"
   }
 }

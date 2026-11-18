@@ -1,0 +1,36 @@
+{
+  "id": "male_muto_w8",
+  "name": "MALE MUTO: HUNTER FROM THE SKY",
+  "subtitle": "WAVE 8 // ATMOSPHERIC PREDATOR",
+  "maxHp": 145,
+  "spriteType": "male_muto",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 8,
+      "hits": 3,
+      "label": "🦅 RAZOR TALON SWARM: 8x3 DMG",
+      "charged": true
+    },
+    {
+      "type": "debuff_atk",
+      "dmg": 15,
+      "weak": 1,
+      "label": "📡 SONIC DISRUPTION: 15 DMG + WEAK"
+    },
+    {
+      "type": "atomic",
+      "dmg": 30,
+      "label": "⚡ EMPEROR'S DIVE: 30 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "male_muto",
+    "illustration": "./kaiju/male-muto.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 38%, rgba(244, 63, 94, 0.34), rgba(30, 41, 59, 0.62) 48%, rgba(8, 15, 23, 0.98) 82%)"
+  }
+}

@@ -405,7 +405,8 @@ export function createGameUI({
       badge.textContent = 'SETLIST COMPLETE // WORLD TOUR SAVED';
       badge.className = 'inline-block px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-display text-[10px] tracking-widest mb-3';
       title.textContent = 'ENCORE VICTORY!';
-      desc.textContent = `K/DA defeated Burning Godzilla and completed all ${encounters.length} Kaiju waves with ${state.player.hp}/${state.player.maxHp} HP remaining!`;
+      const finalEncounter = encounters[encounters.length - 1];
+      desc.textContent = `K/DA defeated ${finalEncounter.name.split(':')[0]} and completed all ${encounters.length} Kaiju waves with ${state.player.hp}/${state.player.maxHp} HP remaining!`;
     } else {
       badge.textContent = 'STAGE OVERWHELMED';
       badge.className = 'inline-block px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-display text-[10px] tracking-widest mb-3';

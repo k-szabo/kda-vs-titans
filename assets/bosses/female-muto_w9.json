@@ -1,0 +1,34 @@
+{
+  "id": "female_muto_w9",
+  "name": "FEMALE MUTO: BROOD QUEEN",
+  "subtitle": "WAVE 9 // TITANIC MATRIARCH",
+  "maxHp": 150,
+  "spriteType": "female_muto",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "attack",
+      "dmg": 18,
+      "label": "🦴 SEISMIC TAIL SWIPE: 18 DMG"
+    },
+    {
+      "type": "charge",
+      "block": 22,
+      "label": "🥚 CARAPACE SHELL: +22 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 31,
+      "label": "🌩️ PULSE-WAVE RUPTURE: 31 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "female_muto",
+    "illustration": "./kaiju/female-muto.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 42%, rgba(168, 85, 247, 0.34), rgba(76, 29, 149, 0.42) 48%, rgba(14, 9, 27, 0.98) 82%)"
+  }
+}

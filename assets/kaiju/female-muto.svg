@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="femaleShell" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="55%" stop-color="#581c87"/>
+      <stop offset="100%" stop-color="#d8b4fe"/>
+    </linearGradient>
+  </defs>
+  <path d="M118 84 C98 48 128 26 140 20 C152 26 182 48 162 84 Z" fill="#2e1065" stroke="#c084fc" stroke-width="1.5"/>
+  <path d="M112 78 C78 54 58 82 70 112 L112 126 Z" fill="url(#femaleShell)" stroke="#d8b4fe" stroke-width="1.4"/>
+  <path d="M168 78 C202 54 222 82 210 112 L168 126 Z" fill="url(#femaleShell)" stroke="#d8b4fe" stroke-width="1.4"/>
+  <path d="M124 68 L156 68 L164 132 L146 168 L134 168 L116 132 Z" fill="url(#femaleShell)" stroke="#e9d5ff" stroke-width="1.5"/>
+  <path d="M130 64 L124 36 L140 58 Z M150 64 L156 36 L140 58 Z" fill="#c4b5fd"/>
+  <circle cx="133" cy="76" r="2.5" fill="#fef08a"/>
+  <circle cx="147" cy="76" r="2.5" fill="#fef08a"/>
+  <path d="M118 118 L82 156 L112 146 Z M162 118 L198 156 L168 146 Z" fill="#4c1d95" stroke="#c084fc" stroke-width="1.3"/>
+  <path d="M122 132 L158 132 M118 142 L162 142" stroke="#ede9fe" stroke-width="1" opacity="0.65"/>
+</svg>

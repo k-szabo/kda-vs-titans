@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="maleWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="55%" stop-color="#7f1d1d"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <path d="M132 94 L18 38 L48 82 L24 102 L76 112 L126 116 Z" fill="url(#maleWing)" stroke="#fca5a5" stroke-width="1.4"/>
+  <path d="M148 94 L262 38 L232 82 L256 102 L204 112 L154 116 Z" fill="url(#maleWing)" stroke="#fca5a5" stroke-width="1.4"/>
+  <path d="M126 96 L38 58 M126 104 L52 96 M154 96 L242 58 M154 104 L228 96" stroke="#fecaca" stroke-width="1.2" opacity="0.78"/>
+  <path d="M128 74 L152 74 L158 130 L140 168 L122 130 Z" fill="#3f1d20" stroke="#fb7185" stroke-width="1.5"/>
+  <path d="M132 68 L126 38 L140 62 Z" fill="#fca5a5"/>
+  <path d="M148 68 L154 38 L140 62 Z" fill="#fca5a5"/>
+  <circle cx="133" cy="78" r="2.5" fill="#fef08a"/>
+  <circle cx="147" cy="78" r="2.5" fill="#fef08a"/>
+  <path d="M126 122 L96 148 L116 142 Z M154 122 L184 148 L164 142 Z" fill="#7f1d1d" stroke="#fb7185" stroke-width="1.2"/>
+</svg>

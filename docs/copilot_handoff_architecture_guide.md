@@ -14,7 +14,7 @@ A zero-build, turn-based deckbuilding roguelike inspired by *Slay the Spire*, st
 - **Keyboard Shortcuts:**
   - `1` – `5`: Play the corresponding card in hand.
   - `E`: End the player's turn and resolve the Kaiju's telegraphed intent.
-- **Debug / Wave Jumpers:** Clicking `W1` through `W8` in the top header immediately jumps to that Kaiju encounter (`startStage(waveIdx)`).
+- **Debug / Wave Jumpers:** Clicking `W1` through `W10` in the top header immediately jumps to that Kaiju encounter (`startStage(waveIdx)`).
 - **Holo Shield:** Player shield left after an enemy attack carries into the next turn and is only spent by incoming damage. Shield resets when a new Kaiju wave begins.
 - **Version:** The header's version badge opens the release notes from `assets/changelog.json`.
 
