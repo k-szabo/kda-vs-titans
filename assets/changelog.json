@@ -1,6 +1,17 @@
 {
-  "currentVersion": "v1.6.0_3f20ea3d",
+  "currentVersion": "v1.6.1_c66d4010",
   "releases": [
+    {
+      "version": "v1.6.1_c66d4010",
+      "date": "2026-11-19",
+      "changes": [
+        "Restricted signature starter Relics to their leader and removed them from random Relic rewards.",
+        "Capped the hand at five cards and normalized oversized saved hands without losing cards.",
+        "Advanced ranked art borders only for the leader whose run cleared the wave.",
+        "Replaced the Tailwind Play CDN with a prebuilt stylesheet for GitHub Pages.",
+        "Reset previous run saves and profile progress so all players begin a fresh tour."
+      ]
+    },
     {
       "version": "v1.6.0_3f20ea3d",
       "date": "2026-11-19",

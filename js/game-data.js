@@ -210,6 +210,7 @@ export async function loadGameData() {
       typeof relic.id !== 'string' ||
       typeof relic.name !== 'string' ||
       typeof relic.description !== 'string' ||
+      relic.leaderId !== undefined && !leaderIds.includes(relic.leaderId) ||
       !Array.isArray(relic.effects) ||
       relic.effects.some((effect) =>
         !effect ||

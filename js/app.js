@@ -16,6 +16,7 @@ import {
   getEncoreBossMaxHp,
   getEncoreInterruptThreshold,
   getEncorePhase2Ratio,
+  MAX_HAND_SIZE,
   recordMemberPlay,
   shouldInterruptChargedIntent
 } from './combat-rules.js';
@@ -25,12 +26,15 @@ import {
   createDefaultProfileStats,
   InvalidProfileStatsError,
   loadProfileStats,
+  OutdatedProfileStatsError,
   ProfileStorageError,
   saveProfileStats
 } from './profile-storage.js';
 import {
+  clearSavedRun,
   InvalidSavedRunError,
   loadSavedRun,
+  RUN_SAVE_VERSION,
   RunStorageError,
   saveRun
 } from './run-storage.js';
@@ -61,7 +65,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         return createDailyChallenge(
           getUtcDateString(),
           LEADERS.map(({ id }) => id),
-          Object.keys(RELIC_DB)
+          Object.keys(RELIC_DB).filter((id) => !RELIC_DB[id].leaderId)
         );
       }
 
@@ -94,17 +98,15 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             upgradeLevel: 0
           });
         }
-        const starterRelics = {
-          ahri: 'nine_tail_mic',
-          akali: 'neon_kunai',
-          evelynn: 'velvet_shades',
-          kaisa: 'void_core'
-        };
+        const starterRelic = Object.values(RELIC_DB).find((relic) => relic.leaderId === leader);
+        if (!dailyChallenge && !starterRelic) {
+          throw new Error(`No starter relic is configured for leader ${leader}.`);
+        }
         const dailyModifier = dailyChallenge?.modifier;
         const maxEnergy = dailyModifier === 'acoustic_set' ? 4 : 3;
         const initialRelics = dailyChallenge
           ? dailyChallenge.relicId ? [dailyChallenge.relicId] : []
-          : [starterRelics[leader]];
+          : [starterRelic.id];
         return {
           stageIndex: 0,
           wavesCleared: 0,
@@ -204,7 +206,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
       function drawCards(count) {
         for (let i = 0; i < count; i++) {
-          if (state.hand.length >= 8) break;
+          if (state.hand.length >= MAX_HAND_SIZE) break;
           if (state.drawPile.length === 0) {
             if (state.discardPile.length === 0) break;
             state.drawPile = shuffle(state.discardPile);
@@ -679,7 +681,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.runStatus = 'draft';
         state.draftChoices = shuffle(draftPool).slice(0, 3).map((card) => card.id);
         const ownedRelics = new Set(state.relics);
-        state.relicChoices = shuffle(Object.keys(RELIC_DB).filter((relicId) => !ownedRelics.has(relicId))).slice(0, 3);
+        state.relicChoices = shuffle(Object.keys(RELIC_DB).filter((relicId) =>
+          !ownedRelics.has(relicId) && !RELIC_DB[relicId].leaderId
+        )).slice(0, 3);
         saveRunState();
         ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck);
       }
@@ -687,10 +691,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       function recordStageClear() {
         state.wavesCleared += 1;
         profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
-        LEADERS.forEach(({ id }) => {
-          const artId = profileStats.selectedArts[id];
-          profileStats.artWaveClears[id][artId] += 1;
-        });
+        const artId = profileStats.selectedArts[state.leader];
+        profileStats.artWaveClears[state.leader][artId] += 1;
         if (!profileStats.unlockedKaiju.includes(state.enemy.id)) {
           profileStats.unlockedKaiju.push(state.enemy.id);
         }
@@ -941,6 +943,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       function chooseRelic(relicId) {
         if (state.runStatus !== 'draft' || !state.relicChoices.includes(relicId) || state.relics.includes(relicId)) return;
         const relic = RELIC_DB[relicId];
+        if (relic.leaderId) {
+          throw new Error(`Leader starter relic ${relicId} cannot be selected as a reward.`);
+        }
         state.relics.push(relicId);
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + (state.encoreLevel >= 2 ? 12 : 18));
         state.runStatus = 'playing';
@@ -1105,9 +1110,13 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               profileStorageAvailable = false;
               console.error('Unable to read player profile stats.', error);
               ui.showSaveNotice('Profile statistics are unavailable in this browser.');
-            } else if (error instanceof InvalidProfileStatsError) {
-              console.error('Saved profile stats could not be restored.', error);
-              ui.showSaveNotice('Saved profile statistics could not be restored and have been reset.');
+            } else if (error instanceof InvalidProfileStatsError || error instanceof OutdatedProfileStatsError) {
+              if (error instanceof InvalidProfileStatsError) {
+                console.error('Saved profile stats could not be restored.', error);
+              }
+              ui.showSaveNotice(error instanceof OutdatedProfileStatsError
+                ? 'This update reset profile progress. Start a new World Tour.'
+                : 'Saved profile statistics could not be restored and have been reset.');
               profileStats = createDefaultProfileStats();
               try {
                 saveProfileStats(profileStats);
@@ -1125,6 +1134,11 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           let savedRun = null;
           try {
             savedRun = loadSavedRun();
+            if (savedRun !== null && savedRun.version !== RUN_SAVE_VERSION) {
+              clearSavedRun();
+              savedRun = null;
+              ui.showSaveNotice('This update reset saved progress. Choose a leader to start a new World Tour.');
+            }
             if (savedRun !== null) {
               savedRun = migrateSavedRun(savedRun, {
                 cardDatabase: CARD_DB,

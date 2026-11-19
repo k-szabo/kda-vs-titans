@@ -1,6 +1,6 @@
 import { getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
 
-export const PROFILE_VERSION = 2;
+export const PROFILE_VERSION = 3;
 const PROFILE_KEY = 'encore-spire.profile';
 
 export class ProfileStorageError extends Error {
@@ -14,6 +14,13 @@ export class InvalidProfileStatsError extends Error {
   constructor(message, cause) {
     super(message, { cause });
     this.name = 'InvalidProfileStatsError';
+  }
+}
+
+export class OutdatedProfileStatsError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'OutdatedProfileStatsError';
   }
 }
 
@@ -54,6 +61,10 @@ export function loadProfileStats() {
     profile = JSON.parse(serialized);
   } catch (error) {
     throw new InvalidProfileStatsError('Saved profile stats are not valid JSON.', error);
+  }
+
+  if (Number.isInteger(profile?.version) && profile.version < PROFILE_VERSION) {
+    throw new OutdatedProfileStatsError('Saved profile progress was reset by this update.');
   }
 
   const isNonNegativeInteger = (value) => Number.isInteger(value) && value >= 0;

@@ -1,4 +1,5 @@
 export const KDA_MEMBER_IDS = Object.freeze(['ahri', 'akali', 'evelynn', 'kaisa']);
+export const MAX_HAND_SIZE = 5;
 
 export function createTurnMemberState() {
   return {

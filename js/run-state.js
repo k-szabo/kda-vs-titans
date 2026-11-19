@@ -1,4 +1,4 @@
-import { createTurnMemberState, KDA_MEMBER_IDS } from './combat-rules.js';
+import { createTurnMemberState, KDA_MEMBER_IDS, MAX_HAND_SIZE } from './combat-rules.js';
 import { InvalidSavedRunError, RUN_SAVE_VERSION } from './run-storage.js';
 import { LEADERS } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
@@ -29,7 +29,16 @@ function normalizeTurnMemberState(state) {
   };
 }
 
-function normalizeRunTracking(state, cardDatabase, encounterCount) {
+function normalizeHandSize(state) {
+  const hand = Array.isArray(state.hand) ? [...state.hand] : [];
+  const drawPile = Array.isArray(state.drawPile) ? [...state.drawPile] : [];
+  if (hand.length > MAX_HAND_SIZE) {
+    drawPile.push(...hand.splice(MAX_HAND_SIZE).reverse());
+  }
+  return { hand, drawPile };
+}
+
+function normalizeRunTracking(state, cardDatabase, encounterCount, relicDatabase) {
   const stageIndex = Number.isInteger(state.stageIndex) ? state.stageIndex : 0;
   const clearedCurrentStage = ['draft', 'victory'].includes(state.runStatus);
   const inferredWavesCleared = Math.min(encounterCount, stageIndex + Number(clearedCurrentStage));
@@ -48,7 +57,15 @@ function normalizeRunTracking(state, cardDatabase, encounterCount) {
       ? state.peakSingleTurnDamage
       : Math.max(0, isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0),
     cardPlayCounts,
-    dailyChallenge: state.dailyChallenge ?? null,
+    dailyChallenge: state.dailyChallenge && isRecord(state.dailyChallenge)
+      ? {
+          ...state.dailyChallenge,
+          relicId: state.dailyChallenge.relicId &&
+            relicDatabase[state.dailyChallenge.relicId]?.leaderId
+            ? null
+            : state.dailyChallenge.relicId ?? null
+        }
+      : state.dailyChallenge ?? null,
     rngState: Number.isInteger(state.rngState) &&
       state.rngState >= 0 &&
       state.rngState <= 0xffffffff
@@ -84,6 +101,15 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     const patterns = enrageTriggered && encounter.phase2Patterns?.length
       ? encounter.phase2Patterns
       : encounter.patterns;
+    const { hand, drawPile } = normalizeHandSize(state);
+    const relics = Array.isArray(state.relics)
+      ? state.relics.filter((id) =>
+        !relicDatabase[id]?.leaderId || relicDatabase[id].leaderId === state.leader
+      )
+      : state.relics;
+    const relicChoices = Array.isArray(state.relicChoices)
+      ? state.relicChoices.filter((id) => !relicDatabase[id]?.leaderId)
+      : state.relicChoices;
     const activeInstances = [
       ...(Array.isArray(state.drawPile) ? state.drawPile : []),
       ...(Array.isArray(state.hand) ? state.hand : []),
@@ -102,8 +128,12 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       ...savedRun,
       state: {
         ...state,
+        hand,
+        drawPile,
+        relics,
+        relicChoices,
         ...normalizeTurnMemberState(state),
-        ...normalizeRunTracking(state, cardDatabase, encounters.length),
+        ...normalizeRunTracking(state, cardDatabase, encounters.length, relicDatabase),
         encoreLevel,
         damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
@@ -161,24 +191,31 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     throw new InvalidSavedRunError('The saved run deck contains cards outside its active piles.');
   }
 
-  const relics = Array.isArray(oldState.relics) ? oldState.relics : [];
+  const leader = LEADERS.some(({ id }) => id === oldState.leader) ? oldState.leader : LEADERS[0].id;
+  const relics = Array.isArray(oldState.relics)
+    ? oldState.relics.filter((id) =>
+      !relicDatabase[id]?.leaderId || relicDatabase[id].leaderId === leader
+    )
+    : [];
   const relicChoices = Array.isArray(oldState.relicChoices)
-    ? oldState.relicChoices
+    ? oldState.relicChoices.filter((id) => !relicDatabase[id]?.leaderId)
     : oldState.runStatus === 'draft'
-      ? shuffle(Object.keys(relicDatabase).filter((id) => !relics.includes(id))).slice(0, 3)
+      ? shuffle(Object.keys(relicDatabase).filter((id) =>
+        !relics.includes(id) && !relicDatabase[id].leaderId
+      )).slice(0, 3)
       : [];
   const migratedState = {
     ...oldState,
     ...piles,
     ...normalizeTurnMemberState(oldState),
-    ...normalizeRunTracking(oldState, cardDatabase, encounters.length),
+    ...normalizeRunTracking(oldState, cardDatabase, encounters.length, relicDatabase),
     masterDeck,
     nextCardInstanceId,
     encoreLevel: Number.isInteger(oldState.encoreLevel)
       ? Math.min(5, Math.max(0, oldState.encoreLevel))
       : 0,
     stageIndex: Number.isInteger(oldState.stageIndex) ? oldState.stageIndex : 0,
-    leader: LEADERS.some(({ id }) => id === oldState.leader) ? oldState.leader : LEADERS[0].id,
+    leader,
     leaderAbilityUsed: oldState.leaderAbilityUsed === true,
     damageDealtThisTurn: 0,
     skillsPlayedThisTurn: 0,
@@ -218,6 +255,7 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     !Array.isArray(saved.draftChoices) ||
     !Array.isArray(saved.relics) ||
     !Array.isArray(saved.relicChoices) ||
+    saved.hand.length > MAX_HAND_SIZE ||
     !saved.masterDeck.every(isCardInstance) ||
     !allInstances.every(isCardInstance) ||
     !allInstances.every((instance) => {
@@ -233,9 +271,18 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     activeIds.size !== allInstances.length ||
     [...masterIds].some((id) => !activeIds.has(id)) ||
     !saved.draftChoices.every((id) => typeof id === 'string' && Object.hasOwn(cardDatabase, id) && !cardDatabase[id].starter && cardDatabase[id].draftable !== false) ||
-    !saved.relics.every((id) => typeof id === 'string' && Object.hasOwn(relicDatabase, id)) ||
+    !saved.relics.every((id) =>
+      typeof id === 'string' &&
+      Object.hasOwn(relicDatabase, id) &&
+      (!relicDatabase[id].leaderId || relicDatabase[id].leaderId === saved.leader)
+    ) ||
     new Set(saved.relics).size !== saved.relics.length ||
-    !saved.relicChoices.every((id) => typeof id === 'string' && Object.hasOwn(relicDatabase, id) && !saved.relics.includes(id)) ||
+    !saved.relicChoices.every((id) =>
+      typeof id === 'string' &&
+      Object.hasOwn(relicDatabase, id) &&
+      !relicDatabase[id].leaderId &&
+      !saved.relics.includes(id)
+    ) ||
     new Set(saved.relicChoices).size !== saved.relicChoices.length ||
     !Number.isInteger(saved.stageIndex) ||
     saved.stageIndex < 0 ||
@@ -272,6 +319,7 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       (saved.dailyChallenge.relicId === null ||
         typeof saved.dailyChallenge.relicId === 'string' &&
           Object.hasOwn(relicDatabase, saved.dailyChallenge.relicId) &&
+          !relicDatabase[saved.dailyChallenge.relicId].leaderId &&
           saved.relics.includes(saved.dailyChallenge.relicId)) &&
       DAILY_MODIFIERS.some(({ id }) => id === saved.dailyChallenge.modifier) &&
       Number.isInteger(saved.rngState) &&

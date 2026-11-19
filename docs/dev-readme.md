@@ -1,6 +1,6 @@
 # Developer guide
 
-Encore Spire is a static HTML, CSS, and JavaScript project. It has no build step or package installation requirements. Active runs and player profile stats are saved in the browser's local storage.
+Encore Spire is a static HTML, CSS, and JavaScript project with no runtime package or deployment build requirement. Rebuilding the committed Tailwind stylesheet uses temporary npm packages. Active runs and player profile stats are saved in the browser's local storage.
 
 ## Run locally
 
@@ -20,13 +20,13 @@ Open <http://localhost:8000/#devtools> to use the testing-only wave selector. Se
 
 The World Tour main menu is shown on boot unless `#devtools` is in the URL. It displays each member's equipped art and rank, total wins, highest wave, unlocked art, Codex progress, Encore tier, and daily streak. It offers Continue Tour, New World Tour, Daily World Tour, Art Studio, and Codex & Changelog. The combat header's MENU button returns to the main menu without ending the active run. Continue Tour restores the saved combat or reward screen.
 
-A new tour begins with leader and Encore-tier selection. A leader's special ability can be used once during that run. Completing all 10 waves with a leader unlocks that member's MORE art; completing a second full run with the same leader unlocks FIRESTARTER. Choose unlocked character art in the Art Studio. Every wave cleared while an art style is equipped counts toward that member/art's ranked portrait border, which advances once per 10 waves.
+A new tour begins with leader and Encore-tier selection. A leader's special ability can be used once during that run. Completing all 10 waves with a leader unlocks that member's MORE art; completing a second full run with the same leader unlocks FIRESTARTER. Choose unlocked character art in the Art Studio. Each cleared wave advances only the run leader's equipped art border, which advances once per 10 waves.
 
 Leader art uses official League of Legends Data Dragon splash assets configured in `assets/data.json`.
 
 ## Encore Ascension
 
-Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is stored in the persistent profile and ranges from `0` (Normal) through `5`. Existing profile data is preserved.
+Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is stored in the persistent profile and ranges from `0` (Normal) through `5`. Release v1.6.1 bumps `PROFILE_VERSION` to 3 and `RUN_SAVE_VERSION` to 4, intentionally resetting previous profile progress and run saves so all players begin a fresh tour.
 
 - **Encore 1:** +15% boss maximum HP.
 - **Encore 2:** Card and relic rewards heal 12 HP instead of 18 HP.
@@ -34,7 +34,7 @@ Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is store
 - **Encore 4:** New runs include one non-draftable Stage Fright Status card in the starter deck.
 - **Encore 5:** Charged-interrupt thresholds increase by 4 damage and boss Phase 2 triggers at 60% HP instead of 50%.
 
-Each new run also receives the selected leader's signature starter relic: Ahri gets Nine-Tail Mic, Akali gets Neon Kunai, Evelynn gets Velvet Shades, and Kai'Sa gets Void Core.
+Each new standard run also receives the selected leader's signature starter Relic: Ahri gets Nine-Tail Mic, Akali gets Neon Kunai, Evelynn gets Velvet Shades, and Kai'Sa gets Void Core. Signature Relics are leader-bound and never appear in random Relic rewards; Daily Tours draw only from the general Relic pool.
 
 ## Reactive boss mechanics
 
@@ -47,17 +47,17 @@ Bosses may define optional `passives` in their encounter JSON:
 
 Enemy Strength is added to each hit. Charged intents may define `interruptThreshold` to be skipped when K/DA deals that much HP damage during the player turn; `interruptBonus` sets the extra damage if the interrupt is missed, and `pierce` controls the share of damage that bypasses Holo Shield. The `injectStatus` intent adds non-draftable Status card copies to the discard pile.
 
-Status cards may set `endTurnDamage` and `ethereal` to deal direct HP damage and exhaust if left in hand. Boss mechanics and temporary Status instances are normalized in existing v3 run saves; no save reset or save-version bump is needed.
+Status cards may set `endTurnDamage` and `ethereal` to deal direct HP damage and exhaust if left in hand. The hand is capped at five cards, including when loading a saved run; overflow cards return to the draw pile. The current run-save version is 4. Version 1.6.1 deliberately invalidates previous run saves and profile data.
 
 Cards may set `retain: true` to stay in hand instead of being discarded at turn end; the older `retainInHand` field remains supported for compatibility. Void Prism Bastion and Starlight Aria are draftable retained cards. At each post-battle reward, the Cut 1 Card option removes a selected deck card and restores 10 HP. EMP Static and Stage Fright retain until played, while Micro-Oxygen costs 1 Hype Energy and deals 4 direct HP damage if left in hand.
 
-Playing cards from all four K/DA members in one player turn triggers Quartet Harmony once that turn: +1 Energy, +6 Shield, and +10% Crowd Cheer. Playing three cards from the same member consecutively triggers that member's Solo Spotlight: Ahri applies 1 Charm and heals 3 HP; Akali deals 6 piercing damage and draws 1 card; Evelynn applies 1 Marked and steals up to 3 boss Block; Kai'Sa gains 8 Shield and 1 turn of Encore. The combat UI shows members played and the current consecutive chain. Turn tracking is normalized when loading existing v3 run saves.
+Playing cards from all four K/DA members in one player turn triggers Quartet Harmony once that turn: +1 Energy, +6 Shield, and +10% Crowd Cheer. Playing three cards from the same member consecutively triggers that member's Solo Spotlight: Ahri applies 1 Charm and heals 3 HP; Akali deals 6 piercing damage and draws 1 card; Evelynn applies 1 Marked and steals up to 3 boss Block; Kai'Sa gains 8 Shield and 1 turn of Encore. The combat UI shows members played and the current consecutive chain. Turn tracking is normalized when loading run saves.
 
-Boss encounters may define an optional `stageEffect` field. Supported hazards are `overcharge_grid` (3 direct HP damage per unspent Energy at turn end), `thermonuclear_heat` (3 direct HP damage at turn end if Shield is 0), and `luminous_spores` (+3% Crowd Cheer for each Skill played). Overcharge Grid is used by King Ghidorah and Mechagodzilla; Thermonuclear Heat by Rodan and Burning Godzilla; Luminous Spores by Mothra. The active hazard is shown in the boss panel. Existing v3 run saves restore the current encounter's hazard.
+Boss encounters may define an optional `stageEffect` field. Supported hazards are `overcharge_grid` (3 direct HP damage per unspent Energy at turn end), `thermonuclear_heat` (3 direct HP damage at turn end if Shield is 0), and `luminous_spores` (+3% Crowd Cheer for each Skill played). Overcharge Grid is used by King Ghidorah and Mechagodzilla; Thermonuclear Heat by Rodan and Burning Godzilla; Luminous Spores by Mothra. The active hazard is shown in the boss panel.
 
 Daily World Tour uses the UTC date as a deterministic seed for its assigned leader, Relic, rule modifier, deck shuffles, and rewards. Acoustic Set starts with 4 max Energy and no starter Relic; Encore Pressure gives bosses +15% HP and a random starter Relic; Crowd Surf grants +15% Crowd Cheer at each wave start and a random starter Relic. Daily wins update current and best consecutive-day streaks in the existing profile.
 
-Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. These run metrics are stored with the v3 run state and normalized when loading older saves.
+Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. These run metrics are stored with the v4 run state.
 
 The battle log can be collapsed from its header control. It defaults to collapsed on narrow screens to preserve combat and hand space.
 
@@ -101,7 +101,7 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 └── index.html
 ```
 
-Run and profile data stay in the same browser and site origin; they are not synced between devices or browsers. Starting a new run replaces only the active run.
+Run and profile data stay in the same browser and site origin; they are not synced between devices or browsers. Starting a new run replaces only the active run. Release v1.6.1 resets existing run and profile data for all players.
 
 ## Version and changelog
 
@@ -126,7 +126,14 @@ See the [architecture guide](copilot_handoff_architecture_guide.md) for the boss
 
 ## External resources
 
-- [Tailwind CSS Play CDN](https://tailwindcss.com/docs/installation/play-cdn) and [Google Fonts](https://fonts.google.com/) are loaded by the page.
+Tailwind utilities are compiled into the committed `css/tailwind.css` stylesheet, avoiding the Play CDN runtime warning on GitHub Pages. After adding Tailwind classes to `index.html` or `js/*.js`, regenerate it from the project root:
+
+```powershell
+npm install --no-save --no-package-lock tailwindcss @tailwindcss/cli
+npx --yes @tailwindcss/cli -i ./css/tailwind.input.css -o ./css/tailwind.css --minify
+```
+
+[Google Fonts](https://fonts.google.com/) are loaded by the page.
 - K/DA portrait images are served from Riot's Data Dragon CDN.
 - Encounter backdrops are served from Unsplash.
 

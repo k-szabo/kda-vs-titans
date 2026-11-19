@@ -1,4 +1,4 @@
-export const RUN_SAVE_VERSION = 3;
+export const RUN_SAVE_VERSION = 4;
 const RUN_SAVE_KEY = 'encore-spire.run';
 
 export class RunStorageError extends Error {
@@ -29,6 +29,14 @@ export function loadSavedRun() {
     return JSON.parse(serialized);
   } catch (error) {
     throw new InvalidSavedRunError('The saved run is not valid JSON.', error);
+  }
+}
+
+export function clearSavedRun() {
+  try {
+    window.localStorage.removeItem(RUN_SAVE_KEY);
+  } catch (error) {
+    throw new RunStorageError('Unable to reset the saved run.', error);
   }
 }
 
