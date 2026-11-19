@@ -381,7 +381,9 @@ Supported effect types (`js/card-effects.js`):
 - Effects run in array order.
 - `upgradeAmount` is added to `amount` per upgrade level (max level 1). It does
   **not** upgrade `turns` or `count`.
-- `upgrade.costReduction` reduces effective cost per upgrade level.
+- `upgrade.costReduction` reduces effective cost per upgrade level. When a card's
+  upgrade only changes cost, the upgrade description must say so
+  (`Cost 1. ...`) or the preview reads as unchanged.
 - `"when": { "target": "enemy" | "player", "status": "..." }` gates an effect.
 - Log alternatives use the same `when` shape and may override `template` /
   `colorClass`.

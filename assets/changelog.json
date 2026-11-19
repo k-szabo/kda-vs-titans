@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.7.4_92afe6bc",
+  "currentVersion": "v1.7.5_8804cd4b",
   "releases": [
+    {
+      "version": "v1.7.5_8804cd4b",
+      "date": "2026-11-19",
+      "changes": [
+        "Buff card upgrades now state their cost reduction, so Zhonya's Hourglass and Ionian Boots no longer preview as unchanged."
+      ]
+    },
     {
       "version": "v1.7.4_92afe6bc",
       "date": "2026-11-19",

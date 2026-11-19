@@ -401,7 +401,7 @@
       "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3158.png",
       "desc": "At the start of your turn, gain <b>+1 Hype Energy</b>. Lasts <b>2</b> turns.",
       "upgrade": {
-        "description": "At the start of your turn, gain +1 Hype Energy. Lasts 2 turns.",
+        "description": "Cost 1. At the start of your turn, gain +1 Hype Energy. Lasts 2 turns.",
         "costReduction": 1
       },
       "buff": {
@@ -455,7 +455,7 @@
       "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3157.png",
       "desc": "Negate the next instance of damage, then lose this buff.",
       "upgrade": {
-        "description": "Negate the next instance of damage, then lose this buff.",
+        "description": "Cost 1. Negate the next instance of damage, then lose this buff.",
         "costReduction": 1
       },
       "buff": {
