@@ -191,7 +191,11 @@ export async function loadGameData() {
   const relicDatabase = Object.fromEntries(relicData.relics.map((relic) => [relic.id, relic]));
   const supportedRelicEffects = [
     { trigger: 'stageStart', type: 'startingEnergy' },
-    { trigger: 'attackPlayed', type: 'gainBlock' }
+    { trigger: 'attackPlayed', type: 'gainBlock' },
+    { trigger: 'cardPlayed', type: 'cheerGainPercent' },
+    { trigger: 'attackPlayed', type: 'zeroCostAttackDamage' },
+    { trigger: 'skillPlayed', type: 'charmDuration' },
+    { trigger: 'skillPlayed', type: 'skillGainBlock' }
   ];
   if (
     Object.keys(relicDatabase).length !== relicData.relics.length ||

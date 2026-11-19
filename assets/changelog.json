@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.4.2_56646801",
+  "currentVersion": "v1.4.3_d7d3e4c4",
   "releases": [
+    {
+      "version": "v1.4.3_d7d3e4c4",
+      "date": "2026-11-19",
+      "changes": [
+        "Fixed relic data validation to accept the four leader starter relic effect types, preventing the game from failing to load.",
+        "Updated developer documentation for Encore, starter relic, hazard, and battle-log behavior."
+      ]
+    },
     {
       "version": "v1.4.2_56646801",
       "date": "2026-11-19",
