@@ -168,7 +168,11 @@
           <span class="font-display text-[10px] font-bold text-indigo-300 mt-1">KAI'SA</span>
         </div>
       </div>
-      <div id="memberHarmonyChain" class="flex flex-wrap items-center justify-center gap-1.5 mb-2" aria-label="Member card chain for this turn"></div>
+      <div class="flex flex-wrap items-center justify-center gap-1.5 mb-2">
+        <div id="memberHarmonyChain" class="flex flex-wrap items-center justify-center gap-1.5" aria-label="Member card chain for this turn"></div>
+        <button id="btnComboGuide" type="button" aria-expanded="false" aria-controls="comboGuide" class="rounded-full border border-amber-300/40 bg-amber-400/10 px-2 py-1 font-display text-[8px] font-black tracking-wider text-amber-200 transition hover:bg-amber-400/20">❔ COMBOS</button>
+      </div>
+      <div id="comboGuide" class="hidden mb-2"></div>
 
       <!-- CROWD CHEER / JOINT ENCORE ULTIMATE METER -->
       <div class="bg-gradient-to-r from-pink-950/50 via-purple-950/50 to-amber-950/40 rounded-2xl p-2.5 mb-2.5 border border-amber-400/30">
@@ -237,6 +241,7 @@
           <div id="enemyIntentText" class="font-display text-xs sm:text-sm font-black text-white">
             ⚔️ TAIL SLAM: 10 DMG
           </div>
+          <div id="enemyStunMeter" class="hidden mt-1 text-[9px] font-display font-black tracking-wider text-cyan-200" title="Only HP damage dealt after the boss's Block counts toward an interrupt.">STUN 0 / 18 HP DMG</div>
         </div>
       </div>
 
@@ -346,6 +351,10 @@
             <li>Relics grant passive or triggered bonuses. Draft rewards and backstage rests help shape your deck between waves.</li>
             <li>Clear all 10 waves to unlock the next Encore tier. Art Studio unlocks alternate looks and tracks each leader's rank.</li>
           </ul>
+        </article>
+        <article class="rounded-2xl border border-amber-300/25 bg-amber-400/5 p-4 md:col-span-3">
+          <h3 class="mb-2 font-display text-xs font-black text-amber-200">4. MEMBER COMBOS</h3>
+          <div id="howToPlayCombos"></div>
         </article>
       </div>
       <p class="mt-4 text-[11px] text-slate-400">Keyboard shortcuts can be changed in Options. During a battle, press the configured key to play a card, end your turn, trigger Joint Finale, or use your Leader Ability.</p>

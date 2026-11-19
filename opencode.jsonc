@@ -1,0 +1,32 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // GitHub MCP server for issue triage on k-szabo/kda-vs-titans.
+  // The PAT is read from a user-only file outside the repository, so no secret
+  // is committed. The file must hold the token on one line with no trailing
+  // newline. Toolsets are limited so the tool list stays small.
+  "mcp": {
+    "servers": {
+      "github": {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {file:~/.secrets/github-pat}",
+          "X-MCP-Toolsets": "context,repos,issues,labels,projects",
+        }
+      }
+    }
+  },
+  "providers": {
+    "opencode": {
+      "models": {
+        "deepseek-v4.1-flash-free": {
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          }
+        }
+      }
+    }
+  }
+}

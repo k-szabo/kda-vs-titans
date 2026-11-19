@@ -1,4 +1,5 @@
 import { getEffectiveCardCost } from './card-effects.js';
+import { MEMBER_SYNERGY } from './combat-rules.js';
 import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { renderChangelogEntries } from './changelog-ui.js';
@@ -15,6 +16,7 @@ export function createGameUI({
   getCurrentEnemyIntent,
   getDailyChallenge,
   onPlayCard,
+  onToggleKeep,
   onJumpToStage,
   onChooseDraftCard,
   onChooseRelic,
@@ -65,10 +67,14 @@ export function createGameUI({
     const upgradeLevel = previewUpgrade ? 1 : (cardInstance?.upgradeLevel || 0);
     const cost = getEffectiveCardCost(card, upgradeLevel);
     const playable = isDraftPreview || (state.isPlayerTurn && state.player.energy >= cost);
+    const isKept = !isDraftPreview &&
+      handIndex >= 0 &&
+      cardInstance != null &&
+      state.keptCardInstanceId === cardInstance.instanceId;
     const el = document.createElement('div');
     el.className = `spire-card card-${card.member} p-2.5 sm:p-3 flex flex-col justify-between ${
       playable ? 'playable' : 'unplayable'
-    }${upgradeLevel > 0 ? ' card-upgraded' : ''}`;
+    }${upgradeLevel > 0 ? ' card-upgraded' : ''}${isKept ? ' ring-2 ring-amber-300/70' : ''}`;
 
     const badgeColor =
       card.member === 'ahri'
@@ -90,9 +96,12 @@ export function createGameUI({
           <span class="px-1.5 py-0.5 rounded border font-display text-[9px] font-bold ${badgeColor}">
             ${card.memberName}
           </span>
-          <span class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-display text-xs font-black flex items-center justify-center shadow">
-            ${cost}
-          </span>
+          <div class="flex items-center gap-1">
+            ${!isDraftPreview && handIndex >= 0 ? `<button type="button" data-keep-toggle="1" aria-pressed="${isKept}" title="${isKept ? 'Stop keeping this card' : 'Keep this card for next turn (draws one fewer)'}" class="w-5 h-5 rounded-full border font-display text-[9px] leading-none flex items-center justify-center ${isKept ? 'bg-amber-400 text-slate-950 border-amber-300' : 'bg-black/40 text-amber-200/80 border-white/20'}">📌</button>` : ''}
+            <span class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-display text-xs font-black flex items-center justify-center shadow">
+              ${cost}
+            </span>
+          </div>
         </div>
         <div class="w-full h-16 sm:h-20 rounded-lg overflow-hidden mb-1.5 border border-white/10 bg-slate-900">
           <img src="${artUrl}" alt="${card.name}" class="w-full h-full object-cover object-[50%_18%]" />
@@ -111,6 +120,13 @@ export function createGameUI({
 
     if (!isDraftPreview && handIndex >= 0) {
       el.addEventListener('click', () => onPlayCard(handIndex));
+      const keepToggle = el.querySelector('[data-keep-toggle]');
+      if (keepToggle) {
+        keepToggle.addEventListener('click', (event) => {
+          event.stopPropagation();
+          onToggleKeep(cardInstance.instanceId);
+        });
+      }
     }
     return el;
   }
@@ -128,6 +144,51 @@ export function createGameUI({
       tab.classList.toggle('bg-white/5', !active);
       tab.classList.toggle('text-slate-300', !active);
     });
+  }
+
+  function buildComboReference({ compact = false } = {}) {
+    const { quartet, spotlight } = MEMBER_SYNERGY;
+    const rows = LEADERS.map(({ id, name }) => {
+      const synergy = spotlight[id];
+      if (!synergy) return '';
+      const parts = [];
+      if (synergy.charm) parts.push(`${synergy.charm} Charm`);
+      if (synergy.heal) parts.push(`heal ${synergy.heal} HP`);
+      if (synergy.damage) parts.push(`${synergy.damage} piercing damage`);
+      if (synergy.draw) parts.push(`draw ${synergy.draw}`);
+      if (synergy.marked) parts.push(`${synergy.marked} Marked`);
+      if (synergy.stealBlock) parts.push(`steal up to ${synergy.stealBlock} Block`);
+      if (synergy.block) parts.push(`+${synergy.block} Holo Shield`);
+      if (synergy.encore) parts.push(`+${synergy.encore} turn of Encore`);
+      return `<li><span class="font-bold text-white">${name}</span>: ${parts.join(', ')}</li>`;
+    }).join('');
+
+    const wrapperClass = compact
+      ? 'rounded-xl border border-amber-300/25 bg-amber-400/5 p-2.5 text-[10px] leading-relaxed text-slate-300'
+      : 'text-xs leading-relaxed text-slate-300';
+    const headingClass = compact ? 'text-[10px]' : 'text-xs';
+
+    return `
+      <div class="${wrapperClass}">
+        <p class="font-display ${headingClass} font-black text-amber-200">QUARTET HARMONY <span class="font-normal text-slate-400">— all four members in one turn, once per turn</span></p>
+        <p class="mb-2">+${quartet.energy} Energy, +${quartet.block} Holo Shield, +${quartet.cheer}% Crowd Cheer.</p>
+        <p class="font-display ${headingClass} font-black text-amber-200">SOLO SPOTLIGHT <span class="font-normal text-slate-400">— 3 cards from the same member in a row</span></p>
+        <ul class="mt-1 list-disc space-y-0.5 pl-4">${rows}</ul>
+        <p class="mt-2 text-slate-400">A non-member card (e.g. K/DA SQUAD) breaks the consecutive chain but keeps members already played this turn.</p>
+      </div>`;
+  }
+
+  function renderComboReference() {
+    const guide = document.getElementById('comboGuide');
+    if (guide && guide.dataset.rendered !== 'true') {
+      guide.innerHTML = buildComboReference({ compact: true });
+      guide.dataset.rendered = 'true';
+    }
+    const howTo = document.getElementById('howToPlayCombos');
+    if (howTo && howTo.dataset.rendered !== 'true') {
+      howTo.innerHTML = buildComboReference();
+      howTo.dataset.rendered = 'true';
+    }
   }
 
   function renderAll() {
@@ -248,6 +309,21 @@ export function createGameUI({
     document.getElementById('enemySubtitle').textContent = e.subtitle;
     document.getElementById('enemyName').textContent = e.name;
     document.getElementById('enemyIntentText').textContent = intent.displayText;
+    const stunMeter = document.getElementById('enemyStunMeter');
+    const stunThreshold = Number.isFinite(intent.interruptThreshold) ? intent.interruptThreshold : null;
+    if (stunThreshold) {
+      const stunProgress = Math.min(state.damageDealtThisTurn || 0, stunThreshold);
+      const stunMet = stunProgress >= stunThreshold;
+      stunMeter.classList.remove('hidden');
+      stunMeter.textContent = stunMet
+        ? `🛑 STUN READY (${stunThreshold} HP DMG)`
+        : `STUN ${stunProgress} / ${stunThreshold} HP DMG`;
+      stunMeter.className = stunMet
+        ? 'mt-1 text-[9px] font-display font-black tracking-wider text-emerald-300'
+        : 'mt-1 text-[9px] font-display font-black tracking-wider text-cyan-200';
+    } else {
+      stunMeter.classList.add('hidden');
+    }
     document.getElementById('enemyHpText').textContent = `${e.hp} / ${e.maxHp}`;
     document.getElementById('enemyHpBar').style.width = `${Math.max(0, (e.hp / e.maxHp) * 100)}%`;
     const stageEffects = {
@@ -355,6 +431,8 @@ export function createGameUI({
       harmonyPill.textContent = 'QUARTET HARMONY';
       harmonyEl.appendChild(harmonyPill);
     }
+
+    renderComboReference();
 
     document.getElementById('combatLog').innerHTML = state.logs
       .map((entry) => `<div class="bg-black/35 rounded-lg px-2 py-1 border border-white/5 leading-snug ${entry.colorClass}">

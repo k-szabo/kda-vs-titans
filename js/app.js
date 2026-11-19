@@ -18,6 +18,8 @@ import {
   getEncoreInterruptThreshold,
   getEncorePhase2Ratio,
   MAX_HAND_SIZE,
+  MAX_HAND_LIMIT,
+  MEMBER_SYNERGY,
   recordMemberPlay,
   shouldInterruptChargedIntent
 } from './combat-rules.js';
@@ -118,6 +120,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           damageDealtThisTurn: 0,
           peakSingleTurnDamage: 0,
           skillsPlayedThisTurn: 0,
+          handLimit: MAX_HAND_SIZE,
+          keptCardInstanceId: null,
           cardPlayCounts: {},
           ...createTurnMemberState(),
           leader,
@@ -175,6 +179,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.turn = 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        state.handLimit = MAX_HAND_SIZE;
+        state.keptCardInstanceId = null;
         Object.assign(state, createTurnMemberState());
         state.runStatus = 'playing';
         state.draftChoices = [];
@@ -210,8 +216,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       }
 
       function drawCards(count) {
+        const limit = state.handLimit ?? MAX_HAND_SIZE;
         for (let i = 0; i < count; i++) {
-          if (state.hand.length >= MAX_HAND_SIZE) break;
+          if (state.hand.length >= limit) break;
           if (state.drawPile.length === 0) {
             if (state.discardPile.length === 0) break;
             state.drawPile = shuffle(state.discardPile);
@@ -252,7 +259,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             intent.uninterruptedDmg = Math.ceil(eff * (1 + (intent.interruptBonus ?? 0.35)));
           }
           const thresholdText = Number.isFinite(intent.interruptThreshold)
-            ? ` // ${intent.interruptThreshold} DMG TO STUN`
+            ? ` // ${intent.interruptThreshold} HP DMG TO STUN`
             : '';
           if (intent.type === 'multi') {
             intent.displayText = `${intent.label.split(':')[0]}: ${eff}x${intent.hits} DMG${thresholdText}`;
@@ -265,6 +272,14 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           intent.displayText = intent.label;
         }
         return intent;
+      }
+
+      function toggleKeptCard(instanceId) {
+        if (!state.isPlayerTurn) return;
+        if (!Number.isInteger(instanceId)) return;
+        if (!state.hand.some((cardInstance) => cardInstance.instanceId === instanceId)) return;
+        state.keptCardInstanceId = state.keptCardInstanceId === instanceId ? null : instanceId;
+        renderAll();
       }
 
       function playCardAtIndex(handIdx) {
@@ -288,6 +303,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
         // Move card from hand to discard/exhaust
         state.hand.splice(handIdx, 1);
+        if (state.keptCardInstanceId === cardInstance.instanceId) state.keptCardInstanceId = null;
         if (card.exhaust) {
           state.exhaustPile.push(cardInstance);
         } else {
@@ -357,6 +373,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             state.player.cheer = Math.min(100, state.player.cheer + pct);
           },
           draw: (count) => drawCards(count),
+          raiseHandLimit: (amount) => {
+            const ceiling = Math.max(MAX_HAND_SIZE, state.handLimit ?? MAX_HAND_SIZE) + amount;
+            state.handLimit = Math.min(MAX_HAND_LIMIT, ceiling);
+          },
           stealEnemyBlock: (amount) => {
             const stolen = Math.min(state.enemy.block, amount);
             state.enemy.block -= stolen;
@@ -395,38 +415,62 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
       function resolveMemberSynergy({ harmonyTriggered, spotlightTriggered }) {
         const ctx = createEffectContext();
+        const { quartet, spotlight } = MEMBER_SYNERGY;
         if (harmonyTriggered) {
-          ctx.gainEnergy(1);
-          ctx.gainBlock(6);
-          ctx.addCheer(10);
-          addLog('🎶 QUARTET HARMONY! +1 Energy, +6 Shield, and +10% Crowd Cheer!', 'text-amber-300 font-bold');
+          ctx.gainEnergy(quartet.energy);
+          ctx.gainBlock(quartet.block);
+          ctx.addCheer(quartet.cheer);
+          addLog(
+            `🎶 QUARTET HARMONY! +${quartet.energy} Energy, +${quartet.block} Shield, and +${quartet.cheer}% Crowd Cheer!`,
+            'text-amber-300 font-bold'
+          );
         }
         if (!spotlightTriggered) return;
 
-        switch (state.memberPlayChain.member) {
-          case 'ahri':
-            ctx.applyEnemyStatus('charm', 1);
-            ctx.healPlayer(3);
-            addLog('🦊 Ahri Solo Spotlight: applied 1 Charm and healed 3 HP!', 'text-pink-300 font-bold');
-            break;
-          case 'akali':
-            ctx.dealEnemyDmg(6, 1);
-            ctx.draw(1);
-            addLog('🥷 Akali Solo Spotlight: dealt 6 piercing damage and drew 1 card!', 'text-cyan-300 font-bold');
-            break;
-          case 'evelynn': {
-            ctx.applyEnemyStatus('marked', 1);
-            const stolen = ctx.stealEnemyBlock(3);
-            addLog(`💜 Evelynn Solo Spotlight: applied 1 Marked and stole ${stolen} Block!`, 'text-purple-300 font-bold');
+        const member = state.memberPlayChain.member;
+        switch (member) {
+          case 'ahri': {
+            const synergy = spotlight.ahri;
+            ctx.applyEnemyStatus('charm', synergy.charm);
+            ctx.healPlayer(synergy.heal);
+            addLog(
+              `🦊 Ahri Solo Spotlight: applied ${synergy.charm} Charm and healed ${synergy.heal} HP!`,
+              'text-pink-300 font-bold'
+            );
             break;
           }
-          case 'kaisa':
-            ctx.gainBlock(8);
-            ctx.addPlayerStatus('encore', 1);
-            addLog("✨ Kai'Sa Solo Spotlight: gained +8 Shield and +1 turn of Encore!", 'text-indigo-300 font-bold');
+          case 'akali': {
+            const synergy = spotlight.akali;
+            ctx.dealEnemyDmg(synergy.damage, synergy.pierce);
+            ctx.draw(synergy.draw);
+            addLog(
+              `🥷 Akali Solo Spotlight: dealt ${synergy.damage} piercing damage and drew ${synergy.draw} card!`,
+              'text-cyan-300 font-bold'
+            );
             break;
+          }
+          case 'evelynn': {
+            const synergy = spotlight.evelynn;
+            ctx.applyEnemyStatus('marked', synergy.marked);
+            const stolen = ctx.stealEnemyBlock(synergy.stealBlock);
+            addLog(
+              `💜 Evelynn Solo Spotlight: applied ${synergy.marked} Marked and stole ${stolen} Block!`,
+              'text-purple-300 font-bold'
+            );
+            break;
+          }
+          case 'kaisa': {
+            const synergy = spotlight.kaisa;
+            ctx.gainBlock(synergy.block);
+            ctx.addPlayerStatus('encore', synergy.encore);
+            addLog(
+              `✨ Kai'Sa Solo Spotlight: gained +${synergy.block} Shield and +${synergy.encore} turn of Encore!`,
+              'text-indigo-300 font-bold'
+            );
+            break;
+          }
           default:
-            throw new Error(`Unknown member in Solo Spotlight chain: ${state.memberPlayChain.member}`);
+            throw new Error(`Unknown member in Solo Spotlight chain: ${member}`);
         }
       }
 
@@ -483,10 +527,11 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             addLog('💜 Evelynn used Allure: charmed the enemy for 3 turns and gained 25% Crowd Cheer!', 'text-purple-300 font-bold');
             break;
           case 'kaisa':
+            ctx.raiseHandLimit(3);
             ctx.draw(3);
             ctx.gainEnergy(2);
             ctx.addCheer(15);
-            addLog("✨ Kai'Sa used Killer Instinct: drew 3 cards, gained 2 Hype Energy and 15% Crowd Cheer!", 'text-indigo-300 font-bold');
+            addLog("✨ Kai'Sa used Killer Instinct: 3 temporary hand slots, drew 3 cards, gained 2 Hype Energy and 15% Crowd Cheer!", 'text-indigo-300 font-bold');
             break;
           default:
             throw new Error(`Unknown run leader: ${state.leader}`);
@@ -516,16 +561,19 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
 
         const retainedCards = [];
+        const keptCardInstanceId = state.keptCardInstanceId ?? null;
         while (state.hand.length > 0) {
           const cardInstance = state.hand.pop();
           const card = CARD_DB[cardInstance.cardId];
-          if (card?.retain || card?.retainInHand) {
+          const isKept = keptCardInstanceId !== null && cardInstance.instanceId === keptCardInstanceId;
+          if (card?.retain || card?.retainInHand || isKept) {
             retainedCards.unshift(cardInstance);
           } else {
             state.discardPile.push(cardInstance);
           }
         }
         state.hand.push(...retainedCards);
+        state.keptCardInstanceId = null;
 
         if (state.enemy.stageEffect === 'overcharge_grid' && state.player.energy > 0) {
           const hazardDamage = state.player.energy * 3;
@@ -546,46 +594,51 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         triggerEnemyPassives('onTurnEnd');
         const intent = getCurrentEnemyIntent();
 
-        addLog(`--- ${e.name} executes ${intent.displayText} ---`, 'text-sky-300 font-bold');
-
-        if (typeof intent.effectiveDmg === 'number') playSoundEffect(playKaijuRoarSfx);
         const interrupted = shouldInterruptChargedIntent(intent, state.damageDealtThisTurn);
         if (interrupted) {
-          addLog(`💥 K/DA dealt ${state.damageDealtThisTurn} damage and interrupted ${e.name}'s charged attack!`, 'text-cyan-300 font-bold');
+          addLog(
+            `🛑 ${e.name}'s ${intent.displayText} fizzles — K/DA's ${state.damageDealtThisTurn} HP damage interrupted it!`,
+            'text-cyan-300 font-bold'
+          );
           playSoundEffect(playDorsalInterruptSfx);
-        } else if (intent.type === 'charge') {
-          e.block += intent.block;
-          ui.spawnPopup('enemyArenaCard', `+${intent.block} 🛡️`, 'text-sky-300 font-display font-black text-lg');
-        } else if (intent.type === 'injectStatus') {
-          if (intent.block) {
+        } else {
+          addLog(`--- ${e.name} executes ${intent.displayText} ---`, 'text-sky-300 font-bold');
+          if (typeof intent.effectiveDmg === 'number') playSoundEffect(playKaijuRoarSfx);
+
+          if (intent.type === 'charge') {
             e.block += intent.block;
             ui.spawnPopup('enemyArenaCard', `+${intent.block} 🛡️`, 'text-sky-300 font-display font-black text-lg');
-          }
-          for (let count = 0; count < intent.count; count++) {
-            state.discardPile.push({
-              instanceId: state.nextCardInstanceId++,
-              cardId: intent.cardId,
-              upgradeLevel: 0
-            });
-          }
-          addLog(`⚠️ ${e.name} added ${intent.count} ${CARD_DB[intent.cardId].name} card${intent.count === 1 ? '' : 's'} to your discard pile!`, 'text-rose-300');
-        } else if (intent.type === 'attack' || intent.type === 'atomic' || intent.type === 'debuff_atk') {
-          const damage = intent.uninterruptedDmg ?? intent.effectiveDmg;
-          if (!interrupted && intent.interruptThreshold) {
-            addLog(`⚠️ The charged attack hit harder because K/DA missed the ${intent.interruptThreshold}-damage interrupt!`, 'text-rose-300');
-          }
-          applyDamageToPlayer(damage, intent.pierce || 0);
-          if (intent.weak) {
-            state.player.statuses.weak += intent.weak;
-            addLog(`⚠️ K/DA afflicted with ${intent.weak} Weak (-25% Attack DMG)!`, 'text-rose-300');
-          }
-        } else if (intent.type === 'multi') {
-          const damage = intent.uninterruptedDmg ?? intent.effectiveDmg;
-          if (!interrupted && intent.interruptThreshold) {
-            addLog(`⚠️ The charged attack hit harder because K/DA missed the ${intent.interruptThreshold}-damage interrupt!`, 'text-rose-300');
-          }
-          for (let h = 0; h < intent.hits; h++) {
+          } else if (intent.type === 'injectStatus') {
+            if (intent.block) {
+              e.block += intent.block;
+              ui.spawnPopup('enemyArenaCard', `+${intent.block} 🛡️`, 'text-sky-300 font-display font-black text-lg');
+            }
+            for (let count = 0; count < intent.count; count++) {
+              state.discardPile.push({
+                instanceId: state.nextCardInstanceId++,
+                cardId: intent.cardId,
+                upgradeLevel: 0
+              });
+            }
+            addLog(`⚠️ ${e.name} added ${intent.count} ${CARD_DB[intent.cardId].name} card${intent.count === 1 ? '' : 's'} to your discard pile!`, 'text-rose-300');
+          } else if (intent.type === 'attack' || intent.type === 'atomic' || intent.type === 'debuff_atk') {
+            const damage = intent.uninterruptedDmg ?? intent.effectiveDmg;
+            if (intent.interruptThreshold) {
+              addLog(`⚠️ The charged attack hit harder because K/DA missed the ${intent.interruptThreshold} HP damage interrupt!`, 'text-rose-300');
+            }
             applyDamageToPlayer(damage, intent.pierce || 0);
+            if (intent.weak) {
+              state.player.statuses.weak += intent.weak;
+              addLog(`⚠️ K/DA afflicted with ${intent.weak} Weak (-25% Attack DMG)!`, 'text-rose-300');
+            }
+          } else if (intent.type === 'multi') {
+            const damage = intent.uninterruptedDmg ?? intent.effectiveDmg;
+            if (intent.interruptThreshold) {
+              addLog(`⚠️ The charged attack hit harder because K/DA missed the ${intent.interruptThreshold} HP damage interrupt!`, 'text-rose-300');
+            }
+            for (let h = 0; h < intent.hits; h++) {
+              applyDamageToPlayer(damage, intent.pierce || 0);
+            }
           }
         }
 
@@ -604,6 +657,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.turn += 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        state.handLimit = MAX_HAND_SIZE;
         Object.assign(state, createTurnMemberState());
         state.player.energy = state.player.maxEnergy;
         state.isPlayerTurn = true;
@@ -1023,6 +1077,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         document.getElementById('btnEndTurn').addEventListener('click', endPlayerTurn);
         document.getElementById('btnJointAttack').addEventListener('click', triggerJointAttack);
         document.getElementById('btnLeaderAbility').addEventListener('click', useLeaderAbility);
+        document.getElementById('btnComboGuide').addEventListener('click', () => {
+          const guide = document.getElementById('comboGuide');
+          const button = document.getElementById('btnComboGuide');
+          const nowHidden = guide.classList.toggle('hidden');
+          button.setAttribute('aria-expanded', String(!nowHidden));
+        });
         document.getElementById('btnNewRun').addEventListener('click', openNewRunSelection);
         document.getElementById('btnMainMenu').addEventListener('click', showMainMenu);
         document.getElementById('btnRestartRunEnd').addEventListener('click', openNewRunSelection);
@@ -1116,6 +1176,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             getEncounters: () => ENCOUNTERS,
             getCurrentEnemyIntent,
             onPlayCard: playCardAtIndex,
+            onToggleKeep: toggleKeptCard,
             onJumpToStage: startStage,
             onChooseDraftCard: chooseDraftCard,
             onChooseRelic: chooseRelic,

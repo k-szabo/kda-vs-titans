@@ -1,4 +1,4 @@
-import { createTurnMemberState, KDA_MEMBER_IDS, MAX_HAND_SIZE } from './combat-rules.js';
+import { createTurnMemberState, KDA_MEMBER_IDS, MAX_HAND_SIZE, MAX_HAND_LIMIT } from './combat-rules.js';
 import { InvalidSavedRunError, RUN_SAVE_VERSION } from './run-storage.js';
 import { LEADERS } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
@@ -29,13 +29,30 @@ function normalizeTurnMemberState(state) {
   };
 }
 
-function normalizeHandSize(state) {
+function normalizeHandLimit(state) {
+  return Number.isInteger(state.handLimit) &&
+    state.handLimit >= MAX_HAND_SIZE &&
+    state.handLimit <= MAX_HAND_LIMIT
+    ? state.handLimit
+    : MAX_HAND_SIZE;
+}
+
+function normalizeHandSize(state, handLimit) {
   const hand = Array.isArray(state.hand) ? [...state.hand] : [];
   const drawPile = Array.isArray(state.drawPile) ? [...state.drawPile] : [];
-  if (hand.length > MAX_HAND_SIZE) {
-    drawPile.push(...hand.splice(MAX_HAND_SIZE).reverse());
+  if (hand.length > handLimit) {
+    drawPile.push(...hand.splice(handLimit).reverse());
   }
   return { hand, drawPile };
+}
+
+function normalizeKeptCard(state, hand) {
+  const keptId = state.keptCardInstanceId;
+  return Number.isInteger(keptId) &&
+    keptId > 0 &&
+    hand.some((instance) => instance?.instanceId === keptId)
+    ? keptId
+    : null;
 }
 
 function normalizeRunTracking(state, cardDatabase, encounterCount, relicDatabase) {
@@ -101,7 +118,8 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     const patterns = enrageTriggered && encounter.phase2Patterns?.length
       ? encounter.phase2Patterns
       : encounter.patterns;
-    const { hand, drawPile } = normalizeHandSize(state);
+    const handLimit = normalizeHandLimit(state);
+    const { hand, drawPile } = normalizeHandSize(state, handLimit);
     const relics = Array.isArray(state.relics)
       ? state.relics.filter((id) =>
         !relicDatabase[id]?.leaderId || relicDatabase[id].leaderId === state.leader
@@ -136,6 +154,8 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         ...normalizeRunTracking(state, cardDatabase, encounters.length, relicDatabase),
         encoreLevel,
         damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
+        handLimit,
+        keptCardInstanceId: normalizeKeptCard(state, hand),
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
           ? state.skillsPlayedThisTurn
           : 0,
@@ -255,7 +275,7 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     !Array.isArray(saved.draftChoices) ||
     !Array.isArray(saved.relics) ||
     !Array.isArray(saved.relicChoices) ||
-    saved.hand.length > MAX_HAND_SIZE ||
+    saved.hand.length > (Number.isInteger(saved.handLimit) ? saved.handLimit : MAX_HAND_SIZE) ||
     !saved.masterDeck.every(isCardInstance) ||
     !allInstances.every(isCardInstance) ||
     !allInstances.every((instance) => {
@@ -348,6 +368,13 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.damageDealtThisTurn < 0 ||
     !Number.isInteger(saved.skillsPlayedThisTurn) ||
     saved.skillsPlayedThisTurn < 0 ||
+    !Number.isInteger(saved.handLimit) ||
+    saved.handLimit < MAX_HAND_SIZE ||
+    saved.handLimit > MAX_HAND_LIMIT ||
+    !(saved.keptCardInstanceId === null ||
+      Number.isInteger(saved.keptCardInstanceId) &&
+        saved.keptCardInstanceId > 0 &&
+        saved.hand.some((instance) => instance?.instanceId === saved.keptCardInstanceId)) ||
     !Array.isArray(saved.turnMembersPlayed) ||
     saved.turnMembersPlayed.some((member) => !KDA_MEMBER_IDS.includes(member)) ||
     new Set(saved.turnMembersPlayed).size !== saved.turnMembersPlayed.length ||

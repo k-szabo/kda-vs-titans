@@ -1,6 +1,17 @@
 {
-  "currentVersion": "v1.7.1_9532654b",
+  "currentVersion": "v1.7.2_7bd7068f",
   "releases": [
+    {
+      "version": "v1.7.2_7bd7068f",
+      "date": "2026-11-19",
+      "changes": [
+        "Added a member combo reference to the combat screen and How to Play.",
+        "Interrupt thresholds now show a live STUN meter and name HP damage explicitly.",
+        "Interrupted boss intents log a fizzle instead of claiming to execute.",
+        "Added a pin toggle to keep one card for the next turn; it costs a draw slot.",
+        "Hand size can temporarily exceed five, and Killer Instinct now opens three extra slots."
+      ]
+    },
     {
       "version": "v1.7.1_9532654b",
       "date": "2026-11-19",

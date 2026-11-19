@@ -64,10 +64,32 @@ checklist in §11.
 - The header MENU button returns to the main menu without ending the run.
   Options is available from both the main menu and the combat header.
 
+### Issue tracker
+
+Player-reported bugs and feature requests live on GitHub at
+`k-szabo/kda-vs-titans`. The committed `opencode.jsonc` connects OpenCode to
+GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
+`context`, `repos`, `issues`, and `labels` toolsets.
+
+- The PAT is never committed. It is read from `~/.secrets/github-pat` through
+  `{file:~/.secrets/github-pat}`. Keep that file to a single line with **no
+  trailing newline**, or the `Authorization` header is rejected as malformed.
+- `{env:VAR}` substitution is resolved by the OpenCode server when it starts, so
+  an exported variable is ignored until OpenCode restarts. The `{file:}` form
+  takes effect as soon as the config reloads.
+- Writing issues needs a fine-grained PAT with Issues read/write and Metadata
+  read on this repository (or a classic PAT with `repo`).
+- `opencode mcp list` should report `github  connected`; if it reports a 400,
+  the token file is missing, empty, or has a trailing newline.
+- Triage labels: `bug` / `enhancement` for type, `priority: high|normal|low`,
+  and `needs-repro` when the report lacks enough detail to reproduce. Use
+  `good first issue` for self-contained, low-risk work.
+
 ## 3. Project map
 
 | Path | Responsibility |
 | --- | --- |
+| `opencode.jsonc` | OpenCode project config: connects the GitHub MCP server for issue triage. References the PAT from a file outside the repo; never store the token here. |
 | `index.html` | Page structure, main menu, combat arena, modals, `#devtools` page. Loads `css/tailwind.css`, `css/styles.css`, Google Fonts, and `js/app.js` as a module. |
 | `css/tailwind.css` | **Generated and minified.** Do not hand-edit; regenerate from `css/tailwind.input.css`. |
 | `css/tailwind.input.css` | Tailwind source with `@source` globs for `index.html` and `js/**/*.js`. |
@@ -140,8 +162,14 @@ overview.
 - At wave start: shield resets to 0, energy refills, statuses reset to
   `{ encore: 0, weak: 0 }`, draw pile is shuffled from the master deck, and
   5 cards are drawn. **Crowd Cheer is not reset between waves.**
-- Hand cap is `5` (`MAX_HAND_SIZE` in `js/combat-rules.js`). Drawing stops at the
-  cap; reshuffle discard into draw when the draw pile is empty.
+- Hand cap is `5` (`MAX_HAND_SIZE` in `js/combat-rules.js`) by default. Effects
+  such as `raiseHandLimit` raise `state.handLimit` for the current turn only
+  (Kai'Sa's leader ability adds 3 temporary slots); it resets to 5 at the start
+  of every turn and every wave and never exceeds `MAX_HAND_LIMIT` (10). Drawing
+  stops at the limit; reshuffle discard into draw when the draw pile is empty.
+- **Keep one card:** `state.keptCardInstanceId` marks a single hand card. It is
+  retained at end of turn exactly like a `retain` card, the mark clears, and the
+  next draw still stops at the 5-card cap — so keeping a card draws one fewer.
 - Playing a card:
   - checks effective cost (base minus upgrade `costReduction`),
   - spends energy,
@@ -227,7 +255,10 @@ Optional intent fields:
 
 - `charged: true` — marks the intent as charged (visual pulse).
 - `interruptThreshold` — only valid with `charged` and numeric `dmg`. If
-  `damageDealtThisTurn >= threshold`, the intent is skipped.
+  `damageDealtThisTurn >= threshold`, the intent is skipped. The threshold
+  counts HP damage **after** enemy Block; the boss panel shows a live
+  `STUN x / N HP DMG` meter so the gap is visible. Interrupted intents log a
+  fizzle line and never log `executes`.
 - `interruptBonus` — multiplier added to effective damage when the interrupt is
   missed; defaults to `0.35` in `app.js`.
 - `pierce` — `0..1` share of damage that bypasses Holo Shield.
@@ -310,7 +341,8 @@ Common fields:
 
 Supported effect types (`js/card-effects.js`):
 `damage` (optional `hits`), `gainBlock`, `healPlayer`, `applyEnemyStatus`,
-`addPlayerStatus`, `clearPlayerStatus`, `addCheer`, `draw`, `gainEnergy`.
+`addPlayerStatus`, `clearPlayerStatus`, `addCheer`, `draw`, `gainEnergy`,
+`raiseHandLimit`.
 
 - Effects run in array order.
 - `upgradeAmount` is added to `amount` per upgrade level (max level 1). It does
@@ -426,8 +458,9 @@ modal is open or a rebind is listening.
 - Validation is intentionally strict. If you add a `runStatus`, state field, or
   enemy field, update `isValidSavedRun()` and `migrateSavedRun()` in
   `js/run-state.js`. Keep `nextCardInstanceId` greater than every instance ID,
-  keep every master-deck instance present in exactly one active pile, and keep
-  the hand at or below 5.
+  keep every master-deck instance present in exactly one active pile, keep the
+  hand at or below `state.handLimit`, and keep `handLimit` between 5 and 10.
+  `keptCardInstanceId` is `null` or the instance ID of a card currently in hand.
 
 Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
@@ -532,8 +565,12 @@ Run through this before considering a change complete:
 1. Serve over HTTP; no console errors and no `#loadError`.
 2. New run: leader selection, Encore tier gating, starter deck/relic, wave 1.
 3. Play cards; verify cost, upgrades, exhaust, retain, status cards, and hand cap.
+   Mark a card with the 📌 toggle and confirm it survives one turn and that the
+   next hand is 4 + kept card. Use Kai'Sa's ability on a full hand and confirm
+   the temporary 3 slots are used and reset next turn.
 4. Reach 100% Cheer; use Joint Finale; use the leader ability once.
-5. Trigger Quartet Harmony and each Solo Spotlight.
+5. Trigger Quartet Harmony and each Solo Spotlight; open the COMBOS panel and
+   confirm its text matches the effects that fire.
 6. Enemy intents: attack, multi, charge, atomic, debuff, inject; charged
    interrupt success/failure; piercing damage; enrage/phase 2; each hazard.
 7. Post-battle rewards: card, relic, upgrade, cut, rest; confirm heals.

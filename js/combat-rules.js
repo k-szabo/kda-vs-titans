@@ -1,5 +1,19 @@
 export const KDA_MEMBER_IDS = Object.freeze(['ahri', 'akali', 'evelynn', 'kaisa']);
 export const MAX_HAND_SIZE = 5;
+// Hard ceiling for effects that temporarily raise the hand limit.
+export const MAX_HAND_LIMIT = 10;
+
+// Single source of truth for member synergy numbers. The engine, the combat
+// legend, and How to Play all read from here so text cannot drift from effects.
+export const MEMBER_SYNERGY = Object.freeze({
+  quartet: Object.freeze({ energy: 1, block: 6, cheer: 10 }),
+  spotlight: Object.freeze({
+    ahri: Object.freeze({ charm: 1, heal: 3 }),
+    akali: Object.freeze({ damage: 6, pierce: 1, draw: 1 }),
+    evelynn: Object.freeze({ marked: 1, stealBlock: 3 }),
+    kaisa: Object.freeze({ block: 8, encore: 1 })
+  })
+});
 
 export function createTurnMemberState() {
   return {

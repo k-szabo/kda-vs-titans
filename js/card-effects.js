@@ -61,6 +61,9 @@ export function executeCardEffects(card, ctx, upgradeLevel = 0) {
       case 'gainEnergy':
         ctx.gainEnergy(amount);
         break;
+      case 'raiseHandLimit':
+        ctx.raiseHandLimit(amount);
+        break;
       default:
         throw new Error(`Unsupported card effect type: ${effect.type}`);
     }
