@@ -181,10 +181,15 @@ export async function loadGameData() {
         cardDatabase[intent.cardId].draftable === false &&
         Number.isInteger(intent.count) &&
         intent.count > 0 &&
-        (intent.block === undefined || Number.isFinite(intent.block) && intent.block >= 0));
+        (intent.block === undefined || Number.isFinite(intent.block) && intent.block >= 0)) &&
+    (intent.type !== 'steal_energy' ||
+      Number.isInteger(intent.amount) && intent.amount > 0 && intent.amount <= 3);
   const validPassive = (passive) => {
     if (!isRecord(passive) || typeof passive.desc !== 'string' || !passive.desc.trim()) return false;
     if (passive.trigger === 'onPlayerAttack' && passive.effect === 'gainBlock') {
+      return Number.isInteger(passive.value) && passive.value > 0;
+    }
+    if (passive.trigger === 'onPlayerAttack' && passive.effect === 'reflect') {
       return Number.isInteger(passive.value) && passive.value > 0;
     }
     if (passive.trigger === 'onSkillPlayed' && passive.effect === 'gainStrengthEvery') {

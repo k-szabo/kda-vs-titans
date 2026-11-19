@@ -124,6 +124,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           skillsPlayedThisTurn: 0,
           handLimit: MAX_HAND_SIZE,
           keptCardInstanceId: null,
+          energyPenalty: 0,
           cardPlayCounts: {},
           ...createTurnMemberState(),
           leader,
@@ -184,6 +185,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.skillsPlayedThisTurn = 0;
         state.handLimit = MAX_HAND_SIZE;
         state.keptCardInstanceId = null;
+        state.energyPenalty = 0;
         Object.assign(state, createTurnMemberState());
         state.runStatus = 'playing';
         state.draftChoices = [];
@@ -211,6 +213,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           stageEffect: enc.stageEffect,
           enrageTriggered: false,
           patternStep: 0,
+          reflectUsedThisTurn: false,
           statuses: { charm: 0, marked: 0 }
         };
 
@@ -238,6 +241,28 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const def = CARD_DB[buff.cardId]?.buff;
         if (!def) return 0;
         return def.amount + (buff.upgradeLevel > 0 ? (def.upgradeAmount || 0) : 0);
+      }
+
+      function getCardDamagePreview(cardInstance) {
+        const card = CARD_DB[cardInstance?.cardId];
+        if (!card) return null;
+        const damageEffects = (card.effects || []).filter((effect) => effect.type === 'damage');
+        if (damageEffects.length === 0) return null;
+        const upgradeLevel = cardInstance.upgradeLevel || 0;
+        const parts = damageEffects.map((effect) => ({
+          perHit: computeCardAttackDamage(effect.amount + (effect.upgradeAmount || 0) * upgradeLevel),
+          hits: effect.hits || 1
+        }));
+        const total = parts.reduce((sum, part) => sum + part.perHit * part.hits, 0);
+        const single = parts.length === 1 ? parts[0] : null;
+        const hpDamage = Math.max(0, total - (state.enemy.block || 0));
+        return {
+          perHit: single ? single.perHit : null,
+          hits: single ? single.hits : null,
+          total,
+          hpDamage,
+          lethal: state.enemy.hp > 0 && hpDamage >= state.enemy.hp
+        };
       }
 
       function computeCardAttackDamage(baseDmg) {
@@ -690,6 +715,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               });
             }
             addLog(`⚠️ ${e.name} added ${intent.count} ${CARD_DB[intent.cardId].name} card${intent.count === 1 ? '' : 's'} to your discard pile!`, 'text-rose-300');
+          } else if (intent.type === 'steal_energy') {
+            const drained = Math.min(3, intent.amount || 1);
+            state.energyPenalty = Math.max(state.energyPenalty || 0, drained);
+            addLog(`🔋 ${e.name} drained ${drained} Hype Energy from K/DA's next turn!`, 'text-rose-300');
           } else if (intent.type === 'attack' || intent.type === 'atomic' || intent.type === 'debuff_atk') {
             const damage = intent.uninterruptedDmg ?? intent.effectiveDmg;
             if (intent.interruptThreshold) {
@@ -724,8 +753,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
         state.handLimit = MAX_HAND_SIZE;
+        state.enemy.reflectUsedThisTurn = false;
         Object.assign(state, createTurnMemberState());
-        state.player.energy = state.player.maxEnergy;
+        state.player.energy = Math.max(0, state.player.maxEnergy - (state.energyPenalty || 0));
+        state.energyPenalty = 0;
         tickBuffsAtTurnStart();
         state.isPlayerTurn = true;
         drawCards(5);
@@ -852,6 +883,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           if (passive.effect === 'gainBlock') {
             e.block += passive.value;
             ui.spawnPopup('enemyArenaCard', `+${passive.value} 🛡️`, 'text-sky-300 font-display font-black text-lg');
+          } else if (passive.effect === 'reflect') {
+            if (!e.reflectUsedThisTurn) {
+              e.reflectUsedThisTurn = true;
+              applyDamageToPlayer(passive.value, 1);
+              addLog(`🪞 ${e.name}'s plating reflected ${passive.value} damage back at K/DA!`, 'text-rose-300');
+            }
           } else if (passive.effect === 'gainStrength') {
             e.strength += passive.value;
             addLog(`⚠️ ${e.name} gained ${passive.value} Strength!`, 'text-rose-300');
@@ -1352,6 +1389,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             getCurrentEnemyIntent,
             onPlayCard: playCardAtIndex,
             onToggleKeep: toggleKeptCard,
+            getCardDamagePreview,
             onJumpToStage: startStage,
             onChooseDraftCard: chooseDraftCard,
             onChooseRelic: chooseRelic,

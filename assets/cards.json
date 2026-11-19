@@ -491,6 +491,24 @@
         "template": "🎤 Encore Overflow widened the stage and drew 2 cards!",
         "colorClass": "text-indigo-300"
       }
+    },
+    {
+      "id": "burn",
+      "name": "Burn",
+      "member": "squad",
+      "memberName": "K/DA SQUAD",
+      "type": "STATUS",
+      "cost": 1,
+      "starter": false,
+      "draftable": false,
+      "ethereal": true,
+      "endTurnDamage": 3,
+      "desc": "If still in your hand at end of turn, take <b>3 direct HP damage</b>, then exhaust.",
+      "effects": [],
+      "log": {
+        "template": "🔥 Burn seared K/DA for 3 HP.",
+        "colorClass": "text-rose-300"
+      }
     }
   ]
 }

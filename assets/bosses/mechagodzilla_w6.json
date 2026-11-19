@@ -14,6 +14,12 @@
       "desc": "Reactive Armor: gains +3 Block each time K/DA plays an Attack."
     },
     {
+      "trigger": "onPlayerAttack",
+      "effect": "reflect",
+      "value": 4,
+      "desc": "Plasma Plating: the first Attack each turn reflects 4 damage."
+    },
+    {
       "trigger": "onHpBelowHalf",
       "effect": "enrage",
       "strength": 3,

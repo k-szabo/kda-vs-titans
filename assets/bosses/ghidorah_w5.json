@@ -39,6 +39,11 @@
       "dmg": 24,
       "label": "🌩️ GRAVITY BEAMS: 24 DMG",
       "charged": true
+    },
+    {
+      "type": "steal_energy",
+      "amount": 1,
+      "label": "🔋 STORM DRAIN: -1 HYPE ENERGY"
     }
   ],
   "assets": {
