@@ -2,6 +2,8 @@ export const KDA_MEMBER_IDS = Object.freeze(['ahri', 'akali', 'evelynn', 'kaisa'
 export const MAX_HAND_SIZE = 5;
 // Hard ceiling for effects that temporarily raise the hand limit.
 export const MAX_HAND_LIMIT = 10;
+// Fixed number of buff slots on stage.
+export const MAX_BUFF_SLOTS = 3;
 
 // Single source of truth for member synergy numbers. The engine, the combat
 // legend, and How to Play all read from here so text cannot drift from effects.

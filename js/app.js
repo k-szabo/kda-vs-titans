@@ -19,6 +19,7 @@ import {
   getEncorePhase2Ratio,
   MAX_HAND_SIZE,
   MAX_HAND_LIMIT,
+  MAX_BUFF_SLOTS,
   MEMBER_SYNERGY,
   recordMemberPlay,
   shouldInterruptChargedIntent
@@ -63,6 +64,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
   let mainMenuOpen = true;
   let storageAvailable = true;
   let profileStorageAvailable = true;
+  let pendingBuffHandIndex = null;
 
       function getUtcDateString(date = new Date()) {
         return date.toISOString().slice(0, 10);
@@ -150,6 +152,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           hand: [],
           discardPile: [],
           exhaustPile: [],
+          buffs: [],
           player: {
             hp: 80,
             maxHp: 80,
@@ -186,7 +189,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.draftChoices = [];
         state.relicChoices = [];
         state.isPlayerTurn = true;
-        state.drawPile = shuffle(state.masterDeck);
+        expireTimedBuffsAtWaveEnd();
+        const activeBuffIds = new Set(state.buffs.map((buff) => buff.instanceId));
+        state.drawPile = shuffle(state.masterDeck.filter((instance) => !activeBuffIds.has(instance.instanceId)));
         state.hand = [];
         state.discardPile = [];
         state.exhaustPile = [];
@@ -229,8 +234,20 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
       }
 
+      function getBuffAmount(buff) {
+        const def = CARD_DB[buff.cardId]?.buff;
+        if (!def) return 0;
+        return def.amount + (buff.upgradeLevel > 0 ? (def.upgradeAmount || 0) : 0);
+      }
+
       function computeCardAttackDamage(baseDmg) {
-        let dmg = baseDmg + (state.player.statuses.encore || 0);
+        const buffBonus = state.buffs.reduce((sum, buff) => {
+          const def = CARD_DB[buff.cardId]?.buff;
+          return def?.trigger === 'passive' && def.effect === 'bonusAttackDamage'
+            ? sum + getBuffAmount(buff)
+            : sum;
+        }, 0);
+        let dmg = baseDmg + (state.player.statuses.encore || 0) + buffBonus;
         if (state.player.statuses.weak > 0) {
           dmg = Math.floor(dmg * 0.75);
         }
@@ -282,6 +299,43 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         renderAll();
       }
 
+      function chooseBuffReplacement(slotIndex) {
+        if (pendingBuffHandIndex === null) return;
+        const handIndex = pendingBuffHandIndex;
+        pendingBuffHandIndex = null;
+        ui.closeBuffReplaceModal();
+        const cardInstance = state.hand[handIndex];
+        const card = CARD_DB[cardInstance?.cardId];
+        if (
+          !card ||
+          card.type !== 'BUFF' ||
+          state.buffs.length < MAX_BUFF_SLOTS ||
+          !Number.isInteger(slotIndex) ||
+          slotIndex < 0 ||
+          slotIndex >= state.buffs.length
+        ) {
+          renderAll();
+          return;
+        }
+        const cost = getEffectiveCardCost(card, cardInstance.upgradeLevel);
+        if (state.player.energy < cost) {
+          renderAll();
+          return;
+        }
+        const [replaced] = state.buffs.splice(slotIndex, 1);
+        if (replaced) {
+          discardBuffEntry(replaced);
+          addLog(`♻️ ${CARD_DB[replaced.cardId]?.name || 'Buff'} was replaced.`, 'text-slate-400');
+        }
+        playCardAtIndex(handIndex);
+      }
+
+      function cancelBuffReplacement() {
+        pendingBuffHandIndex = null;
+        ui.closeBuffReplaceModal();
+        renderAll();
+      }
+
       function playCardAtIndex(handIdx) {
         if (!state.isPlayerTurn) return;
         const cardInstance = state.hand[handIdx];
@@ -295,16 +349,34 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           return;
         }
 
+        if (card.type === 'BUFF' && state.buffs.length >= MAX_BUFF_SLOTS) {
+          pendingBuffHandIndex = handIdx;
+          ui.openBuffReplaceModal(state.buffs.map((buff) => ({
+            ...buff,
+            name: CARD_DB[buff.cardId]?.name,
+            art: CARD_DB[buff.cardId]?.art
+          })));
+          return;
+        }
+
         playSoundEffect(playCardSfx);
         state.player.energy -= cost;
         state.cardPlayCounts[card.id] = (state.cardPlayCounts[card.id] || 0) + 1;
         state.player.cheer = Math.min(100, state.player.cheer + 5 + cost * 3);
         applyRelicEffects('cardPlayed', card, cost);
 
-        // Move card from hand to discard/exhaust
+        // Move card from hand to discard/exhaust, or into a buff slot
         state.hand.splice(handIdx, 1);
         if (state.keptCardInstanceId === cardInstance.instanceId) state.keptCardInstanceId = null;
-        if (card.exhaust) {
+        if (card.type === 'BUFF') {
+          state.buffs.push({
+            instanceId: cardInstance.instanceId,
+            cardId: card.id,
+            upgradeLevel: cardInstance.upgradeLevel,
+            remaining: Number.isInteger(card.buff?.duration) ? card.buff.duration : null
+          });
+          addLog(card.log.template, card.log.colorClass);
+        } else if (card.exhaust) {
           state.exhaustPile.push(cardInstance);
         } else {
           state.discardPile.push(cardInstance);
@@ -312,7 +384,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
         // Execute Card Effect
         const ctx = createEffectContext();
-        executeCardEffects(card, ctx, cardInstance.upgradeLevel);
+        if (card.type !== 'BUFF') executeCardEffects(card, ctx, cardInstance.upgradeLevel);
         applyRelicEffects('attackPlayed', card, cost);
         if (card.type === 'ATTACK') triggerEnemyPassives('onPlayerAttack');
         if (card.type === 'SKILL') {
@@ -584,10 +656,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           addLog('🔥 Thermonuclear Heat: ending the turn with no Shield dealt 3 direct HP damage!', 'text-rose-300');
         }
 
-        if (state.player.hp <= 0) {
-          finishPlayerDefeat();
-          return;
-        }
+        if (state.player.hp <= 0 && finishPlayerDefeat()) return;
 
         const e = state.enemy;
         e.block = 0; // Enemy block resets at start of its turn
@@ -648,10 +717,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         if (e.statuses.marked > 0) e.statuses.marked -= 1;
         if (state.player.statuses.weak > 0) state.player.statuses.weak -= 1;
 
-        if (state.player.hp <= 0) {
-          finishPlayerDefeat();
-          return;
-        }
+        if (state.player.hp <= 0 && finishPlayerDefeat()) return;
 
         // Carry remaining Holo Shield forward into the next player turn.
         state.turn += 1;
@@ -660,12 +726,89 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.handLimit = MAX_HAND_SIZE;
         Object.assign(state, createTurnMemberState());
         state.player.energy = state.player.maxEnergy;
+        tickBuffsAtTurnStart();
         state.isPlayerTurn = true;
         drawCards(5);
         renderAll();
       }
 
+      function discardBuffEntry(buff) {
+        state.discardPile.push({
+          instanceId: buff.instanceId,
+          cardId: buff.cardId,
+          upgradeLevel: buff.upgradeLevel
+        });
+      }
+
+      function expireTimedBuffsAtWaveEnd() {
+        const surviving = [];
+        state.buffs.forEach((buff) => {
+          if (buff.remaining === null) {
+            surviving.push(buff);
+            return;
+          }
+          addLog(`⏳ ${CARD_DB[buff.cardId]?.name || 'Buff'} expired at the end of the wave.`, 'text-slate-400');
+        });
+        state.buffs = surviving;
+      }
+
+      function describeBuffEffect(def, amount) {
+        switch (def.effect) {
+          case 'gainBlock': return `+${amount} Holo Shield`;
+          case 'heal': return `heal ${amount} HP`;
+          case 'gainEnergy': return `+${amount} Hype Energy`;
+          default: return `+${amount}`;
+        }
+      }
+
+      function tickBuffsAtTurnStart() {
+        const surviving = [];
+        state.buffs.forEach((buff) => {
+          const card = CARD_DB[buff.cardId];
+          const def = card?.buff;
+          if (!def) return;
+
+          if (def.trigger === 'turnStart') {
+            const amount = getBuffAmount(buff);
+            if (def.effect === 'gainBlock') {
+              state.player.block += amount;
+              ui.spawnPopup('playerArenaCard', `+${amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
+            } else if (def.effect === 'heal') {
+              const healed = Math.min(state.player.maxHp - state.player.hp, amount);
+              state.player.hp += healed;
+              if (healed > 0) {
+                ui.spawnPopup('playerArenaCard', `+${healed} ❤️`, 'text-emerald-300 font-display font-black text-lg');
+              }
+            } else if (def.effect === 'gainEnergy') {
+              state.player.energy += amount;
+            }
+            addLog(`🎛️ ${card.name}: ${describeBuffEffect(def, amount)}.`, 'text-purple-300');
+          }
+
+          if (buff.remaining !== null) {
+            buff.remaining -= 1;
+            if (buff.remaining <= 0) {
+              discardBuffEntry(buff);
+              addLog(`⏳ ${card.name} expired.`, 'text-slate-400');
+              return;
+            }
+          }
+          surviving.push(buff);
+        });
+        state.buffs = surviving;
+      }
+
       function applyDamageToPlayer(rawDmg, pierce = 0) {
+        const negateIndex = state.buffs.findIndex((buff) =>
+          CARD_DB[buff.cardId]?.buff?.effect === 'negateDamage'
+        );
+        if (negateIndex >= 0 && rawDmg > 0) {
+          const [consumed] = state.buffs.splice(negateIndex, 1);
+          discardBuffEntry(consumed);
+          addLog(`⏳ ${CARD_DB[consumed.cardId]?.name || 'Buff'} negated ${rawDmg} damage and shattered.`, 'text-sky-300 font-bold');
+          ui.spawnPopup('playerArenaCard', 'NEGATED', 'text-sky-300 font-display font-black');
+          return;
+        }
         const { damageAfterBlock, hpLost, cheerLost } = applyPlayerDamage(state.player, rawDmg, pierce);
         if (damageAfterBlock > 0) {
           ui.triggerScreenShake();
@@ -679,11 +822,25 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       }
 
       function finishPlayerDefeat() {
+        const reviveIndex = state.buffs.findIndex((buff) =>
+          CARD_DB[buff.cardId]?.buff?.effect === 'revive'
+        );
+        if (reviveIndex >= 0) {
+          const [consumed] = state.buffs.splice(reviveIndex, 1);
+          const reviveHp = getBuffAmount(consumed);
+          state.player.hp = Math.min(state.player.maxHp, Math.max(1, reviveHp));
+          discardBuffEntry(consumed);
+          addLog(`👼 ${CARD_DB[consumed.cardId]?.name || 'Buff'} revived K/DA at ${state.player.hp} HP!`, 'text-emerald-300 font-bold');
+          ui.spawnPopup('playerArenaCard', `REVIVED ${state.player.hp} ❤️`, 'text-emerald-300 font-display font-black text-lg');
+          renderAll();
+          return false;
+        }
         state.player.hp = 0;
         state.runStatus = 'defeat';
         recordDailyResult(false);
         renderAll();
         ui.showRunEndModal(false);
+        return true;
       }
 
       function triggerEnemyPassives(trigger) {
@@ -1032,14 +1189,19 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const deckIndex = state.masterDeck.findIndex((instance) => instance.instanceId === instanceId);
         if (deckIndex < 0) return;
         const activePiles = [state.drawPile, state.hand, state.discardPile, state.exhaustPile];
+        const activeBuffIndex = state.buffs.findIndex((buff) => buff.instanceId === instanceId);
         const activePile = activePiles.find((pile) =>
           pile.some((instance) => instance.instanceId === instanceId)
         );
-        if (!activePile) {
+        if (activeBuffIndex < 0 && !activePile) {
           throw new Error(`Card ${instanceId} was missing from active piles during deck thinning.`);
         }
         const [removed] = state.masterDeck.splice(deckIndex, 1);
-        activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
+        if (activeBuffIndex >= 0) {
+          state.buffs.splice(activeBuffIndex, 1);
+        } else {
+          activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
+        }
         const healed = Math.min(10, state.player.maxHp - state.player.hp);
         state.player.hp += healed;
         state.runStatus = 'playing';
@@ -1054,6 +1216,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const instance = state.masterDeck.find((card) => card.instanceId === instanceId);
         if (!instance || instance.upgradeLevel !== 0 || !CARD_DB[instance.cardId]?.upgrade) return;
         instance.upgradeLevel = 1;
+        const activeBuff = state.buffs.find((buff) => buff.instanceId === instanceId);
+        if (activeBuff) activeBuff.upgradeLevel = 1;
         state.runStatus = 'playing';
         state.draftChoices = [];
         state.relicChoices = [];
@@ -1082,6 +1246,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           const button = document.getElementById('btnComboGuide');
           const nowHidden = guide.classList.toggle('hidden');
           button.setAttribute('aria-expanded', String(!nowHidden));
+        });
+        document.getElementById('btnCancelBuffReplace').addEventListener('click', cancelBuffReplacement);
+        document.getElementById('buffReplaceChoices').addEventListener('click', (event) => {
+          const choice = event.target.closest('[data-buff-replace]');
+          if (!choice) return;
+          chooseBuffReplacement(Number(choice.dataset.buffReplace));
         });
         document.getElementById('btnNewRun').addEventListener('click', openNewRunSelection);
         document.getElementById('btnMainMenu').addEventListener('click', showMainMenu);

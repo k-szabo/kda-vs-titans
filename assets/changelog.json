@@ -1,6 +1,17 @@
 {
-  "currentVersion": "v1.7.2_7bd7068f",
+  "currentVersion": "v1.7.3_696b5c9b",
   "releases": [
+    {
+      "version": "v1.7.3_696b5c9b",
+      "date": "2026-11-19",
+      "changes": [
+        "Added a three-slot buff zone with timed and one-shot stage-gear buffs.",
+        "Added six Data Dragon item buffs plus Kai'Sa's Encore Overflow hand-size card.",
+        "Buff cards prompt to replace an existing buff when all three slots are full.",
+        "Timed buffs count down and expire when a wave ends; one-shots persist until they fire.",
+        "Rebuilt the Tailwind stylesheet."
+      ]
+    },
     {
       "version": "v1.7.2_7bd7068f",
       "date": "2026-11-19",

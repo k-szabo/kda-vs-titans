@@ -211,6 +211,27 @@ overview.
 8. If alive: advance turn, reset per-turn counters/member chain, refill energy,
    draw 5, render.
 
+### Buff cards
+
+- Three fixed slots (`MAX_BUFF_SLOTS = 3`), stored in `state.buffs` as
+  `{ instanceId, cardId, upgradeLevel, remaining }`. `remaining` is `null` for
+  one-shot buffs and a positive integer for timed ones.
+- Buff cards use `type: "BUFF"` with a single `buff` block instead of immediate
+  effects: trigger `passive` / `turnStart` / `onLethal` / `onDamage`, effect
+  `bonusAttackDamage` / `gainBlock` / `heal` / `gainEnergy` / `revive` /
+  `negateDamage`.
+- Playing a buff moves the instance into a slot instead of the discard pile and
+  logs its `log.template`; an empty `effects` array is valid for BUFF cards.
+- Timed buffs tick at the start of the player's turn and are removed when a wave
+  ends. One-shots (`revive`, `negateDamage`) persist across waves until they
+  fire, then go to the discard pile.
+- `buff.upgradeAmount` is added to `buff.amount` at upgrade level 1.
+- With all three slots full, playing another buff opens the replace prompt; the
+  card returns to hand unspent if the prompt is cancelled.
+- Buff instances belong to `masterDeck` but live outside the four piles, so
+  `run-state.js` treats them as an active location and `startStage()` excludes
+  them when rebuilding the draw pile.
+
 ### Member synergy
 
 - **Quartet Harmony** (once per turn): play cards from all four members →
@@ -308,7 +329,8 @@ save migration.
 
 ### Cards (`assets/cards.json`)
 
-Required by validation: unique `id`, non-empty `effects` array, `log` object,
+Required by validation: unique `id`, an `effects` array (empty is allowed for
+STATUS and BUFF cards), `log` object,
 valid optional booleans (`draftable`, `ethereal`, `retain`, `retainInHand`), a
 valid `upgrade` if present, and starter-deck IDs that exist.
 
@@ -357,6 +379,33 @@ Supported effect types (`js/card-effects.js`):
   limited to simple formatting tags.
 - Draft pool = `!starter && draftable !== false`.
 - Add starter cards to `starterDeck`; duplicate IDs are allowed there.
+
+### Buff cards (`type: "BUFF"`)
+
+```json
+{
+  "id": "buff_locket",
+  "type": "BUFF",
+  "cost": 1,
+  "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3190.png",
+  "buff": {
+    "trigger": "turnStart",
+    "effect": "gainBlock",
+    "amount": 5,
+    "upgradeAmount": 2,
+    "duration": 3
+  },
+  "effects": [],
+  "log": { "template": "🎛️ Locket of the Iron Solari projected a barrier.", "colorClass": "text-cyan-300" }
+}
+```
+
+- `art` is an absolute Data Dragon URL. Cards without it fall back to the
+  member's selected artwork, so only item-style cards need it.
+- `duration` is omitted for one-shot buffs (`revive`, `negateDamage`).
+- The trigger/effect pair must exist in `SUPPORTED_BUFFS` in
+  `js/game-data.js`; `amount` must be positive and `upgradeAmount` may add to it.
+- `effects` stays empty: a buff has no immediate effect when played.
 
 ### Relics (`assets/relics.json`)
 
@@ -461,6 +510,9 @@ modal is open or a rebind is listening.
   keep every master-deck instance present in exactly one active pile, keep the
   hand at or below `state.handLimit`, and keep `handLimit` between 5 and 10.
   `keptCardInstanceId` is `null` or the instance ID of a card currently in hand.
+  `state.buffs` holds at most 3 `{ instanceId, cardId, upgradeLevel, remaining }`
+  entries; buff instances stay out of the four piles and count as an active
+  location for deck coverage.
 
 Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
@@ -492,6 +544,19 @@ The version also drives cache clearing and JSON cache-busting.
    belongs in a new run.
 4. Provide `upgrade.description` if the card can be upgraded.
 5. Keep `log.template` placeholders limited to the supported set.
+
+### Add a buff card
+
+1. Add a `type: "BUFF"` card with an empty `effects` array and a `buff` block
+   using a pair from `SUPPORTED_BUFFS`.
+2. Set `art` to a Data Dragon item icon (pinned version) when the card is gear;
+   omit it for character cards so they use the leader's selected art.
+3. Give it an `upgrade` with a real benefit: `costReduction` or
+   `buff.upgradeAmount`.
+4. Timed buffs need `duration`; one-shots omit it and must consume themselves
+   in `app.js` (`revive` in `finishPlayerDefeat`, `negateDamage` in
+   `applyDamageToPlayer`).
+5. Verify slot replacement, wave expiry, and reload behaviour.
 
 ### Add a relic
 
@@ -574,6 +639,9 @@ Run through this before considering a change complete:
 6. Enemy intents: attack, multi, charge, atomic, debuff, inject; charged
    interrupt success/failure; piercing damage; enrage/phase 2; each hazard.
 7. Post-battle rewards: card, relic, upgrade, cut, rest; confirm heals.
+7a. Buff zone: play a timed buff and confirm its countdown; play a fourth buff
+    and confirm the replace prompt; let a timed buff expire at a wave end;
+    trigger Guardian Angel and Zhonya's and confirm they are consumed.
 8. Reload mid-combat and mid-draft; confirm state, piles, logs, and modal.
 9. Win and lose a run; copy the Tour Receipt; verify profile stats, codex,
    Encore unlock, and Art Studio progress.

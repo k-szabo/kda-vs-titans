@@ -1,4 +1,4 @@
-import { createTurnMemberState, KDA_MEMBER_IDS, MAX_HAND_SIZE, MAX_HAND_LIMIT } from './combat-rules.js';
+import { createTurnMemberState, KDA_MEMBER_IDS, MAX_HAND_SIZE, MAX_HAND_LIMIT, MAX_BUFF_SLOTS } from './combat-rules.js';
 import { InvalidSavedRunError, RUN_SAVE_VERSION } from './run-storage.js';
 import { LEADERS } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
@@ -53,6 +53,55 @@ function normalizeKeptCard(state, hand) {
     hand.some((instance) => instance?.instanceId === keptId)
     ? keptId
     : null;
+}
+
+function normalizeBuffs(state, cardDatabase) {
+  const raw = Array.isArray(state.buffs) ? state.buffs : [];
+  const buffs = [];
+  const orphans = [];
+  const seen = new Set();
+  for (const entry of raw) {
+    const card = isRecord(entry) ? cardDatabase[entry.cardId] : null;
+    const usable = isRecord(entry) &&
+      Number.isInteger(entry.instanceId) &&
+      entry.instanceId > 0 &&
+      !seen.has(entry.instanceId) &&
+      Boolean(card) &&
+      card.type === 'BUFF' &&
+      Number.isInteger(entry.upgradeLevel) &&
+      entry.upgradeLevel >= 0 &&
+      entry.upgradeLevel <= 1;
+    if (!usable || buffs.length >= MAX_BUFF_SLOTS) {
+      if (isRecord(entry) &&
+        Number.isInteger(entry.instanceId) &&
+        Number.isInteger(entry.upgradeLevel) &&
+        typeof entry.cardId === 'string' &&
+        Object.hasOwn(cardDatabase, entry.cardId)) {
+        orphans.push({
+          instanceId: entry.instanceId,
+          cardId: entry.cardId,
+          upgradeLevel: entry.upgradeLevel
+        });
+      }
+      continue;
+    }
+    const duration = card.buff?.duration;
+    const remaining = entry.remaining === null
+      ? null
+      : Number.isInteger(entry.remaining) && entry.remaining > 0
+        ? entry.remaining
+        : Number.isInteger(duration)
+          ? duration
+          : null;
+    buffs.push({
+      instanceId: entry.instanceId,
+      cardId: entry.cardId,
+      upgradeLevel: entry.upgradeLevel,
+      remaining
+    });
+    seen.add(entry.instanceId);
+  }
+  return { buffs, orphans };
 }
 
 function normalizeRunTracking(state, cardDatabase, encounterCount, relicDatabase) {
@@ -119,7 +168,26 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       ? encounter.phase2Patterns
       : encounter.patterns;
     const handLimit = normalizeHandLimit(state);
-    const { hand, drawPile } = normalizeHandSize(state, handLimit);
+    const { buffs, orphans } = normalizeBuffs(state, cardDatabase);
+    const buffIds = new Set(buffs.map((buff) => buff.instanceId));
+    const keepNonBuff = (instance) => !buffIds.has(instance?.instanceId);
+    const { hand: rawHand, drawPile: rawDrawPile } = normalizeHandSize(state, handLimit);
+    const hand = rawHand.filter(keepNonBuff);
+    const drawPile = rawDrawPile.filter(keepNonBuff);
+    const discardPile = (Array.isArray(state.discardPile) ? state.discardPile : []).filter(keepNonBuff);
+    const exhaustPile = (Array.isArray(state.exhaustPile) ? state.exhaustPile : []).filter(keepNonBuff);
+    if (orphans.length > 0) {
+      const masterIds = new Set((Array.isArray(state.masterDeck) ? state.masterDeck : [])
+        .map((instance) => instance?.instanceId));
+      const placedIds = new Set([...hand, ...drawPile, ...discardPile, ...exhaustPile, ...buffs]
+        .map((instance) => instance.instanceId));
+      orphans.forEach((orphan) => {
+        if (masterIds.has(orphan.instanceId) && !placedIds.has(orphan.instanceId)) {
+          discardPile.push(orphan);
+          placedIds.add(orphan.instanceId);
+        }
+      });
+    }
     const relics = Array.isArray(state.relics)
       ? state.relics.filter((id) =>
         !relicDatabase[id]?.leaderId || relicDatabase[id].leaderId === state.leader
@@ -129,10 +197,11 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       ? state.relicChoices.filter((id) => !relicDatabase[id]?.leaderId)
       : state.relicChoices;
     const activeInstances = [
-      ...(Array.isArray(state.drawPile) ? state.drawPile : []),
-      ...(Array.isArray(state.hand) ? state.hand : []),
-      ...(Array.isArray(state.discardPile) ? state.discardPile : []),
-      ...(Array.isArray(state.exhaustPile) ? state.exhaustPile : [])
+      ...drawPile,
+      ...hand,
+      ...discardPile,
+      ...exhaustPile,
+      ...buffs
     ];
     const highestCardInstanceId = Math.max(
       0,
@@ -148,6 +217,9 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         ...state,
         hand,
         drawPile,
+        discardPile,
+        exhaustPile,
+        buffs,
         relics,
         relicChoices,
         ...normalizeTurnMemberState(state),
@@ -255,8 +327,14 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
   const saved = savedRun.state;
   const piles = [saved.drawPile, saved.hand, saved.discardPile, saved.exhaustPile];
   if (!Array.isArray(saved.masterDeck) || saved.masterDeck.length === 0 || !piles.every(Array.isArray)) return false;
+  if (!Array.isArray(saved.buffs) || saved.buffs.length > MAX_BUFF_SLOTS) return false;
 
-  const allInstances = piles.flat();
+  const buffInstances = saved.buffs.map((buff) => ({
+    instanceId: buff?.instanceId,
+    cardId: buff?.cardId,
+    upgradeLevel: buff?.upgradeLevel
+  }));
+  const allInstances = [...piles.flat(), ...buffInstances];
   const isCardInstance = (instance) =>
     isRecord(instance) &&
     Number.isInteger(instance.instanceId) &&
@@ -371,6 +449,19 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     !Number.isInteger(saved.handLimit) ||
     saved.handLimit < MAX_HAND_SIZE ||
     saved.handLimit > MAX_HAND_LIMIT ||
+    !saved.buffs.every((buff) =>
+      isRecord(buff) &&
+      Number.isInteger(buff.instanceId) &&
+      buff.instanceId > 0 &&
+      typeof buff.cardId === 'string' &&
+      cardDatabase[buff.cardId]?.type === 'BUFF' &&
+      Number.isInteger(buff.upgradeLevel) &&
+      buff.upgradeLevel >= 0 &&
+      buff.upgradeLevel <= 1 &&
+      (buff.remaining === null ||
+        Number.isInteger(buff.remaining) && buff.remaining > 0)
+    ) ||
+    new Set(saved.buffs.map((buff) => buff.instanceId)).size !== saved.buffs.length ||
     !(saved.keptCardInstanceId === null ||
       Number.isInteger(saved.keptCardInstanceId) &&
         saved.keptCardInstanceId > 0 &&

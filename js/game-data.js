@@ -3,6 +3,14 @@ import { isValidDefaultKeybinds } from './keybinds.js';
 const DATA_MANIFEST_URL = new URL('../assets/data.json', import.meta.url);
 const CACHE_VERSION_KEY = 'kda-vs-titans:cache-version';
 
+// Buff cards declare a single persistent trigger instead of immediate effects.
+const SUPPORTED_BUFFS = Object.freeze({
+  passive: Object.freeze(['bonusAttackDamage']),
+  turnStart: Object.freeze(['gainBlock', 'heal', 'gainEnergy']),
+  onLethal: Object.freeze(['revive']),
+  onDamage: Object.freeze(['negateDamage'])
+});
+
 async function loadJson(url, cacheVersion) {
   const requestUrl = new URL(url);
   if (cacheVersion) requestUrl.searchParams.set('v', cacheVersion);
@@ -120,6 +128,20 @@ export async function loadGameData() {
       card.retainInHand !== undefined && typeof card.retainInHand !== 'boolean' ||
       card.endTurnDamage !== undefined &&
         (!Number.isFinite(card.endTurnDamage) || card.endTurnDamage <= 0 || card.type !== 'STATUS' || card.ethereal !== true) ||
+      card.art !== undefined && typeof card.art !== 'string' ||
+      (card.type === 'BUFF'
+        ? !card.buff ||
+          typeof card.buff !== 'object' ||
+          typeof card.buff.trigger !== 'string' ||
+          typeof card.buff.effect !== 'string' ||
+          !SUPPORTED_BUFFS[card.buff.trigger]?.includes(card.buff.effect) ||
+          !Number.isFinite(card.buff.amount) ||
+          card.buff.amount <= 0 ||
+          (card.buff.duration !== undefined &&
+            (!Number.isInteger(card.buff.duration) || card.buff.duration < 1)) ||
+          (card.buff.upgradeAmount !== undefined &&
+            (!Number.isFinite(card.buff.upgradeAmount) || card.buff.upgradeAmount < 0))
+        : card.buff !== undefined) ||
       (card.upgrade !== undefined && (
         !card.upgrade ||
         typeof card.upgrade !== 'object' ||

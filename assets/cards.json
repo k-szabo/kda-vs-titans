@@ -304,6 +304,193 @@
         "template": "☠️ Micro-Oxygen burned K/DA for 4 HP.",
         "colorClass": "text-rose-300"
       }
+    },
+    {
+      "id": "buff_large_rod",
+      "name": "Needlessly Large Rod",
+      "member": "squad",
+      "memberName": "STAGE GEAR",
+      "type": "BUFF",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/1058.png",
+      "desc": "While slotted, attacks deal <b>+3</b> damage. Lasts <b>2</b> turns.",
+      "upgrade": {
+        "description": "While slotted, attacks deal +5 damage. Lasts 2 turns.",
+        "costReduction": 0
+      },
+      "buff": {
+        "trigger": "passive",
+        "effect": "bonusAttackDamage",
+        "amount": 3,
+        "upgradeAmount": 2,
+        "duration": 2
+      },
+      "effects": [],
+      "log": {
+        "template": "🎛️ Needlessly Large Rod joined the stage rig.",
+        "colorClass": "text-amber-300"
+      }
+    },
+    {
+      "id": "buff_locket",
+      "name": "Locket of the Iron Solari",
+      "member": "squad",
+      "memberName": "STAGE GEAR",
+      "type": "BUFF",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3190.png",
+      "desc": "At the start of your turn, gain <b>5 Holo Shield</b>. Lasts <b>3</b> turns.",
+      "upgrade": {
+        "description": "At the start of your turn, gain 7 Holo Shield. Lasts 3 turns.",
+        "costReduction": 0
+      },
+      "buff": {
+        "trigger": "turnStart",
+        "effect": "gainBlock",
+        "amount": 5,
+        "upgradeAmount": 2,
+        "duration": 3
+      },
+      "effects": [],
+      "log": {
+        "template": "🎛️ Locket of the Iron Solari projected a barrier.",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "buff_redemption",
+      "name": "Redemption",
+      "member": "squad",
+      "memberName": "STAGE GEAR",
+      "type": "BUFF",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3107.png",
+      "desc": "At the start of your turn, heal <b>4 HP</b>. Lasts <b>2</b> turns.",
+      "upgrade": {
+        "description": "At the start of your turn, heal 6 HP. Lasts 2 turns.",
+        "costReduction": 0
+      },
+      "buff": {
+        "trigger": "turnStart",
+        "effect": "heal",
+        "amount": 4,
+        "upgradeAmount": 2,
+        "duration": 2
+      },
+      "effects": [],
+      "log": {
+        "template": "🎛️ Redemption bathed the dome in healing light.",
+        "colorClass": "text-emerald-300"
+      }
+    },
+    {
+      "id": "buff_ionian_boots",
+      "name": "Ionian Boots of Lucidity",
+      "member": "squad",
+      "memberName": "STAGE GEAR",
+      "type": "BUFF",
+      "cost": 2,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3158.png",
+      "desc": "At the start of your turn, gain <b>+1 Hype Energy</b>. Lasts <b>2</b> turns.",
+      "upgrade": {
+        "description": "At the start of your turn, gain +1 Hype Energy. Lasts 2 turns.",
+        "costReduction": 1
+      },
+      "buff": {
+        "trigger": "turnStart",
+        "effect": "gainEnergy",
+        "amount": 1,
+        "duration": 2
+      },
+      "effects": [],
+      "log": {
+        "template": "🎛️ Ionian Boots of Lucidity quickened the setlist.",
+        "colorClass": "text-amber-300"
+      }
+    },
+    {
+      "id": "buff_guardian_angel",
+      "name": "Guardian Angel",
+      "member": "squad",
+      "memberName": "STAGE GEAR",
+      "type": "BUFF",
+      "cost": 3,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3026.png",
+      "desc": "If K/DA would fall, revive at <b>15 HP</b> instead and lose this buff.",
+      "upgrade": {
+        "description": "If K/DA would fall, revive at 25 HP instead and lose this buff.",
+        "costReduction": 0
+      },
+      "buff": {
+        "trigger": "onLethal",
+        "effect": "revive",
+        "amount": 15,
+        "upgradeAmount": 10
+      },
+      "effects": [],
+      "log": {
+        "template": "🎛️ Guardian Angel armed itself for the final chorus.",
+        "colorClass": "text-emerald-300"
+      }
+    },
+    {
+      "id": "buff_zhonyas",
+      "name": "Zhonya's Hourglass",
+      "member": "squad",
+      "memberName": "STAGE GEAR",
+      "type": "BUFF",
+      "cost": 2,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/16.23.1/img/item/3157.png",
+      "desc": "Negate the next instance of damage, then lose this buff.",
+      "upgrade": {
+        "description": "Negate the next instance of damage, then lose this buff.",
+        "costReduction": 1
+      },
+      "buff": {
+        "trigger": "onDamage",
+        "effect": "negateDamage",
+        "amount": 1
+      },
+      "effects": [],
+      "log": {
+        "template": "🎛️ Zhonya's Hourglass froze the spotlight.",
+        "colorClass": "text-sky-300"
+      }
+    },
+    {
+      "id": "encore_overflow",
+      "name": "Encore Overflow",
+      "member": "kaisa",
+      "memberName": "KAI'SA",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "desc": "Raise your hand limit by <b>2</b> this turn and draw <b>2</b> cards.",
+      "upgrade": {
+        "description": "Raise your hand limit by 3 this turn and draw 2 cards.",
+        "costReduction": 0
+      },
+      "effects": [
+        { "type": "raiseHandLimit", "amount": 2, "upgradeAmount": 1 },
+        { "type": "draw", "count": 2 }
+      ],
+      "log": {
+        "template": "🎤 Encore Overflow widened the stage and drew 2 cards!",
+        "colorClass": "text-indigo-300"
+      }
     }
   ]
 }

@@ -88,7 +88,8 @@ export function createGameUI({
         : 'text-amber-300 bg-amber-500/20 border-amber-400/40';
 
     const artAssets = getArtAssets();
-    const artUrl = artAssets[card.member] || artAssets.squad;
+    const artUrl = card.art || artAssets[card.member] || artAssets.squad;
+    const artClass = card.art ? 'object-contain p-1 bg-slate-950' : 'object-cover object-[50%_18%]';
 
     el.innerHTML = `
       <div>
@@ -104,7 +105,7 @@ export function createGameUI({
           </div>
         </div>
         <div class="w-full h-16 sm:h-20 rounded-lg overflow-hidden mb-1.5 border border-white/10 bg-slate-900">
-          <img src="${artUrl}" alt="${card.name}" class="w-full h-full object-cover object-[50%_18%]" />
+          <img src="${artUrl}" alt="${card.name}" class="w-full h-full ${artClass}" />
         </div>
         <div class="font-display text-xs font-black text-white leading-tight mb-1">
           ${card.name}${upgradeLevel > 0 ? ' +' : ''}
@@ -189,6 +190,61 @@ export function createGameUI({
       howTo.innerHTML = buildComboReference();
       howTo.dataset.rendered = 'true';
     }
+  }
+
+  function renderBuffs(currentState, cardDatabase) {
+    const slots = document.getElementById('buffSlots');
+    if (!slots) return;
+    const buffs = currentState.buffs || [];
+    const counter = document.getElementById('buffSlotCount');
+    if (counter) counter.textContent = `${buffs.length} / 3`;
+    slots.replaceChildren();
+    for (let index = 0; index < 3; index++) {
+      const buff = buffs[index];
+      const tile = document.createElement('div');
+      if (!buff) {
+        tile.className = 'h-14 rounded-lg border border-dashed border-white/10 bg-black/20 flex items-center justify-center font-display text-[8px] tracking-widest text-slate-600';
+        tile.textContent = 'EMPTY';
+        slots.appendChild(tile);
+        continue;
+      }
+      const card = cardDatabase[buff.cardId];
+      tile.className = 'relative h-14 rounded-lg border border-purple-400/40 bg-purple-500/10 overflow-hidden';
+      tile.title = card ? `${card.name}: ${(card.desc || '').replace(/<[^>]+>/g, '')}` : 'Buff';
+      const timer = buff.remaining === null ? 'ARMED' : String(buff.remaining);
+      tile.innerHTML = `
+        ${card?.art ? `<img src="${card.art}" alt="${card.name}" class="absolute inset-0 h-full w-full object-contain p-1" />` : ''}
+        <span class="absolute right-0.5 top-0.5 rounded bg-black/75 px-1 font-display text-[8px] font-black text-amber-200">${timer}</span>
+        <span class="absolute inset-x-0 bottom-0 truncate bg-black/75 px-1 py-0.5 font-display text-[7px] font-bold text-white">${card?.name || 'Buff'}</span>
+      `;
+      slots.appendChild(tile);
+    }
+  }
+
+  function openBuffReplaceModal(buffs) {
+    const modal = document.getElementById('buffReplaceModal');
+    const grid = document.getElementById('buffReplaceChoices');
+    if (!modal || !grid) return;
+    grid.replaceChildren();
+    buffs.forEach((buff, index) => {
+      const choice = document.createElement('button');
+      choice.type = 'button';
+      choice.dataset.buffReplace = String(index);
+      choice.className = 'flex items-center gap-2 rounded-xl border border-purple-400/40 bg-purple-500/10 p-2 text-left transition hover:bg-purple-500/20';
+      choice.innerHTML = `
+        ${buff.art ? `<img src="${buff.art}" alt="" class="h-10 w-10 rounded-lg bg-slate-950 object-contain" />` : ''}
+        <span class="flex-1">
+          <span class="block font-display text-[10px] font-black text-white">${buff.name || 'Buff'}</span>
+          <span class="block text-[10px] text-slate-400">${buff.remaining === null ? 'ARMED' : `${buff.remaining} turn${buff.remaining === 1 ? '' : 's'} left`}</span>
+        </span>
+      `;
+      grid.appendChild(choice);
+    });
+    modal.classList.remove('hidden');
+  }
+
+  function closeBuffReplaceModal() {
+    document.getElementById('buffReplaceModal')?.classList.add('hidden');
   }
 
   function renderAll() {
@@ -303,6 +359,8 @@ export function createGameUI({
     if (p.statuses.weak > 0) {
       pStatusEl.innerHTML += `<span class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/50 text-rose-200 font-display text-[10px] font-bold">💫 WEAK (${p.statuses.weak})</span>`;
     }
+
+    renderBuffs(state, cardDatabase);
 
     const e = state.enemy;
     const intent = getCurrentEnemyIntent();
@@ -668,6 +726,8 @@ export function createGameUI({
     hideMainMenu: progressionUI.hideMainMenu,
     openLeaderSelection: progressionUI.openLeaderSelection,
     openDraftModal,
+    openBuffReplaceModal,
+    closeBuffReplaceModal,
     openPileModal,
     renderAll,
     setChangelog,

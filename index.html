@@ -194,6 +194,13 @@
       <!-- Player HP, Shield (Block) & Energy (Hype) Bars -->
       <div class="space-y-2.5 bg-black/45 rounded-2xl p-3.5 border border-white/10">
         <div id="relicBar" class="flex flex-wrap gap-1.5" aria-label="Equipped relics"></div>
+        <div class="rounded-xl border border-purple-400/30 bg-purple-500/10 p-2">
+          <div class="mb-1 flex items-center justify-between font-display text-[9px] tracking-widest text-purple-300">
+            <span>🎛️ ACTIVE BUFFS</span>
+            <span id="buffSlotCount" class="text-slate-400">0 / 3</span>
+          </div>
+          <div id="buffSlots" class="grid grid-cols-3 gap-1.5" aria-label="Buff slots"></div>
+        </div>
         <!-- HP Bar -->
         <div>
           <div class="flex items-center justify-between text-xs font-display mb-1">
@@ -334,6 +341,7 @@
             <li>Start with 3 Energy and draw up to 5 cards. Spend Energy to play cards; unspent Energy is lost at turn end.</li>
             <li>Shield absorbs incoming damage before HP. End your turn when ready; the boss resolves its shown intent.</li>
             <li>Build Crowd Cheer to 100% to unleash Joint Finale. Card costs, status effects, and bonuses are shown on the cards and squad panel.</li>
+            <li>Buff cards take one of three stage slots. Timed buffs count down and expire when the wave ends; one-shot buffs stay armed until they fire.</li>
           </ul>
         </article>
         <article class="rounded-2xl border border-amber-300/25 bg-amber-400/5 p-4">
@@ -358,6 +366,18 @@
         </article>
       </div>
       <p class="mt-4 text-[11px] text-slate-400">Keyboard shortcuts can be changed in Options. During a battle, press the configured key to play a card, end your turn, trigger Joint Finale, or use your Leader Ability.</p>
+    </div>
+  </section>
+
+  <section id="buffReplaceModal" role="dialog" aria-modal="true" aria-labelledby="buffReplaceHeading" class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+    <div class="glass-panel w-full max-w-md rounded-3xl border border-purple-400/40 p-5">
+      <div class="mb-3">
+        <span class="font-display text-[10px] tracking-widest text-purple-300">ALL SLOTS FULL</span>
+        <h2 id="buffReplaceHeading" class="font-display text-lg font-black holo-text">REPLACE A BUFF</h2>
+      </div>
+      <p class="mb-3 text-xs text-slate-300">Choose the buff to discard. The new card takes its slot.</p>
+      <div id="buffReplaceChoices" class="grid gap-2"></div>
+      <button id="btnCancelBuffReplace" type="button" class="mt-4 w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 font-display text-xs font-bold text-slate-200 transition hover:bg-white/10">CANCEL</button>
     </div>
   </section>
 
