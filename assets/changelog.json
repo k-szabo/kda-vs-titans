@@ -1,6 +1,16 @@
 {
-  "currentVersion": "v1.7.5_8804cd4b",
+  "currentVersion": "v1.8.0_593d59f6",
   "releases": [
+    {
+      "version": "v1.8.0_593d59f6",
+      "date": "2026-11-19",
+      "changes": [
+        "Leona's tour routing now offers three stops after every wave.",
+        "Attack cards preview effective damage with lethal and spotlight markers.",
+        "Bosses can burn cards, drain Hype Energy, and reflect the first attack.",
+        "Validated the new routing and energy-penalty save fields."
+      ]
+    },
     {
       "version": "v1.7.5_8804cd4b",
       "date": "2026-11-19",
