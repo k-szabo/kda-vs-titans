@@ -5,6 +5,7 @@
   "maxHp": 85,
   "spriteType": "rodan",
   "burning": false,
+  "stageEffect": "thermonuclear_heat",
   "patterns": [
     {
       "type": "multi",

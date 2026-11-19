@@ -106,6 +106,7 @@ export async function loadGameData() {
       !card.log ||
       card.draftable !== undefined && typeof card.draftable !== 'boolean' ||
       card.ethereal !== undefined && typeof card.ethereal !== 'boolean' ||
+      card.retain !== undefined && typeof card.retain !== 'boolean' ||
       card.retainInHand !== undefined && typeof card.retainInHand !== 'boolean' ||
       card.endTurnDamage !== undefined &&
         (!Number.isFinite(card.endTurnDamage) || card.endTurnDamage <= 0 || card.type !== 'STATUS' || card.ethereal !== true) ||

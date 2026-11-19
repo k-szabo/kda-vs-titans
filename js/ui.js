@@ -1,5 +1,6 @@
 import { getEffectiveCardCost } from './card-effects.js';
 import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
+import { DAILY_MODIFIERS } from './daily-challenge.js';
 
 export function createGameUI({
   getState,
@@ -10,14 +11,19 @@ export function createGameUI({
   getProfileStats,
   getEncounters,
   getCurrentEnemyIntent,
+  getDailyChallenge,
   onPlayCard,
   onJumpToStage,
   onChooseDraftCard,
   onChooseRelic,
   onUpgradeCard,
+  onCutCard,
   onSelectLeaderArt,
-  onContinueTour
+  onContinueTour,
+  onCopyReceipt
 }) {
+  let loadedChangelog = null;
+
   function triggerScreenShake() {
     const root = document.getElementById('appRoot');
     root.classList.remove('shake-active');
@@ -88,7 +94,7 @@ export function createGameUI({
       <div>
         <p class="text-[11px] text-slate-300 leading-snug mb-1.5">${upgradeLevel > 0 ? card.upgrade.description : card.desc}</p>
         <div class="text-[9px] font-display tracking-widest text-slate-500 uppercase">
-          ${card.type}
+          ${card.type}${card.retain || card.retainInHand ? ' // RETAIN' : ''}
         </div>
       </div>
     `;
@@ -352,6 +358,7 @@ export function createGameUI({
     const cardGrid = document.getElementById('draftChoicesGrid');
     const relicGrid = document.getElementById('relicChoicesGrid');
     const upgradeGrid = document.getElementById('upgradeChoicesGrid');
+    const cutGrid = document.getElementById('cutChoicesGrid');
     document.getElementById('draftHealText').textContent =
       `+${(getState()?.encoreLevel ?? 0) >= 2 ? 12 : 18} HP`;
     const cardDatabase = getCardDatabase();
@@ -359,6 +366,7 @@ export function createGameUI({
     cardGrid.innerHTML = '';
     relicGrid.innerHTML = '';
     upgradeGrid.innerHTML = '';
+    cutGrid.replaceChildren();
 
     cardIds.forEach((cardId) => {
       const card = cardDatabase[cardId];
@@ -399,11 +407,22 @@ export function createGameUI({
       cardEl.addEventListener('click', () => onUpgradeCard(instance.instanceId));
       upgradeGrid.appendChild(cardEl);
     });
+    masterDeck.forEach((instance) => {
+      const card = cardDatabase[instance.cardId];
+      if (!card || masterDeck.length <= 1) return;
+      const choice = document.createElement('button');
+      choice.type = 'button';
+      choice.className = 'rounded-2xl border border-rose-300/30 bg-black/25 p-2 text-left transition hover:border-rose-200 hover:bg-rose-500/10';
+      choice.appendChild(createCardElement(card, true, -1, instance));
+      choice.addEventListener('click', () => onCutCard(instance.instanceId));
+      cutGrid.appendChild(choice);
+    });
 
     const tabs = [
       ['cards', cardIds.length > 0],
       ['relics', relicIds.length > 0],
-      ['upgrades', upgradeableCards.length > 0]
+      ['upgrades', upgradeableCards.length > 0],
+      ['cuts', masterDeck.length > 1]
     ];
     tabs.forEach(([mode, available]) => {
       document.querySelector(`[data-reward-tab="${mode}"]`).classList.toggle('hidden', !available);
@@ -414,7 +433,7 @@ export function createGameUI({
     modal.classList.remove('hidden');
   }
 
-  function renderMainMenu(savedRun) {
+  function renderMainMenu(savedRun, dailyChallenge) {
     const profileStats = getProfileStats();
     const encounters = getEncounters();
     const artAssets = getArtAssets();
@@ -459,6 +478,12 @@ export function createGameUI({
     document.getElementById('menuHighestWave').textContent =
       `${profileStats.highestWaveCleared} / ${encounters.length}`;
     document.getElementById('menuFullClears').textContent = totalClears;
+    const unlockedArtCount = LEADERS.reduce((count, leader) =>
+      count + getUnlockedArtStyles(profileStats.leaderWins[leader.id]).length, 0);
+    document.getElementById('menuUnlockedArt').textContent =
+      `${unlockedArtCount} / ${LEADERS.length * LEADER_ART_STYLES.length}`;
+    document.getElementById('menuCodexProgress').textContent =
+      `${profileStats.unlockedKaiju.length} / ${encounters.length}`;
     const fastest = profileStats.fastestWinMs;
     document.getElementById('menuFastestWin').textContent = fastest === null
       ? '—'
@@ -466,6 +491,21 @@ export function createGameUI({
     const maxEncoreLevel = profileStats.maxEncoreLevel ?? 0;
     document.getElementById('menuEncoreLevel').textContent =
       maxEncoreLevel === 0 ? 'Normal' : `Encore ${maxEncoreLevel}`;
+    const yesterday = new Date(`${dailyChallenge.date}T00:00:00Z`);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const lastDailyWinIsCurrent = profileStats.lastDailyWinDate === dailyChallenge.date ||
+      profileStats.lastDailyWinDate === yesterday.toISOString().slice(0, 10);
+    const currentDailyStreak = lastDailyWinIsCurrent ? profileStats.dailyWinStreak : 0;
+    document.getElementById('menuDailyStreak').textContent =
+      `${currentDailyStreak} // BEST ${profileStats.dailyBestWinStreak}`;
+    const modifier = DAILY_MODIFIERS.find(({ id }) => id === dailyChallenge.modifier);
+    const dailyLeader = LEADERS.find(({ id }) => id === dailyChallenge.leader);
+    const dailyRelic = dailyChallenge.relicId
+      ? getRelicDatabase()[dailyChallenge.relicId]?.name || dailyChallenge.relicId
+      : 'No starter Relic';
+    document.getElementById('menuDailyDetails').textContent =
+      `${dailyChallenge.date} UTC // ${dailyLeader.name} // ${dailyRelic}`;
+    document.getElementById('menuDailyRule').textContent = modifier.description;
 
     const continueButton = document.getElementById('btnContinueTour');
     const hasActiveRun = savedRun && ['playing', 'draft'].includes(savedRun.runStatus);
@@ -478,7 +518,7 @@ export function createGameUI({
   }
 
   function showMainMenu(savedRun) {
-    renderMainMenu(savedRun);
+    renderMainMenu(savedRun, getDailyChallenge());
     document.getElementById('mainMenuOverlay').classList.remove('hidden');
   }
 
@@ -511,6 +551,31 @@ export function createGameUI({
       name.textContent = cleared ? encounter.name : 'UNDISCOVERED KAIJU';
       entry.append(wave, name);
       codexGrid.appendChild(entry);
+    });
+    const history = document.getElementById('statsChangelogEntries');
+    history.replaceChildren();
+    loadedChangelog?.releases.forEach((release) => {
+      const article = document.createElement('article');
+      article.className = 'rounded-xl border border-white/10 bg-white/5 p-3';
+      const heading = document.createElement('div');
+      heading.className = 'flex items-center justify-between gap-2';
+      const version = document.createElement('span');
+      version.className = 'font-display text-[10px] font-black text-amber-200';
+      version.textContent = release.version;
+      const date = document.createElement('time');
+      date.className = 'text-[10px] text-slate-400';
+      date.dateTime = release.date;
+      date.textContent = release.date;
+      heading.append(version, date);
+      const changes = document.createElement('ul');
+      changes.className = 'mt-2 list-disc space-y-1 pl-4 text-[11px] leading-relaxed text-slate-300';
+      release.changes.forEach((change) => {
+        const item = document.createElement('li');
+        item.textContent = change;
+        changes.appendChild(item);
+      });
+      article.append(heading, changes);
+      history.appendChild(article);
     });
     document.getElementById('statsModal').classList.remove('hidden');
   }
@@ -692,6 +757,7 @@ export function createGameUI({
   }
 
   function setChangelog(changelog) {
+    loadedChangelog = changelog;
     document.getElementById('versionText').textContent = changelog.currentVersion;
     const entries = document.getElementById('changelogEntries');
     entries.innerHTML = '';
@@ -757,6 +823,7 @@ export function createGameUI({
   function showRunEndModal(isVictory) {
     const state = getState();
     const encounters = getEncounters();
+    const cardDatabase = getCardDatabase();
     const modal = document.getElementById('runEndModal');
     const badge = document.getElementById('runEndBadge');
     const title = document.getElementById('runEndTitle');
@@ -775,7 +842,32 @@ export function createGameUI({
       desc.textContent = `${state.enemy.name} shattered the concert dome on Wave ${state.stageIndex + 1}. Tweak your draft and try another run!`;
     }
 
+    const mostPlayed = Object.entries(state.cardPlayCounts || {})
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+    document.getElementById('receiptWaves').textContent =
+      `${state.wavesCleared || 0} / ${encounters.length}`;
+    document.getElementById('receiptMostPlayed').textContent = mostPlayed
+      ? `${cardDatabase[mostPlayed[0]]?.name || mostPlayed[0]} (${mostPlayed[1]})`
+      : '—';
+    document.getElementById('receiptPeakDamage').textContent =
+      String(state.peakSingleTurnDamage || 0);
+    const dailyDetails = document.getElementById('receiptDailyDetails');
+    if (state.dailyChallenge) {
+      const modifier = DAILY_MODIFIERS.find(({ id }) => id === state.dailyChallenge.modifier);
+      dailyDetails.textContent =
+        `DAILY ${state.dailyChallenge.date} UTC // ${modifier?.name || state.dailyChallenge.modifier}`;
+      dailyDetails.classList.remove('hidden');
+    } else {
+      dailyDetails.textContent = '';
+      dailyDetails.classList.add('hidden');
+    }
+    document.getElementById('receiptCopyStatus').textContent = '';
     modal.classList.remove('hidden');
+  }
+
+  function showReceiptCopyStatus(message) {
+    document.getElementById('receiptCopyStatus').textContent = message;
   }
 
   function openPileModal(title, cardInstances) {
@@ -821,6 +913,7 @@ export function createGameUI({
   document.getElementById('btnArtStudio').addEventListener('click', showArtStudio);
   document.getElementById('btnMenuArtStudio').addEventListener('click', showArtStudio);
   document.getElementById('btnMenuCodex').addEventListener('click', showStatsModal);
+  document.getElementById('btnCopyReceipt').addEventListener('click', onCopyReceipt);
   document.getElementById('btnNewWorldTour').addEventListener('click', () => {
     openLeaderSelection(false, null, true);
   });
@@ -849,6 +942,7 @@ export function createGameUI({
     showStatsModal,
     showArtStudio,
     showRunEndModal,
+    showReceiptCopyStatus,
     showSaveNotice,
     getSelectedLeader: () => selectedLeader,
     getSelectedEncoreLevel: () => selectedEncoreLevel,

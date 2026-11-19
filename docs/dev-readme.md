@@ -18,7 +18,7 @@ Open <http://localhost:8000/#devtools> to use the testing-only wave selector. Se
 
 ## Leader and art progression
 
-The World Tour main menu is shown on boot unless `#devtools` is in the URL. It displays each member's equipped art and rank, career stats, and offers Continue Tour, New World Tour, Art Studio, and Codex. The combat header's MENU button returns to the main menu without ending the active run. Continue Tour restores the saved combat or reward screen.
+The World Tour main menu is shown on boot unless `#devtools` is in the URL. It displays each member's equipped art and rank, total wins, highest wave, unlocked art, Codex progress, Encore tier, and daily streak. It offers Continue Tour, New World Tour, Daily World Tour, Art Studio, and Codex & Changelog. The combat header's MENU button returns to the main menu without ending the active run. Continue Tour restores the saved combat or reward screen.
 
 A new tour begins with leader and Encore-tier selection. A leader's special ability can be used once during that run. Completing all 10 waves with a leader unlocks that member's MORE art; completing a second full run with the same leader unlocks FIRESTARTER. Choose unlocked character art in the Art Studio. Every wave cleared while an art style is equipped counts toward that member/art's ranked portrait border, which advances once per 10 waves.
 
@@ -49,11 +49,15 @@ Enemy Strength is added to each hit. Charged intents may define `interruptThresh
 
 Status cards may set `endTurnDamage` and `ethereal` to deal direct HP damage and exhaust if left in hand. Boss mechanics and temporary Status instances are normalized in existing v3 run saves; no save reset or save-version bump is needed.
 
-Status cards can also set `retainInHand: true` when they must remain in the hand until spent or exhausted instead of being discarded at end of turn. EMP Static and Stage Fright use this behavior. Micro-Oxygen costs 1 Hype Energy and deals 4 direct HP damage only if it remains in hand at end of turn.
+Cards may set `retain: true` to stay in hand instead of being discarded at turn end; the older `retainInHand` field remains supported for compatibility. Void Prism Bastion and Starlight Aria are draftable retained cards. At each post-battle reward, the Cut 1 Card option removes a selected deck card and restores 10 HP. EMP Static and Stage Fright retain until played, while Micro-Oxygen costs 1 Hype Energy and deals 4 direct HP damage if left in hand.
 
 Playing cards from all four K/DA members in one player turn triggers Quartet Harmony once that turn: +1 Energy, +6 Shield, and +10% Crowd Cheer. Playing three cards from the same member consecutively triggers that member's Solo Spotlight: Ahri applies 1 Charm and heals 3 HP; Akali deals 6 piercing damage and draws 1 card; Evelynn applies 1 Marked and steals up to 3 boss Block; Kai'Sa gains 8 Shield and 1 turn of Encore. The combat UI shows members played and the current consecutive chain. Turn tracking is normalized when loading existing v3 run saves.
 
-Boss encounters may define an optional `stageEffect` field. Supported hazards are `overcharge_grid` (3 direct HP damage per unspent Energy at turn end), `thermonuclear_heat` (3 direct HP damage at turn end if Shield is 0), and `luminous_spores` (+3% Crowd Cheer for each Skill played). The active hazard is shown in the boss panel. Existing v3 run saves restore the current encounter's hazard.
+Boss encounters may define an optional `stageEffect` field. Supported hazards are `overcharge_grid` (3 direct HP damage per unspent Energy at turn end), `thermonuclear_heat` (3 direct HP damage at turn end if Shield is 0), and `luminous_spores` (+3% Crowd Cheer for each Skill played). Overcharge Grid is used by King Ghidorah and Mechagodzilla; Thermonuclear Heat by Rodan and Burning Godzilla; Luminous Spores by Mothra. The active hazard is shown in the boss panel. Existing v3 run saves restore the current encounter's hazard.
+
+Daily World Tour uses the UTC date as a deterministic seed for its assigned leader, Relic, rule modifier, deck shuffles, and rewards. Acoustic Set starts with 4 max Energy and no starter Relic; Encore Pressure gives bosses +15% HP and a random starter Relic; Crowd Surf grants +15% Crowd Cheer at each wave start and a random starter Relic. Daily wins update current and best consecutive-day streaks in the existing profile.
+
+Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. These run metrics are stored with the v3 run state and normalized when loading older saves.
 
 The battle log can be collapsed from its header control. It defaults to collapsed on narrow screens to preserve combat and hand space.
 
@@ -88,6 +92,7 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 │   ├── audio.js           # Synthesized Web Audio effects
 │   ├── card-effects.js    # Data-driven card effect interpreter
 │   ├── combat-rules.js    # Player damage, shield, and Cheer resolution
+│   ├── daily-challenge.js # Date-seeded Daily World Tour assignments and modifiers
 │   ├── game-data.js       # Asset and encounter loading
 │   ├── profile-storage.js # Persistent profile stats and codex
 │   ├── run-state.js       # Run-save migration and validation

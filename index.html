@@ -32,8 +32,16 @@
           <span id="menuHighestWave" class="mt-1 block font-display text-xl font-black text-amber-200">0 / 10</span>
         </div>
         <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
-          <span class="block text-[9px] font-display tracking-widest text-slate-400">FULL TOUR CLEARS</span>
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">TOTAL WINS</span>
           <span id="menuFullClears" class="mt-1 block font-display text-xl font-black text-emerald-200">0</span>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">UNLOCKED ART</span>
+          <span id="menuUnlockedArt" class="mt-1 block font-display text-xl font-black text-purple-200">4 / 12</span>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">CODEX PROGRESS</span>
+          <span id="menuCodexProgress" class="mt-1 block font-display text-xl font-black text-sky-200">0 / 10</span>
         </div>
         <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
           <span class="block text-[9px] font-display tracking-widest text-slate-400">BEST TIME</span>
@@ -42,6 +50,10 @@
         <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
           <span class="block text-[9px] font-display tracking-widest text-slate-400">ENCORE UNLOCKED</span>
           <span id="menuEncoreLevel" class="mt-1 block font-display text-xl font-black text-fuchsia-200">Normal</span>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">DAILY WIN STREAK</span>
+          <span id="menuDailyStreak" class="mt-1 block font-display text-xl font-black text-orange-200">0 // BEST 0</span>
         </div>
       </div>
 
@@ -59,8 +71,13 @@
           <span class="mt-1 block text-xs text-slate-400">Equip unlocked looks and track ranks.</span>
         </button>
         <button id="btnMenuCodex" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-amber-300/50 hover:bg-white/10">
-          <span class="block font-display text-sm font-black text-amber-100">📖 KAIJU CODEX</span>
-          <span class="mt-1 block text-xs text-slate-400">Review your tour record and discoveries.</span>
+          <span class="block font-display text-sm font-black text-amber-100">📖 CODEX &amp; CHANGELOG</span>
+          <span class="mt-1 block text-xs text-slate-400">Review your discoveries and version history.</span>
+        </button>
+        <button id="btnDailyTour" type="button" class="rounded-xl border border-orange-300/40 bg-orange-400/10 px-4 py-4 text-left transition hover:bg-orange-400/20">
+          <span class="block font-display text-sm font-black text-orange-100">📅 DAILY WORLD TOUR</span>
+          <span id="menuDailyDetails" class="mt-1 block text-xs text-orange-200/75"></span>
+          <span id="menuDailyRule" class="mt-1 block text-[10px] text-slate-400"></span>
         </button>
       </div>
     </div>
@@ -312,11 +329,13 @@
         <button id="btnRewardCards" type="button" data-reward-tab="cards" class="px-4 py-2 rounded-xl border border-amber-300/50 bg-amber-400/15 font-display text-[11px] font-bold text-amber-200">CARD DRAFT</button>
         <button id="btnRewardRelics" type="button" data-reward-tab="relics" class="px-4 py-2 rounded-xl border border-white/15 bg-white/5 font-display text-[11px] font-bold text-slate-300">RELICS</button>
         <button id="btnRewardUpgrades" type="button" data-reward-tab="upgrades" class="px-4 py-2 rounded-xl border border-white/15 bg-white/5 font-display text-[11px] font-bold text-slate-300">CARD UPGRADES</button>
+        <button id="btnRewardCuts" type="button" data-reward-tab="cuts" class="px-4 py-2 rounded-xl border border-white/15 bg-white/5 font-display text-[11px] font-bold text-slate-300">✂️ CUT 1 CARD (+10 HP)</button>
       </div>
 
       <div id="draftChoicesGrid" data-reward-panel="cards" class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5"></div>
       <div id="relicChoicesGrid" data-reward-panel="relics" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5"></div>
       <div id="upgradeChoicesGrid" data-reward-panel="upgrades" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5"></div>
+      <div id="cutChoicesGrid" data-reward-panel="cuts" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5"></div>
 
       <div class="text-center">
         <button id="btnSkipDraft" class="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 font-display text-xs font-bold text-slate-200 transition">
@@ -348,6 +367,8 @@
       </div>
       <h3 class="font-display text-sm font-black text-sky-300 mb-2">KAIJU CODEX</h3>
       <div id="statsCodexGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+      <h3 class="mt-6 font-display text-sm font-black text-amber-200 mb-2">VERSION HISTORY</h3>
+      <div id="statsChangelogEntries" class="space-y-2"></div>
     </div>
   </div>
 
@@ -418,6 +439,17 @@
       <p id="runEndDesc" class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-5">
         K/DA finished the setlist without missing a beat!
       </p>
+      <div class="mb-5 rounded-xl border border-white/10 bg-black/30 p-3 text-left">
+        <div class="font-display text-[10px] font-black tracking-widest text-amber-200">TOUR RECEIPT</div>
+        <dl class="mt-2 space-y-1 text-[11px] text-slate-300">
+          <div class="flex justify-between gap-3"><dt>Waves Cleared</dt><dd id="receiptWaves" class="font-bold text-white"></dd></div>
+          <div class="flex justify-between gap-3"><dt>Most-Played Card</dt><dd id="receiptMostPlayed" class="font-bold text-white text-right"></dd></div>
+          <div class="flex justify-between gap-3"><dt>Peak Single-Turn Damage</dt><dd id="receiptPeakDamage" class="font-bold text-white"></dd></div>
+        </dl>
+        <p id="receiptDailyDetails" class="mt-2 text-[9px] text-orange-200"></p>
+      </div>
+      <button id="btnCopyReceipt" type="button" class="mb-3 w-full rounded-xl border border-cyan-300/35 bg-cyan-400/10 py-2.5 font-display text-[11px] font-bold text-cyan-100 hover:bg-cyan-400/20">📋 COPY RECEIPT</button>
+      <p id="receiptCopyStatus" class="mb-3 min-h-4 text-[10px] text-slate-400" aria-live="polite"></p>
       <button id="btnRestartRunEnd" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-500 font-display text-xs sm:text-sm font-black tracking-widest text-white hover:brightness-110 transition">
         PLAY NEW RUN ▶
       </button>

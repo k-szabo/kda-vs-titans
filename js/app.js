@@ -20,6 +20,7 @@ import {
   shouldInterruptChargedIntent
 } from './combat-rules.js';
 import { loadGameData } from './game-data.js';
+import { createDailyChallenge, nextSeededRandom } from './daily-challenge.js';
 import {
   createDefaultProfileStats,
   InvalidProfileStatsError,
@@ -52,16 +53,34 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
   let storageAvailable = true;
   let profileStorageAvailable = true;
 
+      function getUtcDateString(date = new Date()) {
+        return date.toISOString().slice(0, 10);
+      }
+
+      function getTodayDailyChallenge() {
+        return createDailyChallenge(
+          getUtcDateString(),
+          LEADERS.map(({ id }) => id),
+          Object.keys(RELIC_DB)
+        );
+      }
+
+      function nextRandom() {
+        return state && Number.isInteger(state.rngState)
+          ? nextSeededRandom(state)
+          : Math.random();
+      }
+
       function shuffle(arr) {
         const copy = [...arr];
         for (let i = copy.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
+          const j = Math.floor(nextRandom() * (i + 1));
           [copy[i], copy[j]] = [copy[j], copy[i]];
         }
         return copy;
       }
 
-      function createNewRunState(leader, encoreLevel = 0) {
+      function createNewRunState(leader, encoreLevel = 0, dailyChallenge = null) {
         let nextCardInstanceId = 1;
         const masterDeck = STARTER_DECK.map((cardId) => ({
           instanceId: nextCardInstanceId++,
@@ -81,13 +100,31 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           evelynn: 'velvet_shades',
           kaisa: 'void_core'
         };
+        const dailyModifier = dailyChallenge?.modifier;
+        const maxEnergy = dailyModifier === 'acoustic_set' ? 4 : 3;
+        const initialRelics = dailyChallenge
+          ? dailyChallenge.relicId ? [dailyChallenge.relicId] : []
+          : [starterRelics[leader]];
         return {
           stageIndex: 0,
+          wavesCleared: 0,
           damageDealtThisTurn: 0,
+          peakSingleTurnDamage: 0,
           skillsPlayedThisTurn: 0,
+          cardPlayCounts: {},
           ...createTurnMemberState(),
           leader,
           encoreLevel,
+          dailyChallenge: dailyChallenge
+            ? {
+                date: dailyChallenge.date,
+                seed: dailyChallenge.seed,
+                leader: dailyChallenge.leader,
+                relicId: dailyChallenge.relicId,
+                modifier: dailyChallenge.modifier
+              }
+            : null,
+          rngState: dailyChallenge?.rngState ?? null,
           leaderAbilityUsed: false,
           turn: 1,
           startedAt: Date.now(),
@@ -95,7 +132,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           runStatus: 'playing',
           draftChoices: [],
           relicChoices: [],
-          relics: starterRelics[leader] ? [starterRelics[leader]] : [],
+          relics: initialRelics,
           isPlayerTurn: true,
           masterDeck,
           drawPile: [],
@@ -106,8 +143,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             hp: 80,
             maxHp: 80,
             block: 0,
-            energy: 3,
-            maxEnergy: 3,
+            energy: maxEnergy,
+            maxEnergy,
             cheer: 0,
             statuses: {
               encore: 0,
@@ -122,6 +159,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       function startStage(stageIdx) {
         const enc = ENCOUNTERS[stageIdx];
         if (!enc) return;
+        const encoreMaxHp = getEncoreBossMaxHp(enc.maxHp, state.encoreLevel);
+        const bossMaxHp = state.dailyChallenge?.modifier === 'encore_pressure'
+          ? Math.ceil(encoreMaxHp * 1.15)
+          : encoreMaxHp;
 
         state.stageIndex = stageIdx;
         state.turn = 1;
@@ -138,12 +179,15 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.exhaustPile = [];
         state.player.block = 0;
         state.player.energy = state.player.maxEnergy;
+        if (state.dailyChallenge?.modifier === 'crowd_surf') {
+          state.player.cheer = Math.min(100, state.player.cheer + 15);
+        }
         state.player.statuses = { encore: 0, weak: 0 };
 
         state.enemy = {
           ...enc,
-          hp: getEncoreBossMaxHp(enc.maxHp, state.encoreLevel),
-          maxHp: getEncoreBossMaxHp(enc.maxHp, state.encoreLevel),
+          hp: bossMaxHp,
+          maxHp: bossMaxHp,
           block: 0,
           strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0),
           stageEffect: enc.stageEffect,
@@ -231,6 +275,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
         playSoundEffect(playCardSfx);
         state.player.energy -= cost;
+        state.cardPlayCounts[card.id] = (state.cardPlayCounts[card.id] || 0) + 1;
         state.player.cheer = Math.min(100, state.player.cheer + 5 + cost * 3);
         applyRelicEffects('cardPlayed', card, cost);
 
@@ -328,6 +373,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         if (hpDamage > 0) {
           state.enemy.hp = Math.max(0, state.enemy.hp - hpDamage);
           state.damageDealtThisTurn += hpDamage;
+          state.peakSingleTurnDamage = Math.max(
+            state.peakSingleTurnDamage,
+            state.damageDealtThisTurn
+          );
           ui.triggerKaijuHitAnim();
           ui.spawnPopup('enemyArenaCard', `-${hpDamage}`, 'text-amber-300 font-display font-black text-xl');
           triggerEnemyPassives('onHpBelowHalf');
@@ -463,7 +512,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         while (state.hand.length > 0) {
           const cardInstance = state.hand.pop();
           const card = CARD_DB[cardInstance.cardId];
-          if (card?.retainInHand) {
+          if (card?.retain || card?.retainInHand) {
             retainedCards.unshift(cardInstance);
           } else {
             state.discardPile.push(cardInstance);
@@ -571,6 +620,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       function finishPlayerDefeat() {
         state.player.hp = 0;
         state.runStatus = 'defeat';
+        recordDailyResult(false);
         renderAll();
         ui.showRunEndModal(false);
       }
@@ -619,6 +669,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
         if (state.stageIndex >= ENCOUNTERS.length - 1) {
           state.runStatus = 'victory';
+          recordDailyResult(true);
           saveRunState();
           ui.showRunEndModal(true);
           return;
@@ -634,6 +685,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       }
 
       function recordStageClear() {
+        state.wavesCleared += 1;
         profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
         LEADERS.forEach(({ id }) => {
           const artId = profileStats.selectedArts[id];
@@ -652,6 +704,66 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           }
         }
         persistProfileStats();
+      }
+
+      function recordDailyResult(won) {
+        if (!state.dailyChallenge) return;
+        const date = state.dailyChallenge.date;
+        if (won) {
+          if (
+            profileStats.lastDailyWinDate !== date &&
+            (!profileStats.lastDailyWinDate || date > profileStats.lastDailyWinDate)
+          ) {
+            const previousDate = new Date(`${date}T00:00:00Z`);
+            previousDate.setUTCDate(previousDate.getUTCDate() - 1);
+            const yesterday = getUtcDateString(previousDate);
+            profileStats.dailyWinStreak = profileStats.lastDailyWinDate === yesterday
+              ? profileStats.dailyWinStreak + 1
+              : 1;
+            profileStats.dailyBestWinStreak = Math.max(
+              profileStats.dailyBestWinStreak,
+              profileStats.dailyWinStreak
+            );
+            profileStats.lastDailyWinDate = date;
+          }
+        } else if (
+          profileStats.lastDailyWinDate !== date &&
+          (!profileStats.lastDailyWinDate || date >= profileStats.lastDailyWinDate)
+        ) {
+          profileStats.dailyWinStreak = 0;
+        }
+        persistProfileStats();
+      }
+
+      function getRunReceiptText() {
+        const mostPlayed = Object.entries(state.cardPlayCounts)
+          .filter(([, count]) => count > 0)
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+        const cardName = mostPlayed ? CARD_DB[mostPlayed[0]]?.name || mostPlayed[0] : '—';
+        const dailyDescription = state.dailyChallenge
+          ? `Daily Tour ${state.dailyChallenge.date} // ${state.dailyChallenge.modifier.replaceAll('_', ' ')}`
+          : 'Standard Tour';
+        return [
+          'K/DA // ENCORE SPIRE TOUR RECEIPT',
+          `Mode: ${dailyDescription}`,
+          `Leader: ${LEADERS.find(({ id }) => id === state.leader).name}`,
+          `Waves Cleared: ${state.wavesCleared} / ${ENCOUNTERS.length}`,
+          `Most-Played Card: ${cardName}${mostPlayed ? ` (${mostPlayed[1]} plays)` : ''}`,
+          `Peak Single-Turn Damage: ${state.peakSingleTurnDamage}`
+        ].join('\n');
+      }
+
+      async function copyRunReceipt() {
+        try {
+          if (!navigator.clipboard?.writeText) {
+            throw new Error('Clipboard access is unavailable in this browser.');
+          }
+          await navigator.clipboard.writeText(getRunReceiptText());
+          ui.showReceiptCopyStatus('Tour receipt copied.');
+        } catch (error) {
+          console.error('Unable to copy the tour receipt.', error);
+          ui.showReceiptCopyStatus('Copy failed. Clipboard access is unavailable.');
+        }
       }
 
       function persistProfileStats() {
@@ -753,18 +865,28 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       // =========================================================================
       // Run flow and event wiring
       // =========================================================================
-      function startNewRun(leader, encoreLevel = 0) {
+      function startNewRun(leader, encoreLevel = 0, dailyChallenge = null) {
         if (!LEADERS.some(({ id }) => id === leader)) {
           throw new Error(`Unknown run leader: ${leader}`);
         }
+        if (
+          state &&
+          ['playing', 'draft'].includes(state.runStatus) &&
+          !window.confirm('Starting this tour will replace your active run. Continue?')
+        ) return;
         encoreLevel = Number.isInteger(encoreLevel) ? Math.min(5, Math.max(0, encoreLevel)) : 0;
         if (encoreLevel > (profileStats.maxEncoreLevel ?? 0)) return;
         ui.hideRunModals();
         ui.hideMainMenu();
         mainMenuOpen = false;
-        state = createNewRunState(leader, encoreLevel);
+        state = createNewRunState(leader, encoreLevel, dailyChallenge);
         startStage(0);
         syncPage();
+      }
+
+      function startDailyRun() {
+        const challenge = getTodayDailyChallenge();
+        startNewRun(challenge.leader, 0, challenge);
       }
 
       function selectLeaderArt(leader, artId) {
@@ -829,6 +951,28 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         startStage(state.stageIndex + 1);
       }
 
+      function cutCard(instanceId) {
+        if (state.runStatus !== 'draft' || state.masterDeck.length <= 1) return;
+        const deckIndex = state.masterDeck.findIndex((instance) => instance.instanceId === instanceId);
+        if (deckIndex < 0) return;
+        const activePiles = [state.drawPile, state.hand, state.discardPile, state.exhaustPile];
+        const activePile = activePiles.find((pile) =>
+          pile.some((instance) => instance.instanceId === instanceId)
+        );
+        if (!activePile) {
+          throw new Error(`Card ${instanceId} was missing from active piles during deck thinning.`);
+        }
+        const [removed] = state.masterDeck.splice(deckIndex, 1);
+        activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
+        const healed = Math.min(10, state.player.maxHp - state.player.hp);
+        state.player.hp += healed;
+        state.runStatus = 'playing';
+        state.draftChoices = [];
+        state.relicChoices = [];
+        document.getElementById('draftModal').classList.add('hidden');
+        addLog(`✂️ Removed ${CARD_DB[removed.cardId].name} from the setlist and restored +${healed} HP.`, 'text-emerald-300');
+        startStage(state.stageIndex + 1);
+      }
       function upgradeCard(instanceId) {
         if (state.runStatus !== 'draft') return;
         const instance = state.masterDeck.find((card) => card.instanceId === instanceId);
@@ -873,6 +1017,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         });
 
         document.getElementById('btnSkipDraft').addEventListener('click', skipDraft);
+        document.getElementById('btnDailyTour').addEventListener('click', startDailyRun);
 
         document.getElementById('btnViewDraw').addEventListener('click', () => {
           ui.openPileModal('DRAW PILE', state.drawPile);
@@ -943,8 +1088,11 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             onChooseDraftCard: chooseDraftCard,
             onChooseRelic: chooseRelic,
             onUpgradeCard: upgradeCard,
+            onCutCard: cutCard,
             onSelectLeaderArt: selectLeaderArt,
-            onContinueTour: continueTour
+            onContinueTour: continueTour,
+            getDailyChallenge: getTodayDailyChallenge,
+            onCopyReceipt: copyRunReceipt
           });
           ui.setChangelog(gameData.changelog);
           wireEvents();

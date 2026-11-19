@@ -29,6 +29,9 @@ export function createDefaultProfileStats() {
     highestWaveCleared: 0,
     maxEncoreLevel: 0,
     fastestWinMs: null,
+    dailyWinStreak: 0,
+    dailyBestWinStreak: 0,
+    lastDailyWinDate: null,
     unlockedKaiju: [],
     leaderWins,
     selectedArts,
@@ -54,6 +57,12 @@ export function loadProfileStats() {
   }
 
   const isNonNegativeInteger = (value) => Number.isInteger(value) && value >= 0;
+  const isDailyDate = (value) => {
+    if (value === null) return true;
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const parsedDate = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === value;
+  };
   const hasLeaderProgress = LEADERS.every(({ id }) =>
     isNonNegativeInteger(profile?.leaderWins?.[id]) &&
     getUnlockedArtStyles(profile.leaderWins[id]).some((style) =>
@@ -71,6 +80,9 @@ export function loadProfileStats() {
     (profile.maxEncoreLevel !== undefined &&
       (!Number.isInteger(profile.maxEncoreLevel) || profile.maxEncoreLevel < 0 || profile.maxEncoreLevel > 5)) ||
     !(profile.fastestWinMs === null || (Number.isFinite(profile.fastestWinMs) && profile.fastestWinMs >= 0)) ||
+    profile.dailyWinStreak !== undefined && !isNonNegativeInteger(profile.dailyWinStreak) ||
+    profile.dailyBestWinStreak !== undefined && !isNonNegativeInteger(profile.dailyBestWinStreak) ||
+    profile.lastDailyWinDate !== undefined && !isDailyDate(profile.lastDailyWinDate) ||
     !Array.isArray(profile.unlockedKaiju) ||
     profile.unlockedKaiju.some((id) => typeof id !== 'string') ||
     !profile.leaderWins ||
@@ -89,6 +101,9 @@ export function loadProfileStats() {
       Object.values(profile.leaderWins).reduce((sum, wins) => sum + (Number.isInteger(wins) ? wins : 0), 0)
     )),
     fastestWinMs: profile.fastestWinMs,
+    dailyWinStreak: profile.dailyWinStreak ?? 0,
+    dailyBestWinStreak: profile.dailyBestWinStreak ?? 0,
+    lastDailyWinDate: profile.lastDailyWinDate ?? null,
     unlockedKaiju: [...new Set(profile.unlockedKaiju)],
     leaderWins: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.leaderWins[id]])),
     selectedArts: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.selectedArts[id]])),

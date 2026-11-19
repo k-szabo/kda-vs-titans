@@ -5,6 +5,7 @@
   "maxHp": 110,
   "spriteType": "ghidorah",
   "burning": false,
+  "stageEffect": "overcharge_grid",
   "passives": [
     {
       "trigger": "onPlayerAttack",

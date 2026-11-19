@@ -1,9 +1,15 @@
 import { createTurnMemberState, KDA_MEMBER_IDS } from './combat-rules.js';
 import { InvalidSavedRunError, RUN_SAVE_VERSION } from './run-storage.js';
 import { LEADERS } from './leader-data.js';
+import { DAILY_MODIFIERS } from './daily-challenge.js';
 
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
+const isDateString = (value) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
 
 function normalizeTurnMemberState(state) {
   const savedMembers = Array.isArray(state.turnMembersPlayed)
@@ -20,6 +26,34 @@ function normalizeTurnMemberState(state) {
     turnMembersPlayed: [...new Set(savedMembers)],
     memberPlayChain: chain,
     harmonyTriggered: state.harmonyTriggered === true
+  };
+}
+
+function normalizeRunTracking(state, cardDatabase, encounterCount) {
+  const stageIndex = Number.isInteger(state.stageIndex) ? state.stageIndex : 0;
+  const clearedCurrentStage = ['draft', 'victory'].includes(state.runStatus);
+  const inferredWavesCleared = Math.min(encounterCount, stageIndex + Number(clearedCurrentStage));
+  const cardPlayCounts = isRecord(state.cardPlayCounts)
+    ? Object.fromEntries(Object.entries(state.cardPlayCounts).filter(([cardId, count]) =>
+      Object.hasOwn(cardDatabase, cardId) && Number.isInteger(count) && count >= 0
+    ))
+    : {};
+  return {
+    wavesCleared: Number.isInteger(state.wavesCleared) &&
+      state.wavesCleared >= 0 &&
+      state.wavesCleared <= encounterCount
+      ? state.wavesCleared
+      : inferredWavesCleared,
+    peakSingleTurnDamage: isFiniteNumber(state.peakSingleTurnDamage) && state.peakSingleTurnDamage >= 0
+      ? state.peakSingleTurnDamage
+      : Math.max(0, isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0),
+    cardPlayCounts,
+    dailyChallenge: state.dailyChallenge ?? null,
+    rngState: Number.isInteger(state.rngState) &&
+      state.rngState >= 0 &&
+      state.rngState <= 0xffffffff
+      ? state.rngState
+      : null
   };
 }
 
@@ -69,6 +103,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       state: {
         ...state,
         ...normalizeTurnMemberState(state),
+        ...normalizeRunTracking(state, cardDatabase, encounters.length),
         encoreLevel,
         damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
@@ -136,6 +171,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     ...oldState,
     ...piles,
     ...normalizeTurnMemberState(oldState),
+    ...normalizeRunTracking(oldState, cardDatabase, encounters.length),
     masterDeck,
     nextCardInstanceId,
     encoreLevel: Number.isInteger(oldState.encoreLevel)
@@ -218,6 +254,30 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.encoreLevel < 0 ||
     saved.encoreLevel > 5 ||
     !Array.isArray(saved.logs) ||
+    !Number.isInteger(saved.wavesCleared) ||
+    saved.wavesCleared < 0 ||
+    saved.wavesCleared > encounters.length ||
+    !isFiniteNumber(saved.peakSingleTurnDamage) ||
+    saved.peakSingleTurnDamage < 0 ||
+    !isRecord(saved.cardPlayCounts) ||
+    Object.entries(saved.cardPlayCounts).some(([cardId, count]) =>
+      !Object.hasOwn(cardDatabase, cardId) || !Number.isInteger(count) || count < 0
+    ) ||
+    !(saved.dailyChallenge === null || (
+      isRecord(saved.dailyChallenge) &&
+      isDateString(saved.dailyChallenge.date) &&
+      saved.dailyChallenge.seed === saved.dailyChallenge.date &&
+      LEADERS.some(({ id }) => id === saved.dailyChallenge.leader) &&
+      saved.dailyChallenge.leader === saved.leader &&
+      (saved.dailyChallenge.relicId === null ||
+        typeof saved.dailyChallenge.relicId === 'string' &&
+          Object.hasOwn(relicDatabase, saved.dailyChallenge.relicId) &&
+          saved.relics.includes(saved.dailyChallenge.relicId)) &&
+      DAILY_MODIFIERS.some(({ id }) => id === saved.dailyChallenge.modifier) &&
+      Number.isInteger(saved.rngState) &&
+      saved.rngState > 0 &&
+      saved.rngState <= 0xffffffff
+    )) ||
     !isRecord(saved.player) ||
     !isRecord(saved.player.statuses) ||
     !isRecord(saved.enemy) ||

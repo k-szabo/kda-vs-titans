@@ -112,6 +112,7 @@
       "type": "SKILL",
       "cost": 1,
       "starter": false,
+      "retain": true,
       "desc": "Restore <b>6 HP</b>, gain <b>4</b> Holo Shield, and <b>+10%</b> Crowd Cheer.",
       "upgrade": { "description": "Restore 8 HP, gain 6 Holo Shield, and +10% Crowd Cheer." },
       "effects": [
@@ -238,6 +239,7 @@
       "type": "SKILL",
       "cost": 2,
       "starter": false,
+      "retain": true,
       "desc": "Gain <b>14</b> Holo Shield and remove player Weak.",
       "upgrade": { "description": "Gain 17 Holo Shield and remove player Weak." },
       "effects": [
@@ -259,7 +261,7 @@
       "starter": false,
       "draftable": false,
       "exhaust": true,
-      "retainInHand": true,
+      "retain": true,
       "desc": "A backstage curse. Spend <b>1 Hype Energy</b> to clear it, or it clogs your hand. <i>Exhaust.</i>",
       "effects": [],
       "log": {
@@ -277,7 +279,7 @@
       "starter": false,
       "draftable": false,
       "exhaust": true,
-      "retainInHand": true,
+      "retain": true,
       "desc": "Unplayable interference. Spend <b>1 Hype Energy</b> to clear it, or it clogs your hand. <i>Exhaust.</i>",
       "effects": [],
       "log": {

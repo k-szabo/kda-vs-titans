@@ -5,7 +5,6 @@
   "maxHp": 135,
   "spriteType": "destoroyah",
   "burning": false,
-  "stageEffect": "thermonuclear_heat",
   "passives": [
     {
       "trigger": "onHpBelowHalf",
