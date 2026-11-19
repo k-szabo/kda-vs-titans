@@ -1,3 +1,40 @@
+export const KDA_MEMBER_IDS = Object.freeze(['ahri', 'akali', 'evelynn', 'kaisa']);
+
+export function createTurnMemberState() {
+  return {
+    turnMembersPlayed: [],
+    memberPlayChain: { member: null, count: 0 },
+    harmonyTriggered: false
+  };
+}
+
+export function recordMemberPlay(state, member) {
+  if (!Array.isArray(state.turnMembersPlayed)) state.turnMembersPlayed = [];
+  if (!state.memberPlayChain || typeof state.memberPlayChain !== 'object') {
+    state.memberPlayChain = { member: null, count: 0 };
+  }
+  if (typeof state.harmonyTriggered !== 'boolean') state.harmonyTriggered = false;
+
+  if (!KDA_MEMBER_IDS.includes(member)) {
+    state.memberPlayChain = { member: null, count: 0 };
+    return { harmonyTriggered: false, spotlightTriggered: false };
+  }
+
+  if (!state.turnMembersPlayed.includes(member)) state.turnMembersPlayed.push(member);
+  const chain = state.memberPlayChain;
+  chain.count = chain.member === member ? chain.count + 1 : 1;
+  chain.member = member;
+
+  const harmonyTriggered = !state.harmonyTriggered &&
+    KDA_MEMBER_IDS.every((memberId) => state.turnMembersPlayed.includes(memberId));
+  if (harmonyTriggered) state.harmonyTriggered = true;
+
+  const spotlightTriggered = chain.count >= 3;
+  if (spotlightTriggered) chain.count = 0;
+
+  return { harmonyTriggered, spotlightTriggered };
+}
+
 export function applyPlayerDamage(player, rawDamage, pierce = 0) {
   const pierceRatio = Number.isFinite(pierce) ? Math.min(1, Math.max(0, pierce)) : 0;
   const shieldableDamage = Math.ceil(rawDamage * (1 - pierceRatio));

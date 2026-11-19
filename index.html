@@ -16,6 +16,56 @@
   <div id="loadError" role="alert" class="app-width hidden mb-3 rounded-xl border border-rose-400/50 bg-rose-950/80 px-4 py-3 text-sm text-rose-200"></div>
   <div id="saveNotice" role="alert" class="app-width hidden mb-3 rounded-xl border border-amber-400/50 bg-amber-950/80 px-4 py-3 text-sm text-amber-200"></div>
 
+  <section id="mainMenuOverlay" role="dialog" aria-modal="true" aria-labelledby="mainMenuTitle" class="fixed inset-0 z-[75] flex items-center justify-center overflow-y-auto bg-slate-950/95 p-4 backdrop-blur-xl sm:p-8">
+    <div class="my-auto w-full max-w-6xl">
+      <header class="mb-6 text-center">
+        <p class="font-display text-[10px] font-black tracking-[0.35em] text-pink-300">K/DA WORLD TOUR // ENCORE SPIRE</p>
+        <h1 id="mainMenuTitle" class="mt-2 font-display text-3xl font-black tracking-widest holo-text sm:text-5xl">THE WORLD TOUR</h1>
+        <p class="mt-2 text-sm text-slate-300">Four voices. One stage. Your encore starts here.</p>
+      </header>
+
+      <div id="mainMenuMembers" class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4" aria-label="K/DA members and equipped art"></div>
+
+      <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">HIGHEST WAVE</span>
+          <span id="menuHighestWave" class="mt-1 block font-display text-xl font-black text-amber-200">0 / 10</span>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">FULL TOUR CLEARS</span>
+          <span id="menuFullClears" class="mt-1 block font-display text-xl font-black text-emerald-200">0</span>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">BEST TIME</span>
+          <span id="menuFastestWin" class="mt-1 block font-display text-xl font-black text-cyan-200">—</span>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-black/35 p-3 text-center">
+          <span class="block text-[9px] font-display tracking-widest text-slate-400">ENCORE UNLOCKED</span>
+          <span id="menuEncoreLevel" class="mt-1 block font-display text-xl font-black text-fuchsia-200">Normal</span>
+        </div>
+      </div>
+
+      <div class="mx-auto grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">
+        <button id="btnContinueTour" type="button" class="hidden rounded-xl border border-emerald-300/50 bg-emerald-400/10 px-4 py-4 text-left transition hover:bg-emerald-400/20">
+          <span class="block font-display text-sm font-black text-emerald-100">▶ CONTINUE TOUR</span>
+          <span id="menuContinueDetails" class="mt-1 block text-xs text-emerald-200/80"></span>
+        </button>
+        <button id="btnNewWorldTour" type="button" class="rounded-xl border border-pink-300/50 bg-gradient-to-r from-pink-600/30 via-purple-600/30 to-cyan-500/30 px-4 py-4 text-left transition hover:brightness-125">
+          <span class="block font-display text-sm font-black text-white">✦ NEW WORLD TOUR</span>
+          <span class="mt-1 block text-xs text-slate-300">Choose a leader and Encore tier.</span>
+        </button>
+        <button id="btnMenuArtStudio" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-cyan-300/50 hover:bg-white/10">
+          <span class="block font-display text-sm font-black text-cyan-100">🎨 ART STUDIO</span>
+          <span class="mt-1 block text-xs text-slate-400">Equip unlocked looks and track ranks.</span>
+        </button>
+        <button id="btnMenuCodex" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-amber-300/50 hover:bg-white/10">
+          <span class="block font-display text-sm font-black text-amber-100">📖 KAIJU CODEX</span>
+          <span class="mt-1 block text-xs text-slate-400">Review your tour record and discoveries.</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
   <div id="gamePage" class="contents">
   <!-- TOP SETLIST & RUN HEADER -->
   <header class="app-width glass-panel relative z-[70] rounded-2xl px-4 py-3 mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -42,6 +92,9 @@
       </div>
       <button id="btnStats" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
         📖 STATS &amp; CODEX
+      </button>
+      <button id="btnMainMenu" type="button" class="px-3 py-2 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-300/35 font-display text-[11px] font-bold text-pink-100 transition">
+        ☰ MENU
       </button>
       <button id="btnArtStudio" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
         🎨 ART STUDIO
@@ -97,6 +150,7 @@
           <span class="font-display text-[10px] font-bold text-indigo-300 mt-1">KAI'SA</span>
         </div>
       </div>
+      <div id="memberHarmonyChain" class="flex flex-wrap items-center justify-center gap-1.5 mb-2" aria-label="Member card chain for this turn"></div>
 
       <!-- CROWD CHEER / JOINT ENCORE ULTIMATE METER -->
       <div class="bg-gradient-to-r from-pink-950/50 via-purple-950/50 to-amber-950/40 rounded-2xl p-2.5 mb-2.5 border border-amber-400/30">
@@ -185,6 +239,9 @@
             <span id="enemyBlockBadge" class="hidden px-2 py-0.5 rounded bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 text-[10px]">
               🛡️ 0 BLOCK
             </span>
+            <span id="enemyStageEffectBadge" class="hidden px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-300/35 text-[9px]" title="">
+              ⚠️ STAGE HAZARD
+            </span>
           </span>
           <span id="enemyHpText" class="font-black text-white tabular-nums">65 / 65</span>
         </div>
@@ -270,7 +327,7 @@
   </div>
 
   <!-- PERSISTENT STATS & KAIJU CODEX -->
-  <div id="statsModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+  <div id="statsModal" class="hidden fixed inset-0 z-[80] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="glass-panel rounded-3xl max-w-3xl w-full p-6 sm:p-7 border border-cyan-400/40 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-5">
         <div>

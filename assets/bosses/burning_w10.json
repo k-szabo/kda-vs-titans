@@ -5,6 +5,7 @@
   "maxHp": 155,
   "spriteType": "godzilla",
   "burning": true,
+  "stageEffect": "thermonuclear_heat",
   "passives": [
     {
       "trigger": "onTurnEnd",

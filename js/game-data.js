@@ -170,10 +170,16 @@ export async function loadGameData() {
       Number.isInteger(passive.block) &&
       passive.block >= 0;
   };
+  const validStageEffects = new Set([
+    'overcharge_grid',
+    'thermonuclear_heat',
+    'luminous_spores'
+  ]);
   if (encounters.some((encounter) =>
     !Array.isArray(encounter.patterns) ||
     encounter.patterns.length === 0 ||
     encounter.strength !== undefined && !Number.isFinite(encounter.strength) ||
+    encounter.stageEffect !== undefined && !validStageEffects.has(encounter.stageEffect) ||
     encounter.patterns.some((intent) => !validIntent(intent)) ||
     encounter.passives !== undefined &&
       (!Array.isArray(encounter.passives) || encounter.passives.some((passive) => !validPassive(passive))) ||

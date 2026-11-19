@@ -1,8 +1,27 @@
+import { createTurnMemberState, KDA_MEMBER_IDS } from './combat-rules.js';
 import { InvalidSavedRunError, RUN_SAVE_VERSION } from './run-storage.js';
 import { LEADERS } from './leader-data.js';
 
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
+
+function normalizeTurnMemberState(state) {
+  const savedMembers = Array.isArray(state.turnMembersPlayed)
+    ? state.turnMembersPlayed.filter((member) => KDA_MEMBER_IDS.includes(member))
+    : [];
+  const chain = isRecord(state.memberPlayChain) &&
+      KDA_MEMBER_IDS.includes(state.memberPlayChain.member) &&
+      Number.isInteger(state.memberPlayChain.count) &&
+      state.memberPlayChain.count >= 0 &&
+      state.memberPlayChain.count < 3
+    ? { member: state.memberPlayChain.member, count: state.memberPlayChain.count }
+    : createTurnMemberState().memberPlayChain;
+  return {
+    turnMembersPlayed: [...new Set(savedMembers)],
+    memberPlayChain: chain,
+    harmonyTriggered: state.harmonyTriggered === true
+  };
+}
 
 export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encounters, shuffle }) {
   if (savedRun?.version === RUN_SAVE_VERSION) {
@@ -49,6 +68,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       ...savedRun,
       state: {
         ...state,
+        ...normalizeTurnMemberState(state),
         encoreLevel,
         damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
@@ -67,6 +87,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
             : state.enemy.statuses,
           enrageTriggered,
           passives: encounter.passives || [],
+          stageEffect: encounter.stageEffect,
           phase2Patterns: encounter.phase2Patterns || [],
           patterns
         }
@@ -114,6 +135,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
   const migratedState = {
     ...oldState,
     ...piles,
+    ...normalizeTurnMemberState(oldState),
     masterDeck,
     nextCardInstanceId,
     encoreLevel: Number.isInteger(oldState.encoreLevel)
@@ -218,6 +240,15 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.damageDealtThisTurn < 0 ||
     !Number.isInteger(saved.skillsPlayedThisTurn) ||
     saved.skillsPlayedThisTurn < 0 ||
+    !Array.isArray(saved.turnMembersPlayed) ||
+    saved.turnMembersPlayed.some((member) => !KDA_MEMBER_IDS.includes(member)) ||
+    new Set(saved.turnMembersPlayed).size !== saved.turnMembersPlayed.length ||
+    !isRecord(saved.memberPlayChain) ||
+    !(saved.memberPlayChain.member === null || KDA_MEMBER_IDS.includes(saved.memberPlayChain.member)) ||
+    !Number.isInteger(saved.memberPlayChain.count) ||
+    saved.memberPlayChain.count < 0 ||
+    saved.memberPlayChain.count >= 3 ||
+    typeof saved.harmonyTriggered !== 'boolean' ||
     !['charm', 'marked'].every((key) => isFiniteNumber(saved.enemy.statuses[key])) ||
     !saved.logs.every((entry) => isRecord(entry) && typeof entry.text === 'string' && typeof entry.colorClass === 'string' && Number.isInteger(entry.turn))
   ) {

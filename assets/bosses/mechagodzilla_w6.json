@@ -5,6 +5,7 @@
   "maxHp": 120,
   "spriteType": "mechagodzilla",
   "burning": false,
+  "stageEffect": "overcharge_grid",
   "passives": [
     {
       "trigger": "onPlayerAttack",

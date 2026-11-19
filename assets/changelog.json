@@ -1,6 +1,16 @@
 {
-  "currentVersion": "v1.4.3_d7d3e4c4",
+  "currentVersion": "v1.5.0_dc53f6cc",
   "releases": [
+    {
+      "version": "v1.5.0_dc53f6cc",
+      "date": "2026-11-19",
+      "changes": [
+        "Added the World Tour main menu with run continuation, equipped leader art and ranked borders, career stats, Art Studio, and Codex navigation.",
+        "Added once-per-turn Quartet Harmony and leader-specific Solo Spotlights with visible turn-chain indicators.",
+        "Added validated boss stage hazards for unspent Energy, empty Shield, and Skill Cheer bonuses.",
+        "Normalized turn-member state and restored encounter hazards when loading existing v3 run saves."
+      ]
+    },
     {
       "version": "v1.4.3_d7d3e4c4",
       "date": "2026-11-19",

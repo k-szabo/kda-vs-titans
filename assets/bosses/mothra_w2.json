@@ -5,6 +5,7 @@
   "maxHp": 75,
   "spriteType": "mothra",
   "burning": false,
+  "stageEffect": "luminous_spores",
   "patterns": [
     {
       "type": "debuff_atk",

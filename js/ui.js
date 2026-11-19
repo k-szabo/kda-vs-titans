@@ -15,7 +15,8 @@ export function createGameUI({
   onChooseDraftCard,
   onChooseRelic,
   onUpgradeCard,
-  onSelectLeaderArt
+  onSelectLeaderArt,
+  onContinueTour
 }) {
   function triggerScreenShake() {
     const root = document.getElementById('appRoot');
@@ -233,6 +234,27 @@ export function createGameUI({
     document.getElementById('enemyIntentText').textContent = intent.displayText;
     document.getElementById('enemyHpText').textContent = `${e.hp} / ${e.maxHp}`;
     document.getElementById('enemyHpBar').style.width = `${Math.max(0, (e.hp / e.maxHp) * 100)}%`;
+    const stageEffects = {
+      overcharge_grid: {
+        label: 'OVERCHARGE GRID',
+        description: 'At turn end, each unspent Energy deals 3 direct HP damage.'
+      },
+      thermonuclear_heat: {
+        label: 'THERMONUCLEAR HEAT',
+        description: 'At turn end, having 0 Shield deals 3 direct HP damage.'
+      },
+      luminous_spores: {
+        label: 'LUMINOUS SPORES',
+        description: 'Playing a Skill grants +3% extra Crowd Cheer.'
+      }
+    };
+    const stageEffectBadge = document.getElementById('enemyStageEffectBadge');
+    const stageEffect = stageEffects[e.stageEffect];
+    stageEffectBadge.classList.toggle('hidden', !stageEffect);
+    if (stageEffect) {
+      stageEffectBadge.textContent = `⚠️ ${stageEffect.label}`;
+      stageEffectBadge.title = stageEffect.description;
+    }
 
     const eBlockBadge = document.getElementById('enemyBlockBadge');
     if (e.block > 0) {
@@ -292,6 +314,31 @@ export function createGameUI({
       const card = cardDatabase[cardInstance.cardId];
       if (card) handEl.appendChild(createCardElement(card, false, idx, cardInstance));
     });
+
+    const chain = state.memberPlayChain || { member: null, count: 0 };
+    const membersPlayed = new Set(state.turnMembersPlayed || []);
+    const harmonyEl = document.getElementById('memberHarmonyChain');
+    harmonyEl.replaceChildren();
+    LEADERS.forEach(({ id, name }) => {
+      const pill = document.createElement('span');
+      const isChainMember = chain.member === id && chain.count > 0;
+      pill.className = `rounded-full border px-2 py-1 font-display text-[8px] font-bold ${
+        isChainMember
+          ? 'border-amber-300/70 bg-amber-400/20 text-amber-100'
+          : membersPlayed.has(id)
+            ? 'border-cyan-300/40 bg-cyan-400/10 text-cyan-100'
+            : 'border-white/10 bg-black/20 text-slate-500'
+      }`;
+      pill.textContent = `${name.toUpperCase()}${isChainMember ? ` ${chain.count}/3` : membersPlayed.has(id) ? ' ✓' : ''}`;
+      harmonyEl.appendChild(pill);
+    });
+    const harmonyReady = membersPlayed.size === LEADERS.length;
+    if (harmonyReady) {
+      const harmonyPill = document.createElement('span');
+      harmonyPill.className = 'rounded-full border border-amber-300/70 bg-amber-400/20 px-2 py-1 font-display text-[8px] font-black text-amber-100';
+      harmonyPill.textContent = 'QUARTET HARMONY';
+      harmonyEl.appendChild(harmonyPill);
+    }
 
     document.getElementById('combatLog').innerHTML = state.logs
       .map((entry) => `<div class="bg-black/35 rounded-lg px-2 py-1 border border-white/5 leading-snug ${entry.colorClass}">
@@ -365,6 +412,78 @@ export function createGameUI({
     if (!defaultTab) throw new Error('No post-battle rewards are available.');
     setRewardTab(defaultTab);
     modal.classList.remove('hidden');
+  }
+
+  function renderMainMenu(savedRun) {
+    const profileStats = getProfileStats();
+    const encounters = getEncounters();
+    const artAssets = getArtAssets();
+    const members = document.getElementById('mainMenuMembers');
+    members.replaceChildren();
+
+    LEADERS.forEach(({ id, name }) => {
+      const artId = profileStats.selectedArts[id];
+      const style = LEADER_ART_STYLES.find((entry) => entry.id === artId);
+      const rank = getArtRank(profileStats.artWaveClears[id][artId]);
+      const card = document.createElement('article');
+      card.className = 'overflow-hidden rounded-2xl border bg-black/40 shadow-lg';
+      card.style.borderColor = rank?.color || 'rgba(255,255,255,0.15)';
+      if (rank) card.style.boxShadow = `0 0 16px ${rank.color}55`;
+
+      const image = document.createElement('img');
+      image.src = artAssets[id];
+      image.alt = `${name} ${style?.name || ''}`;
+      image.className = 'h-36 w-full object-cover object-[50%_18%] sm:h-48';
+      const caption = document.createElement('div');
+      caption.className = 'flex flex-wrap items-center justify-between gap-1 p-2.5';
+      const title = document.createElement('span');
+      title.className = 'font-display text-[10px] font-black text-white';
+      title.textContent = name.toUpperCase();
+      const artName = document.createElement('span');
+      artName.className = 'text-[9px] text-slate-400';
+      artName.textContent = style?.name || 'POP/STARS';
+      caption.append(title, artName);
+      if (rank) {
+        const rankBadge = document.createElement('span');
+        rankBadge.className = 'w-full font-display text-[8px] font-bold uppercase tracking-wider';
+        rankBadge.style.color = rank.color;
+        rankBadge.textContent = `${rank.name} // ${profileStats.artWaveClears[id][artId]} WAVES`;
+        caption.appendChild(rankBadge);
+      }
+      card.append(image, caption);
+      members.appendChild(card);
+    });
+
+    const totalClears = Object.values(profileStats.leaderWins)
+      .reduce((sum, wins) => sum + wins, 0);
+    document.getElementById('menuHighestWave').textContent =
+      `${profileStats.highestWaveCleared} / ${encounters.length}`;
+    document.getElementById('menuFullClears').textContent = totalClears;
+    const fastest = profileStats.fastestWinMs;
+    document.getElementById('menuFastestWin').textContent = fastest === null
+      ? '—'
+      : `${Math.floor(fastest / 60000)}m ${Math.floor((fastest % 60000) / 1000)}s`;
+    const maxEncoreLevel = profileStats.maxEncoreLevel ?? 0;
+    document.getElementById('menuEncoreLevel').textContent =
+      maxEncoreLevel === 0 ? 'Normal' : `Encore ${maxEncoreLevel}`;
+
+    const continueButton = document.getElementById('btnContinueTour');
+    const hasActiveRun = savedRun && ['playing', 'draft'].includes(savedRun.runStatus);
+    continueButton.classList.toggle('hidden', !hasActiveRun);
+    if (hasActiveRun) {
+      const leader = LEADERS.find((entry) => entry.id === savedRun.leader);
+      document.getElementById('menuContinueDetails').textContent =
+        `${leader?.name || savedRun.leader} // WAVE ${savedRun.stageIndex + 1} // ${savedRun.player.hp}/${savedRun.player.maxHp} HP`;
+    }
+  }
+
+  function showMainMenu(savedRun) {
+    renderMainMenu(savedRun);
+    document.getElementById('mainMenuOverlay').classList.remove('hidden');
+  }
+
+  function hideMainMenu() {
+    document.getElementById('mainMenuOverlay').classList.add('hidden');
   }
 
   function showStatsModal() {
@@ -552,10 +671,10 @@ export function createGameUI({
     });
   }
 
-  function openLeaderSelection(canCancel, currentLeader) {
+  function openLeaderSelection(canCancel, currentLeader, allowCancel = canCancel) {
     selectedLeader = LEADERS.some(({ id }) => id === currentLeader) ? currentLeader : LEADERS[0].id;
     renderEncoreChoices();
-    document.getElementById('btnCancelLeaderSelection').classList.toggle('hidden', !canCancel);
+    document.getElementById('btnCancelLeaderSelection').classList.toggle('hidden', !allowCancel);
     document.getElementById('leaderSelectionWarning').classList.toggle('hidden', !canCancel);
     renderLeaderChoices();
     document.getElementById('leaderSelectionModal').classList.remove('hidden');
@@ -700,6 +819,12 @@ export function createGameUI({
   });
   window.addEventListener('resize', fitChangelogToFour);
   document.getElementById('btnArtStudio').addEventListener('click', showArtStudio);
+  document.getElementById('btnMenuArtStudio').addEventListener('click', showArtStudio);
+  document.getElementById('btnMenuCodex').addEventListener('click', showStatsModal);
+  document.getElementById('btnNewWorldTour').addEventListener('click', () => {
+    openLeaderSelection(false, null, true);
+  });
+  document.getElementById('btnContinueTour').addEventListener('click', onContinueTour);
   document.getElementById('btnCloseArtStudio').addEventListener('click', () => {
     document.getElementById('artStudioModal').classList.add('hidden');
   });
@@ -714,6 +839,8 @@ export function createGameUI({
 
   return {
     hideRunModals,
+    showMainMenu,
+    hideMainMenu,
     openLeaderSelection,
     openDraftModal,
     openPileModal,

@@ -12,9 +12,11 @@ import {
 import {
   applyPlayerDamage,
   calculateEnemyAttackDamage,
+  createTurnMemberState,
   getEncoreBossMaxHp,
   getEncoreInterruptThreshold,
   getEncorePhase2Ratio,
+  recordMemberPlay,
   shouldInterruptChargedIntent
 } from './combat-rules.js';
 import { loadGameData } from './game-data.js';
@@ -46,6 +48,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
   let profileStats = createDefaultProfileStats();
   let ui = null;
   let state = null;
+  let mainMenuOpen = true;
   let storageAvailable = true;
   let profileStorageAvailable = true;
 
@@ -82,6 +85,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           stageIndex: 0,
           damageDealtThisTurn: 0,
           skillsPlayedThisTurn: 0,
+          ...createTurnMemberState(),
           leader,
           encoreLevel,
           leaderAbilityUsed: false,
@@ -123,6 +127,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.turn = 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        Object.assign(state, createTurnMemberState());
         state.runStatus = 'playing';
         state.draftChoices = [];
         state.relicChoices = [];
@@ -141,6 +146,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           maxHp: getEncoreBossMaxHp(enc.maxHp, state.encoreLevel),
           block: 0,
           strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0),
+          stageEffect: enc.stageEffect,
           enrageTriggered: false,
           patternStep: 0,
           statuses: { charm: 0, marked: 0 }
@@ -245,7 +251,13 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           state.skillsPlayedThisTurn += 1;
           triggerEnemyPassives('onSkillPlayed');
           applyRelicEffects('skillPlayed', card, cost);
+          if (state.enemy.stageEffect === 'luminous_spores') {
+            state.player.cheer = Math.min(100, state.player.cheer + 3);
+            addLog('✨ Luminous Spores: Skills gained +3% extra Crowd Cheer.', 'text-amber-300');
+          }
         }
+
+        resolveMemberSynergy(recordMemberPlay(state, card.member));
 
         // Check if Kaiju was defeated mid-turn
         if (state.enemy.hp <= 0) {
@@ -261,23 +273,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       function createEffectContext() {
         return {
           calcDmg: (base) => computeCardAttackDamage(base),
-          dealEnemyDmg: (amount) => {
-            let remaining = amount;
-            if (state.enemy.block > 0) {
-              const absorbed = Math.min(state.enemy.block, remaining);
-              state.enemy.block -= absorbed;
-              remaining -= absorbed;
-            }
-            if (remaining > 0) {
-              state.enemy.hp = Math.max(0, state.enemy.hp - remaining);
-              state.damageDealtThisTurn += remaining;
-              ui.triggerKaijuHitAnim();
-              ui.spawnPopup('enemyArenaCard', `-${remaining}`, 'text-amber-300 font-display font-black text-xl');
-              triggerEnemyPassives('onHpBelowHalf');
-            } else {
-              ui.spawnPopup('enemyArenaCard', 'BLOCKED', 'text-cyan-300 font-display font-bold text-sm');
-            }
-          },
+          dealEnemyDmg: (amount, pierce = 0) => dealDamageToEnemy(amount, pierce),
           gainBlock: (amount) => {
             state.player.block += amount;
             ui.spawnPopup('playerArenaCard', `+${amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
@@ -309,8 +305,73 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             state.player.cheer = Math.min(100, state.player.cheer + pct);
           },
           draw: (count) => drawCards(count),
+          stealEnemyBlock: (amount) => {
+            const stolen = Math.min(state.enemy.block, amount);
+            state.enemy.block -= stolen;
+            state.player.block += stolen;
+            if (stolen > 0) {
+              ui.spawnPopup('enemyArenaCard', `-${stolen} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
+              ui.spawnPopup('playerArenaCard', `+${stolen} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
+            }
+            return stolen;
+          },
           log: (msg, cls) => addLog(msg, cls)
         };
+      }
+
+      function dealDamageToEnemy(amount, pierce = 0) {
+        const pierceRatio = Number.isFinite(pierce) ? Math.min(1, Math.max(0, pierce)) : 0;
+        const blockableDamage = Math.ceil(amount * (1 - pierceRatio));
+        const blocked = Math.min(state.enemy.block, blockableDamage);
+        state.enemy.block -= blocked;
+        const hpDamage = Math.max(0, amount - blocked);
+        if (hpDamage > 0) {
+          state.enemy.hp = Math.max(0, state.enemy.hp - hpDamage);
+          state.damageDealtThisTurn += hpDamage;
+          ui.triggerKaijuHitAnim();
+          ui.spawnPopup('enemyArenaCard', `-${hpDamage}`, 'text-amber-300 font-display font-black text-xl');
+          triggerEnemyPassives('onHpBelowHalf');
+        } else {
+          ui.spawnPopup('enemyArenaCard', 'BLOCKED', 'text-cyan-300 font-display font-bold text-sm');
+        }
+        return hpDamage;
+      }
+
+      function resolveMemberSynergy({ harmonyTriggered, spotlightTriggered }) {
+        const ctx = createEffectContext();
+        if (harmonyTriggered) {
+          ctx.gainEnergy(1);
+          ctx.gainBlock(6);
+          ctx.addCheer(10);
+          addLog('🎶 QUARTET HARMONY! +1 Energy, +6 Shield, and +10% Crowd Cheer!', 'text-amber-300 font-bold');
+        }
+        if (!spotlightTriggered) return;
+
+        switch (state.memberPlayChain.member) {
+          case 'ahri':
+            ctx.applyEnemyStatus('charm', 1);
+            ctx.healPlayer(3);
+            addLog('🦊 Ahri Solo Spotlight: applied 1 Charm and healed 3 HP!', 'text-pink-300 font-bold');
+            break;
+          case 'akali':
+            ctx.dealEnemyDmg(6, 1);
+            ctx.draw(1);
+            addLog('🥷 Akali Solo Spotlight: dealt 6 piercing damage and drew 1 card!', 'text-cyan-300 font-bold');
+            break;
+          case 'evelynn': {
+            ctx.applyEnemyStatus('marked', 1);
+            const stolen = ctx.stealEnemyBlock(3);
+            addLog(`💜 Evelynn Solo Spotlight: applied 1 Marked and stole ${stolen} Block!`, 'text-purple-300 font-bold');
+            break;
+          }
+          case 'kaisa':
+            ctx.gainBlock(8);
+            ctx.addPlayerStatus('encore', 1);
+            addLog("✨ Kai'Sa Solo Spotlight: gained +8 Shield and +1 turn of Encore!", 'text-indigo-300 font-bold');
+            break;
+          default:
+            throw new Error(`Unknown member in Solo Spotlight chain: ${state.memberPlayChain.member}`);
+        }
       }
 
       // Trigger K/DA 4-Member Joint Finale when Crowd Cheer hits 100%
@@ -410,6 +471,15 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
         state.hand.push(...retainedCards);
 
+        if (state.enemy.stageEffect === 'overcharge_grid' && state.player.energy > 0) {
+          const hazardDamage = state.player.energy * 3;
+          applyDamageToPlayer(hazardDamage, 1);
+          addLog(`⚡ Overcharge Grid: ${state.player.energy} unspent Energy dealt ${hazardDamage} direct HP damage!`, 'text-rose-300');
+        } else if (state.enemy.stageEffect === 'thermonuclear_heat' && state.player.block === 0) {
+          applyDamageToPlayer(3, 1);
+          addLog('🔥 Thermonuclear Heat: ending the turn with no Shield dealt 3 direct HP damage!', 'text-rose-300');
+        }
+
         if (state.player.hp <= 0) {
           finishPlayerDefeat();
           return;
@@ -478,6 +548,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.turn += 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        Object.assign(state, createTurnMemberState());
         state.player.energy = state.player.maxEnergy;
         state.isPlayerTurn = true;
         drawCards(5);
@@ -620,16 +691,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
                 break;
               case 'zeroCostAttackDamage':
                 if (trigger !== 'attackPlayed' || playedCard?.type !== 'ATTACK' || effectiveCardCost !== 0 || !state.enemy) break;
-                let remaining = effect.amount;
-                const blocked = Math.min(state.enemy.block, remaining);
-                state.enemy.block -= blocked;
-                remaining -= blocked;
-                if (remaining > 0) {
-                  state.enemy.hp = Math.max(0, state.enemy.hp - remaining);
-                  state.damageDealtThisTurn += remaining;
-                  ui.spawnPopup('enemyArenaCard', `-${remaining}`, 'text-amber-300 font-display font-black text-xl');
-                  triggerEnemyPassives('onHpBelowHalf');
-                }
+                dealDamageToEnemy(effect.amount);
                 addLog(`✦ ${relic.name}: +${effect.amount} damage to 0-cost Attack.`, 'text-fuchsia-300');
                 break;
               case 'skillGainBlock':
@@ -669,7 +731,11 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const devtoolsOpen = window.location.hash === '#devtools' && state !== null;
         document.getElementById('gamePage').classList.toggle('hidden', devtoolsOpen);
         document.getElementById('devtoolsPage').classList.toggle('hidden', !devtoolsOpen);
-        if (ui && state) ui.renderAll();
+        if (devtoolsOpen) {
+          mainMenuOpen = false;
+          ui?.hideMainMenu();
+        }
+        if (ui && state && !mainMenuOpen) ui.renderAll();
       }
 
       function playSoundEffect(play) {
@@ -694,6 +760,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         encoreLevel = Number.isInteger(encoreLevel) ? Math.min(5, Math.max(0, encoreLevel)) : 0;
         if (encoreLevel > (profileStats.maxEncoreLevel ?? 0)) return;
         ui.hideRunModals();
+        ui.hideMainMenu();
+        mainMenuOpen = false;
         state = createNewRunState(leader, encoreLevel);
         startStage(0);
         syncPage();
@@ -707,11 +775,28 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
         profileStats.selectedArts[leader] = artId;
         persistProfileStats();
+        if (mainMenuOpen) ui.showMainMenu(state);
         renderAll();
       }
 
       function openNewRunSelection() {
         ui.openLeaderSelection(Boolean(state), state?.leader);
+      }
+
+      function showMainMenu() {
+        saveRunState();
+        ui.hideRunModals();
+        mainMenuOpen = true;
+        ui.showMainMenu(state);
+      }
+
+      function continueTour() {
+        if (!state) return;
+        mainMenuOpen = false;
+        ui.hideMainMenu();
+        renderAll();
+        restoreRunModal();
+        syncPage();
       }
 
       function chooseDraftCard(cardId) {
@@ -773,6 +858,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         document.getElementById('btnJointAttack').addEventListener('click', triggerJointAttack);
         document.getElementById('btnLeaderAbility').addEventListener('click', useLeaderAbility);
         document.getElementById('btnNewRun').addEventListener('click', openNewRunSelection);
+        document.getElementById('btnMainMenu').addEventListener('click', showMainMenu);
         document.getElementById('btnRestartRunEnd').addEventListener('click', openNewRunSelection);
         document.getElementById('btnStartNewRun').addEventListener('click', () => {
           startNewRun(ui.getSelectedLeader(), ui.getSelectedEncoreLevel());
@@ -799,7 +885,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         });
 
         window.addEventListener('keydown', (e) => {
-          if (!state || !state.isPlayerTurn) return;
+          if (mainMenuOpen || !state || !state.isPlayerTurn) return;
           if (e.key >= '1' && e.key <= '5') {
             const idx = parseInt(e.key, 10) - 1;
             if (idx < state.hand.length) playCardAtIndex(idx);
@@ -857,7 +943,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             onChooseDraftCard: chooseDraftCard,
             onChooseRelic: chooseRelic,
             onUpgradeCard: upgradeCard,
-            onSelectLeaderArt: selectLeaderArt
+            onSelectLeaderArt: selectLeaderArt,
+            onContinueTour: continueTour
           });
           ui.setChangelog(gameData.changelog);
           wireEvents();
@@ -923,11 +1010,25 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
           if (savedRun) {
             state = savedRun.state;
-            renderAll();
-            restoreRunModal();
-            syncPage();
+            if (window.location.hash === '#devtools') {
+              mainMenuOpen = false;
+              ui.hideMainMenu();
+              renderAll();
+              restoreRunModal();
+              syncPage();
+            } else {
+              mainMenuOpen = true;
+              ui.showMainMenu(state);
+            }
           } else {
-            ui.openLeaderSelection(false, null);
+            if (window.location.hash === '#devtools') {
+              mainMenuOpen = false;
+              ui.hideMainMenu();
+              ui.openLeaderSelection(false, null);
+            } else {
+              mainMenuOpen = true;
+              ui.showMainMenu(null);
+            }
           }
         } catch (error) {
           console.error('Unable to load game data and assets.', error);
