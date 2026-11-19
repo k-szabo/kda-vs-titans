@@ -124,10 +124,9 @@ export function loadProfileStats(defaultKeybinds) {
     version: PROFILE_VERSION,
     settings: normalizeSettings(profile.settings, defaultKeybinds),
     highestWaveCleared: profile.highestWaveCleared,
-    maxEncoreLevel: Math.min(5, Math.max(
-      Number.isInteger(profile.maxEncoreLevel) ? profile.maxEncoreLevel : 0,
-      Object.values(profile.leaderWins).reduce((sum, wins) => sum + (Number.isInteger(wins) ? wins : 0), 0)
-    )),
+    maxEncoreLevel: Number.isInteger(profile.maxEncoreLevel)
+      ? Math.min(5, Math.max(0, profile.maxEncoreLevel))
+      : 0,
     fastestWinMs: profile.fastestWinMs,
     dailyWinStreak: profile.dailyWinStreak ?? 0,
     dailyBestWinStreak: profile.dailyBestWinStreak ?? 0,

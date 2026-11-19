@@ -244,6 +244,18 @@ overview.
 - A non-member card (e.g. `squad`) breaks the consecutive chain but does not
   erase members already played this turn.
 
+### Encore progression
+
+- A **non-daily** full clear at Encore tier N unlocks tier N+1, capped at 5:
+  `maxEncoreLevel = min(5, max(maxEncoreLevel, encoreLevel + 1))`. There is no
+  skip — clearing tier 0 five times never unlocks tier 2.
+- Daily World Tour wins never advance Encore; they only update the daily streak.
+- `maxEncoreLevel` is the highest unlocked tier and is validated 0–5 in
+  `profile-storage.js`. Never derive it from `leaderWins`; doing so let repeated
+  clears unlock every tier at once.
+- Existing profiles keep their stored `maxEncoreLevel`; the fix stops further
+  inflation rather than resetting progress.
+
 ### Post-battle rewards
 
 After each non-final wave, `state.runStatus = 'draft'` and the player chooses:

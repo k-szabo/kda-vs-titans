@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.7.3_696b5c9b",
+  "currentVersion": "v1.7.4_92afe6bc",
   "releases": [
+    {
+      "version": "v1.7.4_92afe6bc",
+      "date": "2026-11-19",
+      "changes": [
+        "Encore tiers now unlock exactly one level per non-daily full clear.",
+        "Daily World Tour wins no longer advance Encore progression.",
+        "Removed the profile load rule that re-derived Encore unlocks from total leader wins."
+      ]
+    },
     {
       "version": "v1.7.3_696b5c9b",
       "date": "2026-11-19",

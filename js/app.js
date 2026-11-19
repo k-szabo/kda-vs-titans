@@ -914,8 +914,13 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
         if (state.stageIndex === ENCOUNTERS.length - 1) {
           profileStats.leaderWins[state.leader] += 1;
-          const totalFullClears = Object.values(profileStats.leaderWins).reduce((sum, wins) => sum + wins, 0);
-          profileStats.maxEncoreLevel = Math.min(5, totalFullClears);
+          if (!state.dailyChallenge) {
+            // Clearing a tier unlocks exactly the next one, never a skip.
+            profileStats.maxEncoreLevel = Math.min(
+              5,
+              Math.max(profileStats.maxEncoreLevel, state.encoreLevel + 1)
+            );
+          }
           const duration = Math.max(0, Date.now() - state.startedAt);
           if (profileStats.fastestWinMs === null || duration < profileStats.fastestWinMs) {
             profileStats.fastestWinMs = duration;
