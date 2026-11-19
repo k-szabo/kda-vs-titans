@@ -1,6 +1,26 @@
 {
-  "currentVersion": "v1.6.1_c66d4010",
+  "currentVersion": "v1.7.1_9532654b",
   "releases": [
+    {
+      "version": "v1.7.1_9532654b",
+      "date": "2026-11-19",
+      "changes": [
+        "Moved career statistics and the Kaiju Codex into Options and removed the separate Codex/Changelog menu.",
+        "Loaded validated default keyboard bindings from assets/keybinds.json while keeping custom bindings in profile data.",
+        "Preserved profile v3 progress and run v4 save compatibility.",
+        "Updated developer documentation and rebuilt the static Tailwind stylesheet."
+      ]
+    },
+    {
+      "version": "v1.7.0_ebf94095",
+      "date": "2026-11-19",
+      "changes": [
+        "Added How to Play and Options modals with persistent sound and configurable keyboard shortcuts.",
+        "Normalized settings for existing profile v3 saves without resetting progress; muting now silences active synthesized tones.",
+        "Extracted progression screens and shared changelog rendering into focused UI modules.",
+        "Updated developer documentation and rebuilt the committed Tailwind stylesheet."
+      ]
+    },
     {
       "version": "v1.6.1_c66d4010",
       "date": "2026-11-19",

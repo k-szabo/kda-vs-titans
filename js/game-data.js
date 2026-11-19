@@ -1,3 +1,5 @@
+import { isValidDefaultKeybinds } from './keybinds.js';
+
 const DATA_MANIFEST_URL = new URL('../assets/data.json', import.meta.url);
 const CACHE_VERSION_KEY = 'kda-vs-titans:cache-version';
 
@@ -43,11 +45,13 @@ export async function loadGameData() {
     !manifest.backdrops ||
     !manifest.cards ||
     !manifest.relics ||
+    typeof manifest.keybinds !== 'string' ||
+    !manifest.keybinds ||
     !manifest.changelog ||
     !Array.isArray(manifest.bosses) ||
     manifest.bosses.length === 0
   ) {
-    throw new Error('The asset manifest must define portraits, leader art, backdrops, card, relic, changelog, and boss files.');
+    throw new Error('The asset manifest must define portraits, leader art, backdrops, card, relic, keybind, changelog, and boss files.');
   }
 
   const leaderIds = ['ahri', 'akali', 'evelynn', 'kaisa'];
@@ -72,10 +76,12 @@ export async function loadGameData() {
 
   const cardDataUrl = new URL(manifest.cards, DATA_MANIFEST_URL);
   const relicDataUrl = new URL(manifest.relics, DATA_MANIFEST_URL);
+  const keybindDataUrl = new URL(manifest.keybinds, DATA_MANIFEST_URL);
   const changelogUrl = new URL(manifest.changelog, DATA_MANIFEST_URL);
-  const [cardData, relicData, changelogData, encounters] = await Promise.all([
+  const [cardData, relicData, keybindData, changelogData, encounters] = await Promise.all([
     loadJson(cardDataUrl, manifest.version),
     loadJson(relicDataUrl, manifest.version),
+    loadJson(keybindDataUrl, manifest.version),
     loadJson(changelogUrl, manifest.version),
     Promise.all(manifest.bosses.map(async (bossPath) => {
       const bossUrl = new URL(bossPath, DATA_MANIFEST_URL);
@@ -93,6 +99,10 @@ export async function loadGameData() {
       };
     }))
   ]);
+
+  if (!isValidDefaultKeybinds(keybindData)) {
+    throw new Error('The keybind file must define one unique printable key for every game action.');
+  }
 
   if (!Array.isArray(cardData.cards) || !Array.isArray(cardData.starterDeck) || cardData.cards.length === 0) {
     throw new Error('The card file must define cards and a starter deck.');
@@ -253,6 +263,7 @@ export async function loadGameData() {
     artAssets: { ...manifest.portraits, leaderArts },
     cardDatabase,
     changelog: changelogData,
+    defaultKeybinds: keybindData,
     encounters,
     relicDatabase,
     starterDeck: cardData.starterDeck

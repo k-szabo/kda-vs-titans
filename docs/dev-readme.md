@@ -18,7 +18,7 @@ Open <http://localhost:8000/#devtools> to use the testing-only wave selector. Se
 
 ## Leader and art progression
 
-The World Tour main menu is shown on boot unless `#devtools` is in the URL. It displays each member's equipped art and rank, total wins, highest wave, unlocked art, Codex progress, Encore tier, and daily streak. It offers Continue Tour, New World Tour, Daily World Tour, Art Studio, and Codex & Changelog. The combat header's MENU button returns to the main menu without ending the active run. Continue Tour restores the saved combat or reward screen.
+The World Tour main menu is shown on boot unless `#devtools` is in the URL. It displays each member's equipped art and rank, total wins, highest wave, unlocked art, Codex progress, Encore tier, and daily streak. It offers Continue Tour, New World Tour, Daily World Tour, Art Studio, How to Play, and Options. The Codex and career records are inside Options. The combat header's MENU button returns to the main menu without ending the active run. Continue Tour restores the saved combat or reward screen.
 
 A new tour begins with leader and Encore-tier selection. A leader's special ability can be used once during that run. Completing all 10 waves with a leader unlocks that member's MORE art; completing a second full run with the same leader unlocks FIRESTARTER. Choose unlocked character art in the Art Studio. Each cleared wave advances only the run leader's equipped art border, which advances once per 10 waves.
 
@@ -61,6 +61,12 @@ Victory and defeat screens include a copyable Tour Receipt with waves cleared, t
 
 The battle log can be collapsed from its header control. It defaults to collapsed on narrow screens to preserve combat and hand space.
 
+## How to Play and Options
+
+The How to Play modal summarizes the turn flow, boss intents and interrupts, and leader/relic progression. Options is available from the main menu and combat header and contains the Codex, career records, and changelog. Sound preference and custom keyboard bindings are stored in the existing profile v3 data; older profiles are normalized without clearing progress. This update leaves profile v3 and run v4 saves compatible. Default shortcuts are read from `assets/keybinds.json`, referenced by `assets/data.json`, and custom bindings override them in the profile. Sound defaults to on. The shipped defaults are `1`–`5` for hand slots, `E` to end the turn, `Q` for Joint Finale, and `R` for the Leader Ability. Bindings accept one printable key, duplicate bindings swap, Escape cancels a pending capture, and Reset Defaults restores the JSON-defined defaults. The separate Codex/Changelog menu entry has been removed.
+
+The synthesized sound toggle takes effect immediately, including for tones already playing. Enabling sound from Options plays a short confirmation chime.
+
 ## Deploy to GitHub Pages
 
 1. Push the project to a GitHub repository.
@@ -80,6 +86,7 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 │   ├── cards.json    # Card definitions, upgrades, effects, and starter deck
 │   ├── changelog.json # Version identifiers and release notes
 │   ├── data.json     # Portrait/backdrop URLs and ordered data paths
+│   ├── keybinds.json # Default keyboard shortcuts for game actions
 │   ├── relics.json   # Passive relic definitions and effects
 │   └── favicon.svg   # Browser tab icon
 ├── css/
@@ -88,16 +95,20 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 │   ├── copilot_handoff_architecture_guide.md
 │   └── dev-readme.md
 ├── js/
-│   ├── app.js             # Game state, rules, and event wiring
+│   ├── app.js             # Game state, run flow, and event wiring
 │   ├── audio.js           # Synthesized Web Audio effects
 │   ├── card-effects.js    # Data-driven card effect interpreter
+│   ├── changelog-ui.js    # Shared release-history rendering
 │   ├── combat-rules.js    # Player damage, shield, and Cheer resolution
 │   ├── daily-challenge.js # Date-seeded Daily World Tour assignments and modifiers
 │   ├── game-data.js       # Asset and encounter loading
+│   ├── keybinds.js        # Validated, normalized, and remappable keyboard controls
+│   ├── options-ui.js      # How to Play, Options, and Codex UI
 │   ├── profile-storage.js # Persistent profile stats and codex
+│   ├── progression-ui.js  # Main menu, Codex, Art Studio, and leader selection
 │   ├── run-state.js       # Run-save migration and validation
 │   ├── run-storage.js     # Versioned local run save/load
-│   └── ui.js              # Rendering, card views, and modals
+│   └── ui.js              # Combat rendering, card views, and reward/run modals
 └── index.html
 ```
 

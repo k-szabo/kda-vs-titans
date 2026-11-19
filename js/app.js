@@ -7,6 +7,7 @@ import {
   playKaijuRoarSfx,
   playBossEnrageSfx,
   playDorsalInterruptSfx,
+  playSettingsTestSfx,
   setSoundEnabled
 } from './audio.js';
 import {
@@ -30,6 +31,8 @@ import {
   ProfileStorageError,
   saveProfileStats
 } from './profile-storage.js';
+import { getActionForKey, normalizeKeybinds } from './keybinds.js';
+import { createOptionsUI } from './options-ui.js';
 import {
   clearSavedRun,
   InvalidSavedRunError,
@@ -50,8 +53,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
   let RELIC_DB = {};
   let ENCOUNTERS = [];
   let STARTER_DECK = [];
-  let profileStats = createDefaultProfileStats();
+  let defaultKeybinds = null;
+  let profileStats = null;
   let ui = null;
+  let optionsUI = null;
   let state = null;
   let mainMenuOpen = true;
   let storageAvailable = true;
@@ -780,6 +785,16 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
       }
 
+      function updateProfileSettings(settings) {
+        profileStats.settings = {
+          ...settings,
+          keybinds: normalizeKeybinds(settings.keybinds, defaultKeybinds)
+        };
+        setSoundEnabled(profileStats.settings.soundEnabled);
+        persistProfileStats();
+        optionsUI?.renderSettings();
+      }
+
       function applyRelicEffects(trigger, playedCard = null, effectiveCardCost = null) {
         state.relics.forEach((relicId) => {
           const relic = RELIC_DB[relicId];
@@ -858,7 +873,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           play();
         } catch (error) {
           setSoundEnabled(false);
-          ui.updateSoundButton(false, isSoundSupported());
+          profileStats.settings.soundEnabled = false;
+          persistProfileStats();
+          optionsUI?.renderSettings();
           console.error('A sound effect failed; sound has been disabled.', error);
           ui.showSaveNotice('A sound effect failed to play and has been disabled. Gameplay can continue normally.');
         }
@@ -1012,14 +1029,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         document.getElementById('btnStartNewRun').addEventListener('click', () => {
           startNewRun(ui.getSelectedLeader(), ui.getSelectedEncoreLevel());
         });
-        document.getElementById('btnStats').addEventListener('click', () => ui.showStatsModal());
-        document.getElementById('btnCloseStats').addEventListener('click', () => {
-          document.getElementById('statsModal').classList.add('hidden');
-        });
-        document.getElementById('btnSound').addEventListener('click', () => {
-          const enabled = setSoundEnabled(!isSoundEnabled());
-          ui.updateSoundButton(enabled, isSoundSupported());
-        });
+        document.getElementById('btnOptions').addEventListener('click', () => optionsUI.showOptions());
+        document.getElementById('btnMenuOptions').addEventListener('click', () => optionsUI.showOptions());
+        document.getElementById('btnMenuHowToPlay').addEventListener('click', () => optionsUI.showHowToPlay());
 
         document.getElementById('btnSkipDraft').addEventListener('click', skipDraft);
         document.getElementById('btnDailyTour').addEventListener('click', startDailyRun);
@@ -1035,12 +1047,26 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         });
 
         window.addEventListener('keydown', (e) => {
-          if (mainMenuOpen || !state || !state.isPlayerTurn) return;
-          if (e.key >= '1' && e.key <= '5') {
-            const idx = parseInt(e.key, 10) - 1;
-            if (idx < state.hand.length) playCardAtIndex(idx);
-          } else if (e.key.toLowerCase() === 'e') {
+          if (
+            mainMenuOpen || !state || !state.isPlayerTurn ||
+            optionsUI?.isListening() ||
+            document.querySelector('[role="dialog"]:not(.hidden), [id$="Modal"]:not(.hidden)') ||
+            e.altKey || e.ctrlKey || e.metaKey ||
+            e.target instanceof HTMLElement && e.target.matches('input, textarea, select, [contenteditable="true"]')
+          ) return;
+
+          const action = getActionForKey(e.key, profileStats.settings.keybinds);
+          if (!action) return;
+          e.preventDefault();
+          if (action.startsWith('card')) {
+            const slot = Number(action.slice(-1)) - 1;
+            if (slot < state.hand.length) playCardAtIndex(slot);
+          } else if (action === 'endTurn') {
             endPlayerTurn();
+          } else if (action === 'jointFinale') {
+            triggerJointAttack();
+          } else if (action === 'leaderAbility') {
+            useLeaderAbility();
           }
         });
       }
@@ -1073,6 +1099,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           RELIC_DB = gameData.relicDatabase;
           ENCOUNTERS = gameData.encounters;
           STARTER_DECK = gameData.starterDeck;
+          defaultKeybinds = gameData.defaultKeybinds;
           ui = createGameUI({
             getState: () => state,
             getArtAssets: () => ({
@@ -1101,10 +1128,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           });
           ui.setChangelog(gameData.changelog);
           wireEvents();
-          ui.updateSoundButton(isSoundEnabled(), isSoundSupported());
 
           try {
-            profileStats = loadProfileStats();
+            profileStats = loadProfileStats(defaultKeybinds);
           } catch (error) {
             if (error instanceof ProfileStorageError) {
               profileStorageAvailable = false;
@@ -1117,7 +1143,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               ui.showSaveNotice(error instanceof OutdatedProfileStatsError
                 ? 'This update reset profile progress. Start a new World Tour.'
                 : 'Saved profile statistics could not be restored and have been reset.');
-              profileStats = createDefaultProfileStats();
+              profileStats = createDefaultProfileStats(defaultKeybinds);
               try {
                 saveProfileStats(profileStats);
               } catch (saveError) {
@@ -1130,6 +1156,17 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               throw error;
             }
           }
+          setSoundEnabled(profileStats.settings.soundEnabled);
+          optionsUI = createOptionsUI({
+            getSettings: () => profileStats.settings,
+            defaultKeybinds,
+            getProfileStats: () => profileStats,
+            getEncounters: () => ENCOUNTERS,
+            onSettingsChange: updateProfileSettings,
+            isSoundSupported,
+            onTestSound: () => playSoundEffect(playSettingsTestSfx),
+            changelog: gameData.changelog
+          });
 
           let savedRun = null;
           try {

@@ -70,9 +70,13 @@
           <span class="block font-display text-sm font-black text-cyan-100">🎨 ART STUDIO</span>
           <span class="mt-1 block text-xs text-slate-400">Equip unlocked looks and track ranks.</span>
         </button>
-        <button id="btnMenuCodex" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-amber-300/50 hover:bg-white/10">
-          <span class="block font-display text-sm font-black text-amber-100">📖 CODEX &amp; CHANGELOG</span>
-          <span class="mt-1 block text-xs text-slate-400">Review your discoveries and version history.</span>
+        <button id="btnMenuHowToPlay" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-cyan-300/50 hover:bg-white/10">
+          <span class="block font-display text-sm font-black text-cyan-100">❔ HOW TO PLAY</span>
+          <span class="mt-1 block text-xs text-slate-400">Learn the turn flow, interrupts, and team abilities.</span>
+        </button>
+        <button id="btnMenuOptions" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-purple-300/50 hover:bg-white/10">
+          <span class="block font-display text-sm font-black text-purple-100">⚙ OPTIONS</span>
+          <span class="mt-1 block text-xs text-slate-400">Adjust sound and keyboard shortcuts.</span>
         </button>
         <button id="btnDailyTour" type="button" class="rounded-xl border border-orange-300/40 bg-orange-400/10 px-4 py-4 text-left transition hover:bg-orange-400/20">
           <span class="block font-display text-sm font-black text-orange-100">📅 DAILY WORLD TOUR</span>
@@ -107,17 +111,14 @@
         <div class="text-[9px] font-display tracking-widest text-slate-400">TURN</div>
         <div id="turnNumberDisplay" class="font-display text-sm font-black text-white">1</div>
       </div>
-      <button id="btnStats" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
-        📖 STATS &amp; CODEX
-      </button>
       <button id="btnMainMenu" type="button" class="px-3 py-2 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-300/35 font-display text-[11px] font-bold text-pink-100 transition">
         ☰ MENU
       </button>
       <button id="btnArtStudio" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
         🎨 ART STUDIO
       </button>
-      <button id="btnSound" type="button" aria-pressed="true" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
-        🔊 SOUND ON
+      <button id="btnOptions" type="button" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
+        ⚙ OPTIONS
       </button>
       <button id="btnNewRun" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
         ↺ NEW RUN
@@ -299,7 +300,7 @@
       </div>
 
       <span class="text-[11px] text-slate-400 hidden sm:inline">
-        Click any glowing card in hand to perform it • Keys <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">1-5</kbd> or <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">E</kbd> to End Turn
+        Click any glowing card in hand • <span id="keybindHint">Loading keyboard shortcuts…</span>
       </span>
 
       <!-- End Turn Button -->
@@ -311,6 +312,95 @@
     <!-- Active Hand Grid -->
     <div id="handContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3 min-h-[195px]"></div>
   </footer>
+
+  <section id="howToPlayModal" role="dialog" aria-modal="true" aria-labelledby="howToPlayHeading" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+    <div class="glass-panel max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-cyan-400/40 p-5 sm:p-7">
+      <div class="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <span class="font-display text-[10px] tracking-widest text-cyan-300">QUICK REFERENCE</span>
+          <h2 id="howToPlayHeading" class="font-display text-xl font-black holo-text">HOW TO PLAY</h2>
+        </div>
+        <button id="btnCloseHowToPlay" type="button" class="rounded-lg bg-white/10 px-3 py-1.5 font-display text-xs font-bold text-white hover:bg-white/20">CLOSE ✕</button>
+      </div>
+      <div class="grid gap-3 md:grid-cols-3">
+        <article class="rounded-2xl border border-pink-300/25 bg-pink-400/5 p-4">
+          <h3 class="mb-2 font-display text-xs font-black text-pink-200">1. YOUR TURN</h3>
+          <ul class="space-y-2 text-xs leading-relaxed text-slate-300">
+            <li>Start with 3 Energy and draw up to 5 cards. Spend Energy to play cards; unspent Energy is lost at turn end.</li>
+            <li>Shield absorbs incoming damage before HP. End your turn when ready; the boss resolves its shown intent.</li>
+            <li>Build Crowd Cheer to 100% to unleash Joint Finale. Card costs, status effects, and bonuses are shown on the cards and squad panel.</li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-amber-300/25 bg-amber-400/5 p-4">
+          <h3 class="mb-2 font-display text-xs font-black text-amber-200">2. BOSS INTENTS</h3>
+          <ul class="space-y-2 text-xs leading-relaxed text-slate-300">
+            <li>Read the intent above the boss before ending your turn. Shield protects you; piercing damage bypasses it.</li>
+            <li>Some charged attacks can be interrupted by dealing enough damage in one turn. A successful Dorsal Interrupt cancels that intent.</li>
+            <li>Charm weakens enemy attacks; Marked makes the boss take extra damage. Curses and hazard rules can add special run challenges.</li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-cyan-300/25 bg-cyan-400/5 p-4">
+          <h3 class="mb-2 font-display text-xs font-black text-cyan-200">3. LEADERS &amp; PROGRESSION</h3>
+          <ul class="space-y-2 text-xs leading-relaxed text-slate-300">
+            <li>Choose Ahri, Akali, Evelynn, or Kai'Sa. Each has a once-per-run Leader Ability and a signature starter relic.</li>
+            <li>Relics grant passive or triggered bonuses. Draft rewards and backstage rests help shape your deck between waves.</li>
+            <li>Clear all 10 waves to unlock the next Encore tier. Art Studio unlocks alternate looks and tracks each leader's rank.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="mt-4 text-[11px] text-slate-400">Keyboard shortcuts can be changed in Options. During a battle, press the configured key to play a card, end your turn, trigger Joint Finale, or use your Leader Ability.</p>
+    </div>
+  </section>
+
+  <section id="optionsModal" role="dialog" aria-modal="true" aria-labelledby="optionsHeading" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+    <div class="glass-panel max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-purple-400/40 p-5 sm:p-7">
+      <div class="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <span class="font-display text-[10px] tracking-widest text-purple-300">GAME SETTINGS</span>
+          <h2 id="optionsHeading" class="font-display text-xl font-black holo-text">OPTIONS</h2>
+        </div>
+        <button id="btnCloseOptions" type="button" class="rounded-lg bg-white/10 px-3 py-1.5 font-display text-xs font-bold text-white hover:bg-white/20">CLOSE ✕</button>
+      </div>
+      <section class="mb-5 rounded-2xl border border-white/10 bg-black/25 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-display text-xs font-black text-cyan-200">SOUND</h3>
+            <p class="mt-1 text-[11px] text-slate-400">Synthesized game effects. Turning sound on plays a short test chime.</p>
+          </div>
+          <button id="btnToggleSound" type="button" aria-pressed="true" class="rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 font-display text-[10px] font-bold text-cyan-100 hover:bg-cyan-400/20">🔊 SOUND ON</button>
+        </div>
+      </section>
+      <section class="mb-5 rounded-2xl border border-white/10 bg-black/25 p-4">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-display text-xs font-black text-amber-200">KEYBOARD SHORTCUTS</h3>
+            <p class="mt-1 text-[11px] text-slate-400">Select a binding, then press a single key. Duplicate keys swap bindings; Escape cancels.</p>
+          </div>
+          <button id="btnResetKeybinds" type="button" class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 font-display text-[9px] font-bold text-slate-200 hover:bg-white/10">RESET DEFAULTS</button>
+        </div>
+        <div id="keybindGrid" class="grid gap-2 sm:grid-cols-2"></div>
+        <p id="keybindStatus" aria-live="polite" class="mt-3 min-h-4 text-[10px] text-cyan-200"></p>
+      </section>
+      <section class="mb-5 rounded-2xl border border-white/10 bg-black/25 p-4">
+        <h3 class="font-display text-xs font-black text-sky-300">KAIJU CODEX</h3>
+        <div class="my-3 grid grid-cols-2 gap-3">
+          <div class="rounded-xl border border-white/10 bg-black/30 p-3">
+            <div class="text-[9px] font-display tracking-widest text-slate-400">HIGHEST WAVE CLEARED</div>
+            <div id="optionsHighestWave" class="font-display text-xl font-black text-amber-300">0</div>
+          </div>
+          <div class="rounded-xl border border-white/10 bg-black/30 p-3">
+            <div class="text-[9px] font-display tracking-widest text-slate-400">FASTEST VICTORY</div>
+            <div id="optionsFastestWin" class="font-display text-lg font-black text-emerald-300">—</div>
+          </div>
+        </div>
+        <div id="optionsCodexGrid" class="grid grid-cols-1 gap-2 sm:grid-cols-2"></div>
+      </section>
+      <section>
+        <h3 class="mb-2 font-display text-xs font-black text-amber-200">CHANGELOG</h3>
+        <div id="optionsChangelogEntries" class="max-h-64 space-y-2 overflow-y-auto pr-1"></div>
+      </section>
+    </div>
+  </section>
 
   <!-- POST-BATTLE REWARD & REST MODAL -->
   <div id="draftModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
@@ -342,33 +432,6 @@
           REST (+25 HP) ▶
         </button>
       </div>
-    </div>
-  </div>
-
-  <!-- PERSISTENT STATS & KAIJU CODEX -->
-  <div id="statsModal" class="hidden fixed inset-0 z-[80] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="glass-panel rounded-3xl max-w-3xl w-full p-6 sm:p-7 border border-cyan-400/40 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between mb-5">
-        <div>
-          <span class="text-[10px] font-display tracking-widest text-cyan-300">PLAYER PROFILE</span>
-          <h2 class="font-display text-xl font-black holo-text">RUN RECORD &amp; KAIJU CODEX</h2>
-        </div>
-        <button id="btnCloseStats" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 font-display text-xs font-bold text-white">CLOSE ✕</button>
-      </div>
-      <div class="grid grid-cols-2 gap-3 mb-5">
-        <div class="rounded-xl bg-black/35 border border-white/10 p-4">
-          <div class="text-[9px] font-display tracking-widest text-slate-400">HIGHEST WAVE CLEARED</div>
-          <div id="statsHighestWave" class="font-display text-2xl font-black text-amber-300">0</div>
-        </div>
-        <div class="rounded-xl bg-black/35 border border-white/10 p-4">
-          <div class="text-[9px] font-display tracking-widest text-slate-400">FASTEST VICTORY</div>
-          <div id="statsFastestWin" class="font-display text-lg font-black text-emerald-300">—</div>
-        </div>
-      </div>
-      <h3 class="font-display text-sm font-black text-sky-300 mb-2">KAIJU CODEX</h3>
-      <div id="statsCodexGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
-      <h3 class="mt-6 font-display text-sm font-black text-amber-200 mb-2">VERSION HISTORY</h3>
-      <div id="statsChangelogEntries" class="space-y-2"></div>
     </div>
   </div>
 

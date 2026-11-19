@@ -1,5 +1,6 @@
 let audioContext = null;
 let soundEnabled = true;
+const activeGains = new Set();
 
 export function isSoundSupported() {
   return Boolean(window.AudioContext || window.webkitAudioContext);
@@ -11,6 +12,13 @@ export function isSoundEnabled() {
 
 export function setSoundEnabled(enabled) {
   soundEnabled = Boolean(enabled) && isSoundSupported();
+  if (!soundEnabled && audioContext) {
+    const now = audioContext.currentTime;
+    activeGains.forEach((gain) => {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(0, now);
+    });
+  }
   return soundEnabled;
 }
 
@@ -48,8 +56,24 @@ function playTone(context, {
   gain.gain.exponentialRampToValueAtTime(0.0001, endsAt);
   oscillator.connect(gain);
   gain.connect(context.destination);
+  activeGains.add(gain);
+  oscillator.addEventListener('ended', () => activeGains.delete(gain), { once: true });
   oscillator.start(startsAt);
   oscillator.stop(endsAt);
+}
+
+export function playSettingsTestSfx() {
+  const context = getAudioContext();
+  if (!context) return;
+  [
+    { startFrequency: 520, endFrequency: 780, startDelay: 0 },
+    { startFrequency: 780, endFrequency: 1040, startDelay: 0.08 }
+  ].forEach((tone) => playTone(context, {
+    ...tone,
+    duration: 0.16,
+    volume: 0.04,
+    type: 'sine'
+  }));
 }
 
 export function playCardSfx() {

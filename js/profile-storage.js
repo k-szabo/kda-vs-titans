@@ -1,7 +1,22 @@
 import { getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
+import { normalizeKeybinds } from './keybinds.js';
 
 export const PROFILE_VERSION = 3;
 const PROFILE_KEY = 'encore-spire.profile';
+
+export function createDefaultSettings(defaultKeybinds) {
+  return {
+    soundEnabled: true,
+    keybinds: normalizeKeybinds(defaultKeybinds, defaultKeybinds)
+  };
+}
+
+function normalizeSettings(settings, defaultKeybinds) {
+  return {
+    soundEnabled: typeof settings?.soundEnabled === 'boolean' ? settings.soundEnabled : true,
+    keybinds: normalizeKeybinds(settings?.keybinds, defaultKeybinds)
+  };
+}
 
 export class ProfileStorageError extends Error {
   constructor(message, cause) {
@@ -24,7 +39,7 @@ export class OutdatedProfileStatsError extends Error {
   }
 }
 
-export function createDefaultProfileStats() {
+export function createDefaultProfileStats(defaultKeybinds) {
   const leaderWins = Object.fromEntries(LEADERS.map(({ id }) => [id, 0]));
   const selectedArts = Object.fromEntries(LEADERS.map(({ id }) => [id, 'popstars']));
   const artWaveClears = Object.fromEntries(LEADERS.map(({ id }) => [
@@ -33,6 +48,7 @@ export function createDefaultProfileStats() {
   ]));
   return {
     version: PROFILE_VERSION,
+    settings: createDefaultSettings(defaultKeybinds),
     highestWaveCleared: 0,
     maxEncoreLevel: 0,
     fastestWinMs: null,
@@ -46,7 +62,7 @@ export function createDefaultProfileStats() {
   };
 }
 
-export function loadProfileStats() {
+export function loadProfileStats(defaultKeybinds) {
   let serialized;
   try {
     serialized = window.localStorage.getItem(PROFILE_KEY);
@@ -54,7 +70,7 @@ export function loadProfileStats() {
     throw new ProfileStorageError('Unable to access browser storage for profile stats.', error);
   }
 
-  if (serialized === null) return createDefaultProfileStats();
+  if (serialized === null) return createDefaultProfileStats(defaultKeybinds);
 
   let profile;
   try {
@@ -106,6 +122,7 @@ export function loadProfileStats() {
 
   return {
     version: PROFILE_VERSION,
+    settings: normalizeSettings(profile.settings, defaultKeybinds),
     highestWaveCleared: profile.highestWaveCleared,
     maxEncoreLevel: Math.min(5, Math.max(
       Number.isInteger(profile.maxEncoreLevel) ? profile.maxEncoreLevel : 0,
