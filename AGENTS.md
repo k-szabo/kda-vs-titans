@@ -256,6 +256,19 @@ overview.
 - Existing profiles keep their stored `maxEncoreLevel`; the fix stops further
   inflation rather than resetting progress.
 
+### Tour routing
+
+- After each non-final wave, Leona offers 3 of 4 stops
+  (`js/tour-routes.js` → `TOUR_ROUTES`): Backstage Pass (upgrade), Merch Stand
+  (relic), Fan Meet (card), Soundcheck (rest +25 HP).
+- `state.routeChoices` holds the offered route IDs and `state.rewardMode` holds
+  the chosen reward tab. Both persist with the run, so reloading mid-routing
+  reopens the routing screen (`restoreRunModal()`).
+- Picking a stop opens the existing draft modal restricted to one reward type;
+  the Skip button is hidden while a route is active.
+- `leaveRewardPhase()` clears `routeChoices`/`rewardMode` and starts the next
+  wave, so every reward path (card, relic, upgrade, cut, rest) ends the same way.
+
 ### Post-battle rewards
 
 After each non-final wave, `state.runStatus = 'draft'` and the player chooses:
@@ -526,7 +539,8 @@ modal is open or a rebind is listening.
   `keptCardInstanceId` is `null` or the instance ID of a card currently in hand.
   `state.buffs` holds at most 3 `{ instanceId, cardId, upgradeLevel, remaining }`
   entries; buff instances stay out of the four piles and count as an active
-  location for deck coverage.
+  location for deck coverage. `routeChoices` is a unique subset of
+  `TOUR_ROUTES` ids and `rewardMode` is `null` or a valid reward tab.
 
 Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
