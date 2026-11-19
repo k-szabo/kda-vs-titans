@@ -244,6 +244,9 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
           ? state.skillsPlayedThisTurn
           : 0,
+        energyPenalty: Number.isInteger(state.energyPenalty) && state.energyPenalty >= 0 && state.energyPenalty <= 3
+          ? state.energyPenalty
+          : 0,
         nextCardInstanceId: Number.isInteger(state.nextCardInstanceId) && state.nextCardInstanceId > highestCardInstanceId
           ? state.nextCardInstanceId
           : highestCardInstanceId + 1,
@@ -463,6 +466,9 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.damageDealtThisTurn < 0 ||
     !Number.isInteger(saved.skillsPlayedThisTurn) ||
     saved.skillsPlayedThisTurn < 0 ||
+    !Number.isInteger(saved.energyPenalty) ||
+    saved.energyPenalty < 0 ||
+    saved.energyPenalty > 3 ||
     !Number.isInteger(saved.handLimit) ||
     saved.handLimit < MAX_HAND_SIZE ||
     saved.handLimit > MAX_HAND_LIMIT ||

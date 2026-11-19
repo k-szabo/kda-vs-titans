@@ -296,6 +296,7 @@ new bosses usually need no JS changes.
 | `charge` | Gain `block`. |
 | `debuff_atk` | Damage the player and apply `weak`. |
 | `injectStatus` | Add `count` copies of `cardId` (must be a non-draftable STATUS card) to the discard pile; optional `block`. |
+| `steal_energy` | Reduce the player's next-turn Hype Energy by `amount` (1–3). |
 
 Optional intent fields:
 
@@ -308,6 +309,7 @@ Optional intent fields:
 - `interruptBonus` — multiplier added to effective damage when the interrupt is
   missed; defaults to `0.35` in `app.js`.
 - `pierce` — `0..1` share of damage that bypasses Holo Shield.
+- `amount` — `steal_energy` only; 1–3 energy drained from the next turn.
 
 Damage math: `base + enemy.strength`, then `×0.75` (floor) while Charmed.
 `damageDealtThisTurn` counts **HP damage after enemy Block**, not attempted
@@ -318,6 +320,8 @@ damage, and drives both interrupts and the run receipt's peak turn.
 Supported `passives` entries (validated in `js/game-data.js`):
 
 - `onPlayerAttack` + `gainBlock` + `value`
+- `onPlayerAttack` + `reflect` + `value` — fires once per player turn, deals
+  direct damage back after the first Attack.
 - `onSkillPlayed` + `gainStrengthEvery` + `value` + `every`
 - `onTurnEnd` + `gainStrength` + `value`
 - `onHpBelowHalf` + `enrage` + `strength` + `block`
@@ -343,6 +347,7 @@ Status cards are `type: "STATUS"` and normally `draftable: false`:
   and exhausts them.
 - `micro_oxygen`: `ethereal: true` + `endTurnDamage: 4`; if left in hand at end
   of turn it deals direct HP damage and exhausts.
+- `burn`: `ethereal: true` + `endTurnDamage: 3`, injected by Rodan's Ember Storm.
 - `ethereal` alone does not implement exhaust; the end-turn damage path does.
 - `retain: true` keeps a card in hand (`retainInHand` is a legacy alias).
 
@@ -540,7 +545,9 @@ modal is open or a rebind is listening.
   `state.buffs` holds at most 3 `{ instanceId, cardId, upgradeLevel, remaining }`
   entries; buff instances stay out of the four piles and count as an active
   location for deck coverage. `routeChoices` is a unique subset of
-  `TOUR_ROUTES` ids and `rewardMode` is `null` or a valid reward tab.
+  `TOUR_ROUTES` ids, `rewardMode` is `null` or a valid reward tab, and
+  `energyPenalty` is an integer 0–3 applied when the next turn refills Hype
+  Energy, then reset to 0.
 
 Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
@@ -666,6 +673,7 @@ Run through this before considering a change complete:
    confirm its text matches the effects that fire.
 6. Enemy intents: attack, multi, charge, atomic, debuff, inject; charged
    interrupt success/failure; piercing damage; enrage/phase 2; each hazard.
+   Also verify burn injection, energy drain, and the once-per-turn reflect.
 7. Post-battle rewards: card, relic, upgrade, cut, rest; confirm heals.
 7a. Buff zone: play a timed buff and confirm its countdown; play a fourth buff
     and confirm the replace prompt; let a timed buff expire at a wave end;

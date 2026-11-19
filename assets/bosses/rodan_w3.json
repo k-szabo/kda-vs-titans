@@ -24,6 +24,12 @@
       "type": "attack",
       "dmg": 17,
       "label": "🌋 MAGMA WING GUST: 17 DMG"
+    },
+    {
+      "type": "injectStatus",
+      "cardId": "burn",
+      "count": 2,
+      "label": "🔥 EMBER STORM: 2 BURN"
     }
   ],
   "assets": {

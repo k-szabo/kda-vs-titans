@@ -12,6 +12,7 @@ export function createGameUI({
   getLeaderArts,
   getCardDatabase,
   getRelicDatabase,
+  getCardDamagePreview,
   getProfileStats,
   getEncounters,
   getCurrentEnemyIntent,
@@ -73,6 +74,26 @@ export function createGameUI({
       handIndex >= 0 &&
       cardInstance != null &&
       state.keptCardInstanceId === cardInstance.instanceId;
+    const chain = state.memberPlayChain || { member: null, count: 0 };
+    const spotlightReady = !isDraftPreview &&
+      handIndex >= 0 &&
+      card.member === chain.member &&
+      chain.count === 2;
+    const damagePreview = !isDraftPreview && handIndex >= 0 && getCardDamagePreview
+      ? getCardDamagePreview(cardInstance)
+      : null;
+    const damageLabel = damagePreview
+      ? damagePreview.hits && damagePreview.hits > 1
+        ? `⚔ ${damagePreview.perHit}×${damagePreview.hits}`
+        : `⚔ ${damagePreview.total}`
+      : '';
+    const damageBadge = damagePreview
+      ? `<span class="rounded border px-1 py-0.5 font-display text-[8px] font-black tracking-wider ${
+          damagePreview.lethal
+            ? 'border-rose-400/60 bg-rose-500/25 text-rose-100'
+            : 'border-amber-300/30 bg-black/40 text-amber-200'
+        }">${damagePreview.lethal ? `LETHAL ${damageLabel}` : damageLabel}</span>`
+      : '';
     const el = document.createElement('div');
     el.className = `spire-card card-${card.member} p-2.5 sm:p-3 flex flex-col justify-between ${
       playable ? 'playable' : 'unplayable'
@@ -114,9 +135,13 @@ export function createGameUI({
         </div>
       </div>
       <div>
+        ${spotlightReady ? '<div class="mb-1 font-display text-[8px] font-black tracking-wider text-amber-300">✨ SPOTLIGHT READY</div>' : ''}
         <p class="text-[11px] text-slate-300 leading-snug mb-1.5">${upgradeLevel > 0 ? card.upgrade.description : card.desc}</p>
-        <div class="text-[9px] font-display tracking-widest text-slate-500 uppercase">
-          ${card.type}${card.retain || card.retainInHand ? ' // RETAIN' : ''}
+        <div class="flex items-center justify-between gap-1">
+          <span class="text-[9px] font-display tracking-widest text-slate-500 uppercase">
+            ${card.type}${card.retain || card.retainInHand ? ' // RETAIN' : ''}
+          </span>
+          ${damageBadge}
         </div>
       </div>
     `;
@@ -369,6 +394,23 @@ export function createGameUI({
     document.getElementById('enemySubtitle').textContent = e.subtitle;
     document.getElementById('enemyName').textContent = e.name;
     document.getElementById('enemyIntentText').textContent = intent.displayText;
+    const intentBox = document.getElementById('enemyIntentBox');
+    const intentHints = [];
+    if (intent.charged) intentHints.push('Charged attack.');
+    if (Number.isFinite(intent.interruptThreshold)) {
+      intentHints.push(`Deal ${intent.interruptThreshold} HP damage this turn to interrupt it.`);
+    }
+    if (Number.isFinite(intent.pierce) && intent.pierce > 0) {
+      intentHints.push(`${Math.round(intent.pierce * 100)}% of the damage pierces Holo Shield.`);
+    }
+    if (intentHints.length > 0) {
+      const hint = intentHints.join(' ');
+      intentBox.title = hint;
+      intentBox.setAttribute('aria-label', `${intent.displayText}. ${hint}`);
+    } else {
+      intentBox.removeAttribute('title');
+      intentBox.setAttribute('aria-label', intent.displayText);
+    }
     const stunMeter = document.getElementById('enemyStunMeter');
     const stunThreshold = Number.isFinite(intent.interruptThreshold) ? intent.interruptThreshold : null;
     if (stunThreshold) {
