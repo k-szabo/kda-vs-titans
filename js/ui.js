@@ -4,6 +4,7 @@ import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './
 import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { renderChangelogEntries } from './changelog-ui.js';
 import { createProgressionUI } from './progression-ui.js';
+import { LEONA_MANAGER_ART } from './tour-routes.js';
 
 export function createGameUI({
   getState,
@@ -17,6 +18,7 @@ export function createGameUI({
   getDailyChallenge,
   onPlayCard,
   onToggleKeep,
+  onChooseRoute,
   onJumpToStage,
   onChooseDraftCard,
   onChooseRelic,
@@ -499,7 +501,39 @@ export function createGameUI({
       .join('');
   }
 
-  function openDraftModal(cardIds, relicIds, masterDeck) {
+  function openTourRoutingModal(routes, healAmount) {
+    const modal = document.getElementById('tourRoutingModal');
+    const grid = document.getElementById('tourRouteChoices');
+    if (!modal || !grid) return;
+    const portrait = document.getElementById('tourManagerPortrait');
+    if (portrait) portrait.src = LEONA_MANAGER_ART;
+    const healText = document.getElementById('tourHealText');
+    if (healText) healText.textContent = `Card and relic stops restore +${healAmount} HP.`;
+    grid.replaceChildren();
+    routes.filter(Boolean).forEach((route) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.dataset.route = route.id;
+      card.className = 'group flex items-center gap-3 rounded-2xl border border-white/15 bg-black/30 p-3 text-left transition hover:border-amber-300/70 hover:bg-amber-400/10';
+      card.innerHTML = `
+        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-amber-300/40 bg-amber-400/10 text-xl">${route.icon}</span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-display text-sm font-black text-white">${route.name}</span>
+          <span class="block text-[11px] leading-snug text-slate-300">${route.summary}</span>
+        </span>
+        <span class="shrink-0 rounded-full border border-amber-300/40 bg-amber-400/10 px-2 py-1 font-display text-[8px] font-black text-amber-200">${route.tag}</span>
+      `;
+      card.addEventListener('click', () => onChooseRoute(route.id));
+      grid.appendChild(card);
+    });
+    modal.classList.remove('hidden');
+  }
+
+  function closeTourRoutingModal() {
+    document.getElementById('tourRoutingModal')?.classList.add('hidden');
+  }
+
+  function openDraftModal(cardIds, relicIds, masterDeck, rewardMode = null) {
     const modal = document.getElementById('draftModal');
     const cardGrid = document.getElementById('draftChoicesGrid');
     const relicGrid = document.getElementById('relicChoicesGrid');
@@ -571,11 +605,16 @@ export function createGameUI({
       ['cuts', masterDeck.length > 1]
     ];
     tabs.forEach(([mode, available]) => {
-      document.querySelector(`[data-reward-tab="${mode}"]`).classList.toggle('hidden', !available);
+      const visible = rewardMode ? mode === rewardMode : available;
+      document.querySelector(`[data-reward-tab="${mode}"]`).classList.toggle('hidden', !visible);
     });
-    const defaultTab = tabs.find(([, available]) => available)?.[0];
+    const routedTab = rewardMode && tabs.some(([mode, available]) => mode === rewardMode && available)
+      ? rewardMode
+      : null;
+    const defaultTab = routedTab || tabs.find(([, available]) => available)?.[0];
     if (!defaultTab) throw new Error('No post-battle rewards are available.');
     setRewardTab(defaultTab);
+    document.getElementById('btnSkipDraft').classList.toggle('hidden', Boolean(rewardMode));
     modal.classList.remove('hidden');
   }
 
@@ -726,6 +765,8 @@ export function createGameUI({
     hideMainMenu: progressionUI.hideMainMenu,
     openLeaderSelection: progressionUI.openLeaderSelection,
     openDraftModal,
+    openTourRoutingModal,
+    closeTourRoutingModal,
     openBuffReplaceModal,
     closeBuffReplaceModal,
     openPileModal,

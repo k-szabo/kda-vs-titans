@@ -35,6 +35,7 @@ import {
   saveProfileStats
 } from './profile-storage.js';
 import { getActionForKey, normalizeKeybinds } from './keybinds.js';
+import { getTourRoute, TOUR_ROUTES } from './tour-routes.js';
 import { createOptionsUI } from './options-ui.js';
 import {
   clearSavedRun,
@@ -145,6 +146,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           runStatus: 'playing',
           draftChoices: [],
           relicChoices: [],
+          routeChoices: [],
+          rewardMode: null,
           relics: initialRelics,
           isPlayerTurn: true,
           masterDeck,
@@ -900,8 +903,34 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.relicChoices = shuffle(Object.keys(RELIC_DB).filter((relicId) =>
           !ownedRelics.has(relicId) && !RELIC_DB[relicId].leaderId
         )).slice(0, 3);
+        state.rewardMode = null;
+        state.routeChoices = shuffle(TOUR_ROUTES).slice(0, 3).map((route) => route.id);
         saveRunState();
-        ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck);
+        ui.openTourRoutingModal(
+          state.routeChoices.map((routeId) => getTourRoute(routeId)),
+          getDraftHealAmount()
+        );
+      }
+
+      function getDraftHealAmount() {
+        return state.encoreLevel >= 2 ? 12 : 18;
+      }
+
+      function chooseTourRoute(routeId) {
+        if (state.runStatus !== 'draft') return;
+        if (!state.routeChoices.includes(routeId)) return;
+        const route = getTourRoute(routeId);
+        if (!route) return;
+        ui.closeTourRoutingModal();
+        if (route.rewardMode === 'rest') {
+          state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
+          leaveRewardPhase('💖 Soundcheck: skipped rewards and rested backstage (+25 HP).');
+          return;
+        }
+        state.rewardMode = route.rewardMode;
+        addLog(`🎫 Leona routed K/DA to ${route.name}.`, 'text-amber-300');
+        ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck, route.rewardMode);
+        saveRunState();
       }
 
       function recordStageClear() {
@@ -1156,6 +1185,18 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         syncPage();
       }
 
+      function leaveRewardPhase(message, className = 'text-emerald-300') {
+        state.runStatus = 'playing';
+        state.draftChoices = [];
+        state.relicChoices = [];
+        state.routeChoices = [];
+        state.rewardMode = null;
+        document.getElementById('draftModal').classList.add('hidden');
+        document.getElementById('tourRoutingModal').classList.add('hidden');
+        if (message) addLog(message, className);
+        startStage(state.stageIndex + 1);
+      }
+
       function chooseDraftCard(cardId) {
         if (state.runStatus !== 'draft' || !state.draftChoices.includes(cardId)) return;
         const card = CARD_DB[cardId];
@@ -1164,13 +1205,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           cardId,
           upgradeLevel: 0
         });
-        state.player.hp = Math.min(state.player.maxHp, state.player.hp + (state.encoreLevel >= 2 ? 12 : 18));
-        state.runStatus = 'playing';
-        state.draftChoices = [];
-        state.relicChoices = [];
-        document.getElementById('draftModal').classList.add('hidden');
-        addLog(`✨ Drafted "${card.name}" & restored +${state.encoreLevel >= 2 ? 12 : 18} HP!`, 'text-amber-300');
-        startStage(state.stageIndex + 1);
+        const heal = getDraftHealAmount();
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + heal);
+        leaveRewardPhase(`✨ Drafted "${card.name}" & restored +${heal} HP!`, 'text-amber-300');
       }
 
       function chooseRelic(relicId) {
@@ -1180,13 +1217,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           throw new Error(`Leader starter relic ${relicId} cannot be selected as a reward.`);
         }
         state.relics.push(relicId);
-        state.player.hp = Math.min(state.player.maxHp, state.player.hp + (state.encoreLevel >= 2 ? 12 : 18));
-        state.runStatus = 'playing';
-        state.draftChoices = [];
-        state.relicChoices = [];
-        document.getElementById('draftModal').classList.add('hidden');
-        addLog(`✦ Equipped ${relic.name} & restored +${state.encoreLevel >= 2 ? 12 : 18} HP!`, 'text-amber-300');
-        startStage(state.stageIndex + 1);
+        const heal = getDraftHealAmount();
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + heal);
+        leaveRewardPhase(`✦ Equipped ${relic.name} & restored +${heal} HP!`, 'text-amber-300');
       }
 
       function cutCard(instanceId) {
@@ -1209,13 +1242,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
         const healed = Math.min(10, state.player.maxHp - state.player.hp);
         state.player.hp += healed;
-        state.runStatus = 'playing';
-        state.draftChoices = [];
-        state.relicChoices = [];
-        document.getElementById('draftModal').classList.add('hidden');
-        addLog(`✂️ Removed ${CARD_DB[removed.cardId].name} from the setlist and restored +${healed} HP.`, 'text-emerald-300');
-        startStage(state.stageIndex + 1);
+        leaveRewardPhase(`✂️ Removed ${CARD_DB[removed.cardId].name} from the setlist and restored +${healed} HP.`);
       }
+
       function upgradeCard(instanceId) {
         if (state.runStatus !== 'draft') return;
         const instance = state.masterDeck.find((card) => card.instanceId === instanceId);
@@ -1223,23 +1252,13 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         instance.upgradeLevel = 1;
         const activeBuff = state.buffs.find((buff) => buff.instanceId === instanceId);
         if (activeBuff) activeBuff.upgradeLevel = 1;
-        state.runStatus = 'playing';
-        state.draftChoices = [];
-        state.relicChoices = [];
-        document.getElementById('draftModal').classList.add('hidden');
-        addLog(`⬆️ Upgraded "${CARD_DB[instance.cardId].name}" for the rest of the run.`, 'text-amber-300');
-        startStage(state.stageIndex + 1);
+        leaveRewardPhase(`⬆️ Upgraded "${CARD_DB[instance.cardId].name}" for the rest of the run.`, 'text-amber-300');
       }
 
       function skipDraft() {
         if (state.runStatus !== 'draft') return;
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
-        state.runStatus = 'playing';
-        state.draftChoices = [];
-        state.relicChoices = [];
-        document.getElementById('draftModal').classList.add('hidden');
-        addLog('💖 Skipped draft & rested backstage (+25 HP).', 'text-emerald-300');
-        startStage(state.stageIndex + 1);
+        leaveRewardPhase('💖 Skipped draft & rested backstage (+25 HP).');
       }
 
       function wireEvents() {
@@ -1320,7 +1339,16 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
       function restoreRunModal() {
         if (state.runStatus === 'draft') {
-          ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck);
+          if (state.rewardMode) {
+            ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck, state.rewardMode);
+          } else if (Array.isArray(state.routeChoices) && state.routeChoices.length > 0) {
+            ui.openTourRoutingModal(
+              state.routeChoices.map((routeId) => getTourRoute(routeId)),
+              getDraftHealAmount()
+            );
+          } else {
+            ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck);
+          }
         } else if (state.runStatus === 'victory' || state.runStatus === 'defeat') {
           ui.showRunEndModal(state.runStatus === 'victory');
         }
@@ -1352,6 +1380,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             getCurrentEnemyIntent,
             onPlayCard: playCardAtIndex,
             onToggleKeep: toggleKeptCard,
+            onChooseRoute: chooseTourRoute,
             onJumpToStage: startStage,
             onChooseDraftCard: chooseDraftCard,
             onChooseRelic: chooseRelic,

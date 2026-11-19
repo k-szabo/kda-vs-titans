@@ -431,6 +431,27 @@
     </div>
   </section>
 
+  <!-- TOUR ROUTING MODAL (prototype) -->
+  <section id="tourRoutingModal" role="dialog" aria-modal="true" aria-labelledby="tourRoutingHeading" class="hidden fixed inset-0 z-[52] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+    <div class="glass-panel w-full max-w-3xl overflow-hidden rounded-3xl border border-amber-300/45">
+      <div class="grid sm:grid-cols-[230px_1fr]">
+        <div class="relative min-h-[210px] sm:min-h-full bg-slate-950">
+          <img id="tourManagerPortrait" alt="Leona, K/DA's tour manager" class="absolute inset-0 h-full w-full object-cover object-[50%_18%]" />
+          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-3">
+            <span class="block font-display text-[9px] tracking-widest text-amber-300">TOUR MANAGER</span>
+            <span class="block font-display text-base font-black text-white">LEONA</span>
+          </div>
+        </div>
+        <div class="p-5 sm:p-6">
+          <span class="font-display text-[10px] tracking-widest text-amber-300">STAGE CLEARED // NEXT STOP</span>
+          <h2 id="tourRoutingHeading" class="font-display text-xl sm:text-2xl font-black holo-text">WHERE TO NEXT?</h2>
+          <p id="tourHealText" class="mb-4 mt-1 text-[11px] text-slate-400"></p>
+          <div id="tourRouteChoices" class="grid gap-2.5"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- POST-BATTLE REWARD & REST MODAL -->
   <div id="draftModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="glass-panel rounded-3xl max-w-5xl w-full p-6 sm:p-7 border border-amber-400/45 max-h-[92vh] overflow-y-auto">
