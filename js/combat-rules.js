@@ -24,3 +24,17 @@ export function shouldInterruptChargedIntent(intent, damageDealtThisTurn) {
     damageDealtThisTurn >= intent.interruptThreshold
   );
 }
+
+export function getEncoreBossMaxHp(baseMaxHp, encoreLevel) {
+  if (!Number.isFinite(baseMaxHp) || encoreLevel < 1) return baseMaxHp;
+  return Math.ceil(baseMaxHp * 1.15);
+}
+
+export function getEncoreInterruptThreshold(baseThreshold, encoreLevel) {
+  if (!Number.isFinite(baseThreshold)) return baseThreshold;
+  return baseThreshold + (encoreLevel >= 5 ? 4 : 0);
+}
+
+export function getEncorePhase2Ratio(encoreLevel) {
+  return encoreLevel >= 5 ? 0.6 : 0.5;
+}

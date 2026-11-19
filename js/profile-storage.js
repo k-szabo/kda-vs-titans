@@ -27,6 +27,7 @@ export function createDefaultProfileStats() {
   return {
     version: PROFILE_VERSION,
     highestWaveCleared: 0,
+    maxEncoreLevel: 0,
     fastestWinMs: null,
     unlockedKaiju: [],
     leaderWins,
@@ -67,6 +68,8 @@ export function loadProfileStats() {
     profile.version !== PROFILE_VERSION ||
     !Number.isInteger(profile.highestWaveCleared) ||
     profile.highestWaveCleared < 0 ||
+    (profile.maxEncoreLevel !== undefined &&
+      (!Number.isInteger(profile.maxEncoreLevel) || profile.maxEncoreLevel < 0 || profile.maxEncoreLevel > 5)) ||
     !(profile.fastestWinMs === null || (Number.isFinite(profile.fastestWinMs) && profile.fastestWinMs >= 0)) ||
     !Array.isArray(profile.unlockedKaiju) ||
     profile.unlockedKaiju.some((id) => typeof id !== 'string') ||
@@ -81,6 +84,10 @@ export function loadProfileStats() {
   return {
     version: PROFILE_VERSION,
     highestWaveCleared: profile.highestWaveCleared,
+    maxEncoreLevel: Math.min(5, Math.max(
+      Number.isInteger(profile.maxEncoreLevel) ? profile.maxEncoreLevel : 0,
+      Object.values(profile.leaderWins).reduce((sum, wins) => sum + (Number.isInteger(wins) ? wins : 0), 0)
+    )),
     fastestWinMs: profile.fastestWinMs,
     unlockedKaiju: [...new Set(profile.unlockedKaiju)],
     leaderWins: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.leaderWins[id]])),

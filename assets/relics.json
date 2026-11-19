@@ -9,6 +9,38 @@
       ]
     },
     {
+      "id": "nine_tail_mic",
+      "name": "Nine-Tail Mic",
+      "description": "Increase Crowd Cheer gained from playing cards by 15%.",
+      "effects": [
+        { "trigger": "cardPlayed", "type": "cheerGainPercent", "amount": 15 }
+      ]
+    },
+    {
+      "id": "neon_kunai",
+      "name": "Neon Kunai",
+      "description": "0-cost Attack cards deal 3 additional damage.",
+      "effects": [
+        { "trigger": "attackPlayed", "type": "zeroCostAttackDamage", "amount": 3 }
+      ]
+    },
+    {
+      "id": "velvet_shades",
+      "name": "Velvet Shades",
+      "description": "Skills grant Charm for 1 additional turn.",
+      "effects": [
+        { "trigger": "skillPlayed", "type": "charmDuration", "amount": 1 }
+      ]
+    },
+    {
+      "id": "void_core",
+      "name": "Void Core",
+      "description": "Gain 2 Holo Shield whenever you play a Skill.",
+      "effects": [
+        { "trigger": "skillPlayed", "type": "skillGainBlock", "amount": 2 }
+      ]
+    },
+    {
       "id": "monarch_subwoofer",
       "name": "Monarch Sub-Woofer",
       "description": "Gain +2 Holo Shield whenever you play an Attack.",

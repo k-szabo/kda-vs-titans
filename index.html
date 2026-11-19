@@ -244,7 +244,7 @@
         </span>
         <h2 class="font-display text-xl sm:text-2xl font-black holo-text">CHOOSE A BACKSTAGE REWARD</h2>
         <p class="text-xs text-slate-300 mt-1">
-          Card and relic rewards restore <strong class="text-rose-300">+18 HP</strong>; upgrading does not heal. Rest to restore <strong class="text-emerald-300">+25 HP</strong>.
+          Card and relic rewards restore <strong id="draftHealText" class="text-rose-300">+18 HP</strong>; upgrading does not heal. Rest to restore <strong class="text-emerald-300">+25 HP</strong>.
         </p>
       </div>
 
@@ -303,6 +303,14 @@
         <button id="btnCancelLeaderSelection" type="button" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 font-display text-xs font-bold text-white">CANCEL</button>
       </div>
       <div id="leaderChoicesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5"></div>
+      <div class="mb-5">
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <span class="font-display text-[10px] font-black tracking-widest text-amber-200">ENCORE ASCENSION</span>
+          <span id="encoreTierUnlockText" class="text-[10px] text-slate-400"></span>
+        </div>
+        <div id="encoreTierChoices" class="grid grid-cols-2 sm:grid-cols-6 gap-2"></div>
+        <p id="encoreTierDescription" class="mt-2 min-h-[2.25rem] text-[11px] leading-relaxed text-slate-300"></p>
+      </div>
       <div class="flex flex-wrap items-center justify-between gap-3">
         <p id="leaderSelectionWarning" class="text-xs text-amber-200">Starting a new run replaces the active run.</p>
         <button id="btnStartNewRun" type="button" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-500 font-display text-xs font-black tracking-widest text-white hover:brightness-110 transition">START RUN ▶</button>

@@ -1,6 +1,16 @@
 {
-  "currentVersion": "v1.3.0_b3cae8d5",
+  "currentVersion": "v1.4.0_aea2cd4a",
   "releases": [
+    {
+      "version": "v1.4.0_aea2cd4a",
+      "date": "2026-11-19",
+      "changes": [
+        "Added sequential Encore Ascension tiers 1–5 with boss HP, healing, Strength, curse, interrupt, and Phase 2 modifiers.",
+        "Added signature starter relics for Ahri, Akali, Evelynn, and Kai'Sa.",
+        "Added synthesized boss enrage and dorsal interrupt audio cues.",
+        "Preserved v3 run saves and existing profile data while adding Encore progression."
+      ]
+    },
     {
       "version": "v1.3.0_b3cae8d5",
       "date": "2026-11-18",

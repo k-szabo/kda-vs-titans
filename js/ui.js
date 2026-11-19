@@ -305,6 +305,8 @@ export function createGameUI({
     const cardGrid = document.getElementById('draftChoicesGrid');
     const relicGrid = document.getElementById('relicChoicesGrid');
     const upgradeGrid = document.getElementById('upgradeChoicesGrid');
+    document.getElementById('draftHealText').textContent =
+      `+${(getState()?.encoreLevel ?? 0) >= 2 ? 12 : 18} HP`;
     const cardDatabase = getCardDatabase();
     const relicDatabase = getRelicDatabase();
     cardGrid.innerHTML = '';
@@ -466,6 +468,46 @@ export function createGameUI({
   }
 
   let selectedLeader = LEADERS[0].id;
+  let selectedEncoreLevel = 0;
+
+  const ENCORE_TIERS = [
+    { level: 0, name: 'Normal', description: 'Standard 10-wave setlist. No Encore modifiers.' },
+    { level: 1, name: 'Encore 1', description: 'E1: Bosses have +15% maximum HP.' },
+    { level: 2, name: 'Encore 2', description: 'E1–E2: Boss HP +15%; post-draft healing is only +12 HP.' },
+    { level: 3, name: 'Encore 3', description: 'E1–E3: Boss HP +15%, heal +12, and bosses start with +1 Strength.' },
+    { level: 4, name: 'Encore 4', description: 'E1–E4: All prior modifiers, plus one Stage Fright curse in the starter deck.' },
+    { level: 5, name: 'Encore 5', description: 'E1–E5: Prior modifiers, +4 to interrupt thresholds, and boss Phase 2 begins at 60% HP.' }
+  ];
+
+  function renderEncoreChoices() {
+    const maxLevel = getProfileStats().maxEncoreLevel ?? 0;
+    if (selectedEncoreLevel > maxLevel) selectedEncoreLevel = 0;
+    const choices = document.getElementById('encoreTierChoices');
+    choices.replaceChildren();
+    document.getElementById('encoreTierUnlockText').textContent = `${maxLevel}/5 tiers unlocked`;
+
+    ENCORE_TIERS.forEach((tier) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.disabled = tier.level > maxLevel;
+      button.setAttribute('aria-pressed', String(selectedEncoreLevel === tier.level));
+      button.className = `rounded-xl border px-2 py-2 text-center font-display text-[10px] font-black transition ${
+        selectedEncoreLevel === tier.level
+          ? 'border-amber-300 bg-amber-400/20 text-amber-200 ring-2 ring-amber-300/20'
+          : tier.level <= maxLevel
+            ? 'border-white/15 bg-black/25 text-slate-200 hover:border-cyan-300/60'
+            : 'cursor-not-allowed border-white/5 bg-white/[0.03] text-slate-600'
+      }`;
+      button.textContent = tier.level > maxLevel ? `${tier.name} 🔒` : tier.name;
+      button.addEventListener('click', () => {
+        selectedEncoreLevel = tier.level;
+        renderEncoreChoices();
+      });
+      choices.appendChild(button);
+    });
+    document.getElementById('encoreTierDescription').textContent =
+      ENCORE_TIERS[selectedEncoreLevel].description;
+  }
 
   function renderLeaderChoices() {
     const profileStats = getProfileStats();
@@ -512,6 +554,7 @@ export function createGameUI({
 
   function openLeaderSelection(canCancel, currentLeader) {
     selectedLeader = LEADERS.some(({ id }) => id === currentLeader) ? currentLeader : LEADERS[0].id;
+    renderEncoreChoices();
     document.getElementById('btnCancelLeaderSelection').classList.toggle('hidden', !canCancel);
     document.getElementById('leaderSelectionWarning').classList.toggle('hidden', !canCancel);
     renderLeaderChoices();
@@ -667,6 +710,7 @@ export function createGameUI({
     showRunEndModal,
     showSaveNotice,
     getSelectedLeader: () => selectedLeader,
+    getSelectedEncoreLevel: () => selectedEncoreLevel,
     updateSoundButton,
     spawnPopup,
     triggerKaijuHitAnim,

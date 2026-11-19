@@ -90,3 +90,38 @@ export function playKaijuRoarSfx() {
     type: 'sawtooth'
   });
 }
+
+export function playBossEnrageSfx() {
+  const context = getAudioContext();
+  if (!context) return;
+  playTone(context, {
+    startFrequency: 72,
+    endFrequency: 42,
+    duration: 0.48,
+    volume: 0.09,
+    type: 'sawtooth'
+  });
+  playTone(context, {
+    startFrequency: 180,
+    endFrequency: 55,
+    startDelay: 0.08,
+    duration: 0.58,
+    volume: 0.055,
+    type: 'square'
+  });
+}
+
+export function playDorsalInterruptSfx() {
+  const context = getAudioContext();
+  if (!context) return;
+  [
+    { startFrequency: 240, endFrequency: 720, startDelay: 0 },
+    { startFrequency: 480, endFrequency: 960, startDelay: 0.07 },
+    { startFrequency: 720, endFrequency: 1440, startDelay: 0.14 }
+  ].forEach((tone) => playTone(context, {
+    ...tone,
+    duration: 0.18,
+    volume: 0.045,
+    type: 'triangle'
+  }));
+}

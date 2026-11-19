@@ -5,11 +5,16 @@ import {
   playCardSfx,
   playJointFinaleSfx,
   playKaijuRoarSfx,
+  playBossEnrageSfx,
+  playDorsalInterruptSfx,
   setSoundEnabled
 } from './audio.js';
 import {
   applyPlayerDamage,
   calculateEnemyAttackDamage,
+  getEncoreBossMaxHp,
+  getEncoreInterruptThreshold,
+  getEncorePhase2Ratio,
   shouldInterruptChargedIntent
 } from './combat-rules.js';
 import { loadGameData } from './game-data.js';
@@ -53,18 +58,32 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         return copy;
       }
 
-      function createNewRunState(leader) {
+      function createNewRunState(leader, encoreLevel = 0) {
         let nextCardInstanceId = 1;
         const masterDeck = STARTER_DECK.map((cardId) => ({
           instanceId: nextCardInstanceId++,
           cardId,
           upgradeLevel: 0
         }));
+        if (encoreLevel >= 4) {
+          masterDeck.push({
+            instanceId: nextCardInstanceId++,
+            cardId: 'stage_fright',
+            upgradeLevel: 0
+          });
+        }
+        const starterRelics = {
+          ahri: 'nine_tail_mic',
+          akali: 'neon_kunai',
+          evelynn: 'velvet_shades',
+          kaisa: 'void_core'
+        };
         return {
           stageIndex: 0,
           damageDealtThisTurn: 0,
           skillsPlayedThisTurn: 0,
           leader,
+          encoreLevel,
           leaderAbilityUsed: false,
           turn: 1,
           startedAt: Date.now(),
@@ -72,7 +91,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           runStatus: 'playing',
           draftChoices: [],
           relicChoices: [],
-          relics: [],
+          relics: starterRelics[leader] ? [starterRelics[leader]] : [],
           isPlayerTurn: true,
           masterDeck,
           drawPile: [],
@@ -118,9 +137,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
         state.enemy = {
           ...enc,
-          hp: enc.maxHp,
+          hp: getEncoreBossMaxHp(enc.maxHp, state.encoreLevel),
+          maxHp: getEncoreBossMaxHp(enc.maxHp, state.encoreLevel),
           block: 0,
-          strength: enc.strength || 0,
+          strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0),
           enrageTriggered: false,
           patternStep: 0,
           statuses: { charm: 0, marked: 0 }
@@ -160,6 +180,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const e = state.enemy;
         const raw = e.patterns[e.patternStep % e.patterns.length];
         const intent = { ...raw };
+
+        if (Number.isFinite(intent.interruptThreshold)) {
+          intent.interruptThreshold = getEncoreInterruptThreshold(intent.interruptThreshold, state.encoreLevel);
+        }
 
         if (typeof intent.dmg === 'number') {
           let eff = calculateEnemyAttackDamage(e, intent.dmg);
@@ -202,6 +226,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         playSoundEffect(playCardSfx);
         state.player.energy -= cost;
         state.player.cheer = Math.min(100, state.player.cheer + 5 + cost * 3);
+        applyRelicEffects('cardPlayed', card, cost);
 
         // Move card from hand to discard/exhaust
         state.hand.splice(handIdx, 1);
@@ -214,11 +239,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         // Execute Card Effect
         const ctx = createEffectContext();
         executeCardEffects(card, ctx, cardInstance.upgradeLevel);
-        applyRelicEffects('attackPlayed', card);
+        applyRelicEffects('attackPlayed', card, cost);
         if (card.type === 'ATTACK') triggerEnemyPassives('onPlayerAttack');
         if (card.type === 'SKILL') {
           state.skillsPlayedThisTurn += 1;
           triggerEnemyPassives('onSkillPlayed');
+          applyRelicEffects('skillPlayed', card, cost);
         }
 
         // Check if Kaiju was defeated mid-turn
@@ -392,6 +418,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const interrupted = shouldInterruptChargedIntent(intent, state.damageDealtThisTurn);
         if (interrupted) {
           addLog(`💥 K/DA dealt ${state.damageDealtThisTurn} damage and interrupted ${e.name}'s charged attack!`, 'text-cyan-300 font-bold');
+          playSoundEffect(playDorsalInterruptSfx);
         } else if (intent.type === 'charge') {
           e.block += intent.block;
           ui.spawnPopup('enemyArenaCard', `+${intent.block} 🛡️`, 'text-sky-300 font-display font-black text-lg');
@@ -486,7 +513,11 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               e.strength += passive.value;
               addLog(`⚠️ ${e.name} gained ${passive.value} Strength from K/DA's Skills!`, 'text-rose-300');
             }
-          } else if (passive.effect === 'enrage' && !e.enrageTriggered && e.hp * 2 < e.maxHp) {
+          } else if (
+            passive.effect === 'enrage' &&
+            !e.enrageTriggered &&
+            e.hp <= e.maxHp * getEncorePhase2Ratio(state.encoreLevel)
+          ) {
             e.enrageTriggered = true;
             e.statuses.charm = 0;
             e.statuses.marked = 0;
@@ -497,6 +528,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               e.patternStep = 0;
             }
             addLog(`🔥 ${e.name} enraged: cleared debuffs, gained ${passive.strength} Strength and ${passive.block} Block!`, 'text-rose-300 font-bold');
+            playSoundEffect(playBossEnrageSfx);
           }
         }
       }
@@ -533,6 +565,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
         if (state.stageIndex === ENCOUNTERS.length - 1) {
           profileStats.leaderWins[state.leader] += 1;
+          const totalFullClears = Object.values(profileStats.leaderWins).reduce((sum, wins) => sum + wins, 0);
+          profileStats.maxEncoreLevel = Math.min(5, totalFullClears);
           const duration = Math.max(0, Date.now() - state.startedAt);
           if (profileStats.fastestWinMs === null || duration < profileStats.fastestWinMs) {
             profileStats.fastestWinMs = duration;
@@ -553,7 +587,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         }
       }
 
-      function applyRelicEffects(trigger, playedCard = null) {
+      function applyRelicEffects(trigger, playedCard = null, effectiveCardCost = null) {
         state.relics.forEach((relicId) => {
           const relic = RELIC_DB[relicId];
           if (!relic) throw new Error(`Unknown owned relic: ${relicId}`);
@@ -568,6 +602,40 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
                 state.player.block += effect.amount;
                 ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
                 addLog(`✦ ${relic.name}: gained +${effect.amount} Holo Shield.`, 'text-cyan-300');
+                break;
+              case 'cheerGainPercent':
+                if (trigger !== 'cardPlayed' || effectiveCardCost === null) break;
+                const baseGain = 5 + effectiveCardCost * 3;
+                const bonusCheer = Math.ceil(baseGain * effect.amount / 100);
+                state.player.cheer = Math.min(100, state.player.cheer + bonusCheer);
+                addLog(`✦ ${relic.name}: +${bonusCheer}% bonus Crowd Cheer.`, 'text-pink-300');
+                break;
+              case 'zeroCostAttackDamage':
+                if (trigger !== 'attackPlayed' || playedCard?.type !== 'ATTACK' || effectiveCardCost !== 0 || !state.enemy) break;
+                let remaining = effect.amount;
+                const blocked = Math.min(state.enemy.block, remaining);
+                state.enemy.block -= blocked;
+                remaining -= blocked;
+                if (remaining > 0) {
+                  state.enemy.hp = Math.max(0, state.enemy.hp - remaining);
+                  state.damageDealtThisTurn += remaining;
+                  ui.spawnPopup('enemyArenaCard', `-${remaining}`, 'text-amber-300 font-display font-black text-xl');
+                  triggerEnemyPassives('onHpBelowHalf');
+                }
+                addLog(`✦ ${relic.name}: +${effect.amount} damage to 0-cost Attack.`, 'text-fuchsia-300');
+                break;
+              case 'skillGainBlock':
+                if (trigger !== 'skillPlayed' || playedCard?.type !== 'SKILL') break;
+                state.player.block += effect.amount;
+                ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
+                addLog(`✦ ${relic.name}: +${effect.amount} Holo Shield for playing a Skill.`, 'text-cyan-300');
+                break;
+              case 'charmDuration':
+                if (trigger !== 'skillPlayed' || playedCard?.type !== 'SKILL') break;
+                if ((state.enemy.statuses.charm || 0) > 0) {
+                  state.enemy.statuses.charm += effect.amount;
+                  addLog(`✦ ${relic.name}: +${effect.amount} Charm duration.`, 'text-purple-300');
+                }
                 break;
               default:
                 throw new Error(`Unsupported relic effect type: ${effect.type}`);
@@ -611,12 +679,14 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       // =========================================================================
       // Run flow and event wiring
       // =========================================================================
-      function startNewRun(leader) {
+      function startNewRun(leader, encoreLevel = 0) {
         if (!LEADERS.some(({ id }) => id === leader)) {
           throw new Error(`Unknown run leader: ${leader}`);
         }
+        encoreLevel = Number.isInteger(encoreLevel) ? Math.min(5, Math.max(0, encoreLevel)) : 0;
+        if (encoreLevel > (profileStats.maxEncoreLevel ?? 0)) return;
         ui.hideRunModals();
-        state = createNewRunState(leader);
+        state = createNewRunState(leader, encoreLevel);
         startStage(0);
         syncPage();
       }
@@ -644,12 +714,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           cardId,
           upgradeLevel: 0
         });
-        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 18);
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + (state.encoreLevel >= 2 ? 12 : 18));
         state.runStatus = 'playing';
         state.draftChoices = [];
         state.relicChoices = [];
         document.getElementById('draftModal').classList.add('hidden');
-        addLog(`✨ Drafted "${card.name}" & restored +18 HP!`, 'text-amber-300');
+        addLog(`✨ Drafted "${card.name}" & restored +${state.encoreLevel >= 2 ? 12 : 18} HP!`, 'text-amber-300');
         startStage(state.stageIndex + 1);
       }
 
@@ -657,12 +727,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         if (state.runStatus !== 'draft' || !state.relicChoices.includes(relicId) || state.relics.includes(relicId)) return;
         const relic = RELIC_DB[relicId];
         state.relics.push(relicId);
-        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 18);
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + (state.encoreLevel >= 2 ? 12 : 18));
         state.runStatus = 'playing';
         state.draftChoices = [];
         state.relicChoices = [];
         document.getElementById('draftModal').classList.add('hidden');
-        addLog(`✦ Equipped ${relic.name} & restored +18 HP!`, 'text-amber-300');
+        addLog(`✦ Equipped ${relic.name} & restored +${state.encoreLevel >= 2 ? 12 : 18} HP!`, 'text-amber-300');
         startStage(state.stageIndex + 1);
       }
 
@@ -697,7 +767,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         document.getElementById('btnNewRun').addEventListener('click', openNewRunSelection);
         document.getElementById('btnRestartRunEnd').addEventListener('click', openNewRunSelection);
         document.getElementById('btnStartNewRun').addEventListener('click', () => {
-          startNewRun(ui.getSelectedLeader());
+          startNewRun(ui.getSelectedLeader(), ui.getSelectedEncoreLevel());
         });
         document.getElementById('btnStats').addEventListener('click', () => ui.showStatsModal());
         document.getElementById('btnCloseStats').addEventListener('click', () => {

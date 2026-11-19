@@ -9,6 +9,10 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     const state = savedRun.state;
     const encounter = encounters?.[state?.stageIndex];
     if (!isRecord(state) || !isRecord(state.enemy) || !encounter || state.enemy.id !== encounter.id) return savedRun;
+    const encoreLevel = Number.isInteger(state.encoreLevel)
+      ? Math.min(5, Math.max(0, state.encoreLevel))
+      : 0;
+    const phase2Ratio = encoreLevel >= 5 ? 0.6 : 0.5;
 
     const enragePassive = encounter.passives?.find((passive) =>
       passive.trigger === 'onHpBelowHalf' && passive.effect === 'enrage'
@@ -19,7 +23,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       isFiniteNumber(state.enemy.hp) &&
       isFiniteNumber(state.enemy.maxHp) &&
       state.enemy.hp > 0 &&
-      state.enemy.hp * 2 < state.enemy.maxHp;
+      state.enemy.hp <= state.enemy.maxHp * phase2Ratio;
     const enrageTriggered = state.enemy.enrageTriggered === true || Boolean(applySavedEnrage);
     const enemyStrength = isFiniteNumber(state.enemy.strength)
       ? state.enemy.strength
@@ -45,6 +49,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       ...savedRun,
       state: {
         ...state,
+        encoreLevel,
         damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
           ? state.skillsPlayedThisTurn
@@ -111,6 +116,9 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     ...piles,
     masterDeck,
     nextCardInstanceId,
+    encoreLevel: Number.isInteger(oldState.encoreLevel)
+      ? Math.min(5, Math.max(0, oldState.encoreLevel))
+      : 0,
     stageIndex: Number.isInteger(oldState.stageIndex) ? oldState.stageIndex : 0,
     leader: LEADERS.some(({ id }) => id === oldState.leader) ? oldState.leader : LEADERS[0].id,
     leaderAbilityUsed: oldState.leaderAbilityUsed === true,
@@ -184,6 +192,9 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     typeof saved.isPlayerTurn !== 'boolean' ||
     !LEADERS.some(({ id }) => id === saved.leader) ||
     typeof saved.leaderAbilityUsed !== 'boolean' ||
+    !Number.isInteger(saved.encoreLevel) ||
+    saved.encoreLevel < 0 ||
+    saved.encoreLevel > 5 ||
     !Array.isArray(saved.logs) ||
     !isRecord(saved.player) ||
     !isRecord(saved.player.statuses) ||
