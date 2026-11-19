@@ -2,6 +2,8 @@
 
 Encore Spire is a static HTML, CSS, and JavaScript project with no runtime package or deployment build requirement. Rebuilding the committed Tailwind stylesheet uses temporary npm packages. Active runs and player profile stats are saved in the browser's local storage.
 
+For the authoritative technical and agent reference (data schemas, validation, save invariants, and change workflows), see [`AGENTS.md`](../AGENTS.md). This guide focuses on local setup, features, progression, and deployment.
+
 ## Run locally
 
 The game fetches encounter and art data as JSON, so serve the project root instead of opening `index.html` directly:
@@ -80,6 +82,7 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 
 ```text
 .
+├── AGENTS.md         # Authoritative technical/agent guide
 ├── assets/
 │   ├── bosses/       # One JSON encounter definition per boss
 │   ├── kaiju/        # Kaiju SVG illustrations
@@ -92,7 +95,6 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 ├── css/
 │   └── styles.css
 ├── docs/
-│   ├── copilot_handoff_architecture_guide.md
 │   └── dev-readme.md
 ├── js/
 │   ├── app.js             # Game state, run flow, and event wiring
@@ -126,14 +128,12 @@ node -e "const crypto = require('node:crypto'); const release = { date: '2026-11
 
 ## Add a boss
 
-## Add a boss
-
 1. Add its backdrop URL to `assets/data.json` under `backdrops`.
 2. Add an SVG illustration under `assets/kaiju/`.
 3. Add a JSON encounter file under `assets/bosses/`, including its stats, intent patterns, backdrop key, illustration path, and fallback background. Set the illustration path relative to `assets/data.json`, such as `./kaiju/new-boss.svg`.
 4. Add the boss JSON path to the `bosses` array in `assets/data.json` at the desired wave position.
 
-See the [architecture guide](copilot_handoff_architecture_guide.md) for the boss schema, card definitions, and gameplay architecture.
+See [`AGENTS.md`](../AGENTS.md) for the boss schema, card definitions, save invariants, and gameplay architecture.
 
 ## External resources
 
