@@ -259,6 +259,7 @@
       "starter": false,
       "draftable": false,
       "exhaust": true,
+      "retainInHand": true,
       "desc": "A backstage curse. Spend <b>1 Hype Energy</b> to clear it, or it clogs your hand. <i>Exhaust.</i>",
       "effects": [],
       "log": {
@@ -276,6 +277,7 @@
       "starter": false,
       "draftable": false,
       "exhaust": true,
+      "retainInHand": true,
       "desc": "Unplayable interference. Spend <b>1 Hype Energy</b> to clear it, or it clogs your hand. <i>Exhaust.</i>",
       "effects": [],
       "log": {
@@ -289,7 +291,7 @@
       "member": "squad",
       "memberName": "K/DA SQUAD",
       "type": "STATUS",
-      "cost": 0,
+      "cost": 1,
       "starter": false,
       "draftable": false,
       "ethereal": true,

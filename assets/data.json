@@ -1,5 +1,5 @@
 {
-  "version": "v1.4.0_aea2cd4a",
+  "version": "v1.4.1_813a30d2",
   "portraits": {
     "ahri": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_15.jpg",
     "akali": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Akali_9.jpg",
@@ -18,7 +18,7 @@
     },
     "evelynn": {
       "more": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Evelynn_15.jpg",
-      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Evelynn_65.jpg"
+      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Evelynn_66.jpg"
     },
     "kaisa": {
       "more": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Kaisa_26.jpg",

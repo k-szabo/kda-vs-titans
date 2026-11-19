@@ -626,6 +626,15 @@ export function createGameUI({
     if (open) requestAnimationFrame(fitChangelogToFour);
   }
 
+  function setBattleLogCollapsed(collapsed) {
+    const panel = document.getElementById('battleLogPanel');
+    const button = document.getElementById('btnToggleBattleLog');
+    panel.classList.toggle('battle-log-collapsed', collapsed);
+    button.setAttribute('aria-expanded', String(!collapsed));
+    document.getElementById('battleLogToggleIcon').textContent = collapsed ? '▼' : '▲';
+    document.getElementById('battleLogToggleText').textContent = collapsed ? 'EXPAND' : 'COLLAPSE';
+  }
+
   function showRunEndModal(isVictory) {
     const state = getState();
     const encounters = getEncounters();
@@ -697,6 +706,11 @@ export function createGameUI({
   document.getElementById('btnCancelLeaderSelection').addEventListener('click', () => {
     document.getElementById('leaderSelectionModal').classList.add('hidden');
   });
+  document.getElementById('btnToggleBattleLog').addEventListener('click', () => {
+    const panel = document.getElementById('battleLogPanel');
+    setBattleLogCollapsed(!panel.classList.contains('battle-log-collapsed'));
+  });
+  setBattleLogCollapsed(window.matchMedia('(max-width: 640px)').matches);
 
   return {
     hideRunModals,

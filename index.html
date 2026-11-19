@@ -200,12 +200,15 @@
   </main>
 
   <!-- BATTLE LOG -->
-  <section class="app-width glass-panel rounded-3xl p-3.5 mt-3">
-    <div class="flex items-center justify-between mb-2">
+  <section id="battleLogPanel" class="app-width glass-panel rounded-3xl p-3.5 mt-3">
+    <div class="flex items-center justify-between gap-3">
       <span class="font-display text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">BATTLE LOG</span>
-      <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+      <button id="btnToggleBattleLog" type="button" aria-controls="combatLog" aria-expanded="true" class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 font-display text-[9px] font-bold text-cyan-200 transition hover:bg-white/10">
+        <span id="battleLogToggleIcon" aria-hidden="true">▲</span>
+        <span id="battleLogToggleText">COLLAPSE</span>
+      </button>
     </div>
-    <div id="combatLog" class="combat-log text-[11px] text-slate-300" aria-label="Battle log"></div>
+    <div id="combatLog" class="combat-log mt-2 text-[11px] text-slate-300" aria-label="Battle log"></div>
   </section>
 
   <!-- BOTTOM DECK HAND & PILE CONTROLS -->

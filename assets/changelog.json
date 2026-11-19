@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.4.0_aea2cd4a",
+  "currentVersion": "v1.4.1_813a30d2",
   "releases": [
+    {
+      "version": "v1.4.1_813a30d2",
+      "date": "2026-11-19",
+      "changes": [
+        "Updated hazard Status cards so EMP Static and Stage Fright remain in hand until spent, and tuned Micro-Oxygen to a 1-cost end-turn hazard."
+      ]
+    },
     {
       "version": "v1.4.0_aea2cd4a",
       "date": "2026-11-19",

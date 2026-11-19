@@ -79,6 +79,10 @@
       overflow-y: auto;
     }
 
+    .battle-log-collapsed .combat-log {
+      display: none;
+    }
+
     .combat-log > div {
       flex: 0 0 1.625rem;
       height: 1.625rem;

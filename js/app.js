@@ -398,9 +398,17 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           addLog(card.log.template, card.log.colorClass);
         }
 
+        const retainedCards = [];
         while (state.hand.length > 0) {
-          state.discardPile.push(state.hand.pop());
+          const cardInstance = state.hand.pop();
+          const card = CARD_DB[cardInstance.cardId];
+          if (card?.retainInHand) {
+            retainedCards.unshift(cardInstance);
+          } else {
+            state.discardPile.push(cardInstance);
+          }
         }
+        state.hand.push(...retainedCards);
 
         if (state.player.hp <= 0) {
           finishPlayerDefeat();
