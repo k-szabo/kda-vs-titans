@@ -31,11 +31,11 @@ A zero-build, turn-based deckbuilding roguelike inspired by *Slay the Spire*, st
    - Unused hand cards are discarded, the enemy's previous `block` resets to `0`, and `getCurrentEnemyIntent()` resolves (`attack`, `atomic`, `multi`, `charge`, or `debuff_atk`).
    - Status durations (`charm`, `marked`, `weak`) decrement by `1`, `enemy.patternStep` advances, and the next player turn begins.
 4. **Post-Battle Rewards (`openDraftModal`):**
-   - Defeating a Kaiju opens a reward choice for a new card, an unowned relic, or an upgrade to one unupgraded card instance. Card and relic rewards restore `+18 HP`; resting restores `+25 HP` and takes no other reward. Upgrades do not heal.
+   - Defeating a Kaiju opens a reward choice for a new card, an unowned relic, or an upgrade to one unupgraded card instance. Card and relic rewards restore `+18 HP` (`+12 HP` at Encore 2+); resting restores `+25 HP` and takes no other reward. Upgrades do not heal.
 5. **Damage and Crowd Cheer:**
    - Damage absorbed by Holo Shield does not reduce Cheer. After shields, Cheer decreases by the HP actually lost, down to `0%`.
 6. **Profile and audio:**
-   - Cleared waves, fastest full victory, and the Kaiju codex persist separately from the active run. Synthesized card, Joint Finale, and Kaiju roar effects can be toggled in the header.
+   - Cleared waves, fastest full victory, unlocked leader art, Encore progression, and the Kaiju codex persist separately from the active run. Encore 1-5 modifiers are stored on the run. Synthesized card, Joint Finale, Kaiju roar, Phase 2 enrage, and Dorsal Interrupt effects can be toggled in the header. The battle log is collapsible and starts collapsed on narrow screens.
 
 ---
 
@@ -53,9 +53,9 @@ The app is organized into these files:
 | `js/card-effects.js` | Executes card effect actions, applies upgrade values, and formats card logs. |
 | `js/run-storage.js` | Reads and writes versioned run saves in browser `localStorage`. |
 | `js/run-state.js` | Migrates version-1 saves and validates current saved-run state. |
-| `js/profile-storage.js` | Reads and writes persistent run statistics and codex unlocks. |
+| `js/profile-storage.js` | Reads and writes persistent run statistics, codex unlocks, leader art, and Encore tier progression. |
 | `js/audio.js` | Synthesizes optional sound effects with the Web Audio API. |
-| `js/ui.js` | Rendering, card views, combat animation, rewards, and profile modals. |
+| `js/ui.js` | Rendering, card views, combat animation, collapsible battle log, rewards, and profile modals. |
 | `assets/data.json` | Portrait/backdrop URLs and ordered data-file paths. |
 | `assets/cards.json` | Card metadata, upgrade effects, log templates, and starter deck. |
 | `assets/relics.json` | Passive relic metadata and declarative trigger effects. |
@@ -111,7 +111,7 @@ Add an entry to the `cards` array. Any card with `starter: false` automatically 
 Supported effect types are `damage` (optional `hits`), `gainBlock`, `healPlayer`, `applyEnemyStatus`, `addPlayerStatus`, `clearPlayerStatus`, `addCheer`, `draw`, and `gainEnergy`. Effects execute in array order. Optional `upgradeAmount` increases a numeric effect at upgrade level 1; `upgrade.costReduction` lowers the card's energy cost. An effect or log alternative can use `"when": { "target": "enemy", "status": "charm" }` to require an active status. Log templates support `{damage}`, `{block}`, `{heal}`, and `{encore}` placeholders.
 
 ### Adding a Relic (`assets/relics.json`)
-Add a unique `id`, display `name`, player-facing `description`, and effect list to `relics`. Current supported effects are `startingEnergy` on `stageStart` and `gainBlock` on `attackPlayed`; add corresponding game-engine handling before introducing a new effect type.
+Add a unique `id`, display `name`, player-facing `description`, and effect list to `relics`. Supported triggers and types include `startingEnergy`, `gainBlock`, `cheerGainPercent`, `zeroCostAttackDamage`, `charmDuration`, and `skillGainBlock`; add corresponding game-engine handling before introducing a new effect type.
 
 ### Adding a New Kaiju Boss
 Create a JSON file in `assets/bosses/` with the encounter's combat stats, intent patterns, asset references, and arena fallback background. Add its backdrop URL to `assets/data.json`'s `backdrops`, then add its JSON path to the manifest's `bosses` array to control its position in the setlist. The illustration path is relative to `assets/data.json` and should point to an SVG under `assets/kaiju/`. The renderer reads the boss configuration directly, so no boss-specific code change is needed:

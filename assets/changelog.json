@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.4.1_813a30d2",
+  "currentVersion": "v1.4.2_56646801",
   "releases": [
+    {
+      "version": "v1.4.2_56646801",
+      "date": "2026-11-19",
+      "changes": [
+        "Updated EMP Static and Stage Fright to remain in hand until played or exhausted, and corrected Micro-Oxygen to cost 1 Hype Energy while retaining its end-turn damage effect.",
+        "Made the battle log collapsible and default it to collapsed on small screens.",
+        "Updated developer documentation for Encore Ascension, starter relics, hazard cards, and battle-log behavior."
+      ]
+    },
     {
       "version": "v1.4.1_813a30d2",
       "date": "2026-11-19",

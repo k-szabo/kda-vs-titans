@@ -22,6 +22,18 @@ Each new run starts with a leader selection. A leader's special ability can be u
 
 Leader art uses official League of Legends Data Dragon splash assets configured in `assets/data.json`.
 
+## Encore Ascension
+
+Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is stored in the persistent profile and ranges from `0` (Normal) through `5`. Existing profile data is preserved.
+
+- **Encore 1:** +15% boss maximum HP.
+- **Encore 2:** Card and relic rewards heal 12 HP instead of 18 HP.
+- **Encore 3:** Bosses start with +1 Strength.
+- **Encore 4:** New runs include one non-draftable Stage Fright Status card in the starter deck.
+- **Encore 5:** Charged-interrupt thresholds increase by 4 damage and boss Phase 2 triggers at 60% HP instead of 50%.
+
+Each new run also receives the selected leader's signature starter relic: Ahri gets Nine-Tail Mic, Akali gets Neon Kunai, Evelynn gets Velvet Shades, and Kai'Sa gets Void Core.
+
 ## Reactive boss mechanics
 
 Bosses may define optional `passives` in their encounter JSON:
@@ -34,6 +46,10 @@ Bosses may define optional `passives` in their encounter JSON:
 Enemy Strength is added to each hit. Charged intents may define `interruptThreshold` to be skipped when K/DA deals that much HP damage during the player turn; `interruptBonus` sets the extra damage if the interrupt is missed, and `pierce` controls the share of damage that bypasses Holo Shield. The `injectStatus` intent adds non-draftable Status card copies to the discard pile.
 
 Status cards may set `endTurnDamage` and `ethereal` to deal direct HP damage and exhaust if left in hand. Boss mechanics and temporary Status instances are normalized in existing v3 run saves; no save reset or save-version bump is needed.
+
+Status cards can also set `retainInHand: true` when they must remain in the hand until spent or exhausted instead of being discarded at end of turn. EMP Static and Stage Fright use this behavior. Micro-Oxygen costs 1 Hype Energy and deals 4 direct HP damage only if it remains in hand at end of turn.
+
+The battle log can be collapsed from its header control. It defaults to collapsed on narrow screens to preserve combat and hand space.
 
 ## Deploy to GitHub Pages
 
