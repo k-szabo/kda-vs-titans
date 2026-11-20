@@ -1,16 +1,54 @@
 {
-  "starterDeck": [
-    "foxfire_chord",
-    "foxfire_chord",
-    "foxfire_chord",
-    "hologram_barrier",
-    "hologram_barrier",
-    "hologram_barrier",
-    "smoke_shroud",
-    "smoke_shroud",
-    "allure_strike",
-    "allure_strike"
-  ],
+  "starterDecks": {
+    "ahri": [
+      "foxfire_chord",
+      "foxfire_chord",
+      "foxfire_chord",
+      "ahri_heartseeker",
+      "allure_strike",
+      "allure_strike",
+      "hologram_barrier",
+      "hologram_barrier",
+      "smoke_shroud",
+      "smoke_shroud"
+    ],
+    "akali": [
+      "smoke_shroud",
+      "smoke_shroud",
+      "smoke_shroud",
+      "akali_shadow_dagger",
+      "kunai_flurry",
+      "foxfire_chord",
+      "foxfire_chord",
+      "allure_strike",
+      "hologram_barrier",
+      "hologram_barrier"
+    ],
+    "evelynn": [
+      "allure_strike",
+      "allure_strike",
+      "allure_strike",
+      "evelynn_siphon",
+      "foxfire_chord",
+      "foxfire_chord",
+      "hologram_barrier",
+      "hologram_barrier",
+      "smoke_shroud",
+      "smoke_shroud"
+    ],
+    "kaisa": [
+      "hologram_barrier",
+      "hologram_barrier",
+      "hologram_barrier",
+      "kaisa_second_skin",
+      "foxfire_chord",
+      "foxfire_chord",
+      "allure_strike",
+      "allure_strike",
+      "smoke_shroud",
+      "smoke_shroud"
+    ]
+  },
   "cards": [
     {
       "id": "foxfire_chord",

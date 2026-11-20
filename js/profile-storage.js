@@ -58,7 +58,9 @@ export function createDefaultProfileStats(defaultKeybinds) {
     unlockedKaiju: [],
     leaderWins,
     selectedArts,
-    artWaveClears
+    artWaveClears,
+    finishTokens: 0,
+    cardFinishes: {}
   };
 }
 
@@ -90,13 +92,21 @@ export function loadProfileStats(defaultKeybinds) {
     const parsedDate = new Date(`${value}T00:00:00Z`);
     return !Number.isNaN(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === value;
   };
+  const finishes = profile.cardFinishes;
+  const hasCardFinishes = finishes === undefined || finishes === null || (
+    typeof finishes === 'object' && !Array.isArray(finishes) &&
+    Object.entries(finishes).every(([cardId, level]) =>
+      typeof cardId === 'string' && Number.isInteger(level) && level >= 0 && level <= 3
+    )
+  );
   const hasLeaderProgress = LEADERS.every(({ id }) =>
     isNonNegativeInteger(profile?.leaderWins?.[id]) &&
     getUnlockedArtStyles(profile.leaderWins[id]).some((style) =>
       style.id === profile.selectedArts?.[id]
     ) &&
     LEADER_ART_STYLES.every(({ id: artId }) =>
-      isNonNegativeInteger(profile.artWaveClears?.[id]?.[artId])
+      profile.artWaveClears?.[id]?.[artId] === undefined ||
+      isNonNegativeInteger(profile.artWaveClears[id][artId])
     )
   );
   if (
@@ -115,7 +125,9 @@ export function loadProfileStats(defaultKeybinds) {
     !profile.leaderWins ||
     !profile.selectedArts ||
     !profile.artWaveClears ||
-    !hasLeaderProgress
+    !hasLeaderProgress ||
+    (profile.finishTokens !== undefined && !isNonNegativeInteger(profile.finishTokens)) ||
+    !hasCardFinishes
   ) {
     throw new InvalidProfileStatsError('Saved profile stats have an unsupported shape.');
   }
@@ -138,9 +150,11 @@ export function loadProfileStats(defaultKeybinds) {
       id,
       Object.fromEntries(LEADER_ART_STYLES.map(({ id: artId }) => [
         artId,
-        profile.artWaveClears[id][artId]
+        profile.artWaveClears[id][artId] ?? 0
       ]))
-    ]))
+    ])),
+    finishTokens: profile.finishTokens ?? 0,
+    cardFinishes: { ...(profile.cardFinishes ?? {}) }
   };
 }
 

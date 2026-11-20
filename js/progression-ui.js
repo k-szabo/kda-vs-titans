@@ -1,5 +1,8 @@
 import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
+import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
+
+const MEMBER_ORDER = ['ahri', 'akali', 'evelynn', 'kaisa', 'squad'];
 
 const ENCORE_TIERS = [
   { level: 0, name: 'Normal', description: 'Standard 10-wave setlist. No Encore modifiers.' },
@@ -13,11 +16,13 @@ const ENCORE_TIERS = [
 export function createProgressionUI({
   getArtAssets,
   getLeaderArts,
+  getCardDatabase,
   getRelicDatabase,
   getProfileStats,
   getEncounters,
   getDailyChallenge,
-  onSelectLeaderArt
+  onSelectLeaderArt,
+  onUpgradeCardFinish
 }) {
   let selectedLeader = LEADERS[0].id;
   let selectedEncoreLevel = 0;
@@ -132,9 +137,13 @@ export function createProgressionUI({
       title.textContent = name;
       const progress = document.createElement('p');
       progress.className = 'text-[11px] text-slate-400';
-      progress.textContent = `${leaderWins} full ${leaderWins === 1 ? 'clear' : 'clears'} // ${
-        leaderWins < 2 ? `${2 - leaderWins} ${leaderWins === 1 ? 'more clear' : 'clears'} to FIRESTARTER` : 'all art unlocked'
-      }`;
+      const nextLocked = LEADER_ART_STYLES.find((style) =>
+        style.winsRequired !== undefined &&
+        !unlockedStyles.some(({ id: unlockedId }) => unlockedId === style.id)
+      );
+      progress.textContent = nextLocked
+        ? `${leaderWins} full ${leaderWins === 1 ? 'clear' : 'clears'} // ${nextLocked.winsRequired - leaderWins} more to ${nextLocked.name}`
+        : `${leaderWins} full ${leaderWins === 1 ? 'clear' : 'clears'} // all art unlocked`;
       heading.append(title, progress);
 
       const artChoices = document.createElement('div');
@@ -183,7 +192,77 @@ export function createProgressionUI({
       grid.appendChild(section);
     });
 
+    grid.appendChild(buildCardAtelier());
+
     document.getElementById('artStudioModal').classList.remove('hidden');
+  }
+
+  function buildCardAtelier() {
+    const profileStats = getProfileStats();
+    const cardDatabase = getCardDatabase();
+    const shards = profileStats.finishTokens ?? 0;
+    const section = document.createElement('section');
+    section.className = 'rounded-2xl bg-black/35 border border-white/10 p-4';
+    const heading = document.createElement('div');
+    heading.className = 'flex flex-wrap items-baseline justify-between gap-2 mb-1';
+    const title = document.createElement('h3');
+    title.className = 'font-display text-sm font-black text-white';
+    title.textContent = '✨ CARD ATELIER';
+    const balance = document.createElement('p');
+    balance.className = 'font-display text-xs font-black text-amber-200';
+    balance.textContent = `${shards} ✦ SPOTLIGHT SHARDS`;
+    heading.append(title, balance);
+    const hint = document.createElement('p');
+    hint.className = 'mb-3 text-[11px] text-slate-400';
+    hint.textContent = 'Earn shards by clearing waves (+1) and tours (+3). Finishes are permanent: basic → shiny (2) → platinum (3) → holo (5).';
+    section.append(heading, hint);
+
+    const finishable = Object.values(cardDatabase).filter((card) => card.draftable !== false);
+    MEMBER_ORDER.forEach((member) => {
+      const group = finishable.filter((card) => card.member === member);
+      if (group.length === 0) return;
+      const groupTitle = document.createElement('h4');
+      groupTitle.className = 'mt-3 mb-1.5 font-display text-[10px] font-black tracking-widest text-slate-300';
+      groupTitle.textContent = member === 'squad' ? 'K/DA SQUAD' : member === 'kaisa' ? "KAI'SA" : member.toUpperCase();
+      const rows = document.createElement('div');
+      rows.className = 'grid gap-1.5';
+      group.sort((a, b) => a.name.localeCompare(b.name)).forEach((card) => {
+        const level = getCardFinishLevel(profileStats.cardFinishes, card.id);
+        const next = getNextFinishLevel(level);
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/25 px-3 py-2';
+        const name = document.createElement('span');
+        name.className = 'min-w-0 flex-1 truncate text-xs text-slate-200';
+        const pips = [1, 2, 3].map((tier) => (tier <= level ? '●' : '○')).join('');
+        name.textContent = `${card.name} ${pips}`;
+        row.appendChild(name);
+        if (!next) {
+          const maxed = document.createElement('span');
+          maxed.className = 'font-display text-[10px] font-black text-amber-200';
+          maxed.textContent = 'HOLO MAX';
+          row.appendChild(maxed);
+        } else {
+          const button = document.createElement('button');
+          button.type = 'button';
+          const affordable = shards >= next.cost;
+          button.disabled = !affordable;
+          button.className = affordable
+            ? 'rounded-lg border border-amber-300/40 bg-amber-500/15 px-3 py-1.5 font-display text-[10px] font-bold text-amber-100 transition hover:bg-amber-500/25'
+            : 'rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-display text-[10px] font-bold text-slate-500 cursor-not-allowed';
+          button.textContent = `${next.name} · ${next.cost} ✦`;
+          if (affordable) {
+            button.addEventListener('click', () => {
+              onUpgradeCardFinish(card.id);
+              showArtStudio();
+            });
+          }
+          row.appendChild(button);
+        }
+        rows.appendChild(row);
+      });
+      section.append(groupTitle, rows);
+    });
+    return section;
   }
 
   function renderEncoreChoices() {

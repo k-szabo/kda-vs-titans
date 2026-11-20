@@ -51,6 +51,7 @@ import {
 import { isValidSavedRun, migrateSavedRun } from './run-state.js';
 import { createGameUI } from './ui.js';
 import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
+import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 
 (function () {
   'use strict';
@@ -59,7 +60,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
   let CARD_DB = {};
   let RELIC_DB = {};
   let ENCOUNTERS = [];
-  let STARTER_DECK = [];
+  let STARTER_DECKS = {};
   let defaultKeybinds = null;
   let profileStats = null;
   let ui = null;
@@ -99,7 +100,11 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
       function createNewRunState(leader, encoreLevel = 0, dailyChallenge = null) {
         let nextCardInstanceId = 1;
-        const masterDeck = STARTER_DECK.map((cardId) => ({
+        const leaderDeck = STARTER_DECKS[leader];
+        if (!Array.isArray(leaderDeck)) {
+          throw new Error(`No starter deck is configured for leader ${leader}.`);
+        }
+        const masterDeck = leaderDeck.map((cardId) => ({
           instanceId: nextCardInstanceId++,
           cardId,
           upgradeLevel: 0
@@ -184,9 +189,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const enc = ENCOUNTERS[stageIdx];
         if (!enc) return;
         const encoreMaxHp = getEncoreBossMaxHp(enc.maxHp, state.encoreLevel);
+        const waveMaxHp = Math.ceil(encoreMaxHp * (1 + 0.02 * stageIdx));
         const bossMaxHp = state.dailyChallenge?.modifier === 'encore_pressure'
-          ? Math.ceil(encoreMaxHp * 1.15)
-          : encoreMaxHp;
+          ? Math.ceil(waveMaxHp * 1.15)
+          : waveMaxHp;
 
         state.stageIndex = stageIdx;
         state.turn = 1;
@@ -222,7 +228,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           hp: bossMaxHp,
           maxHp: bossMaxHp,
           block: 0,
-          strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0),
+          strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0) + (stageIdx >= 5 ? 1 : 0),
           stageEffect: enc.stageEffect,
           enrageTriggered: false,
           patternStep: 0,
@@ -1345,6 +1351,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       function recordStageClear() {
         state.wavesCleared += 1;
         applyRelicEffects('waveClear');
+        profileStats.finishTokens = (Number.isInteger(profileStats.finishTokens) ? profileStats.finishTokens : 0) + 1;
+        addLog('✦ Earned 1 Spotlight Shard for clearing the wave.', 'text-amber-300');
         profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
         const artId = profileStats.selectedArts[state.leader];
         profileStats.artWaveClears[state.leader][artId] += 1;
@@ -1364,6 +1372,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           if (profileStats.fastestWinMs === null || duration < profileStats.fastestWinMs) {
             profileStats.fastestWinMs = duration;
           }
+          profileStats.finishTokens += 3;
+          addLog('✦ Tour victory bonus: +3 Spotlight Shards!', 'text-amber-300 font-bold');
         }
         persistProfileStats();
       }
@@ -1602,6 +1612,17 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         renderAll();
       }
 
+      function upgradeCardFinish(cardId) {
+        const level = getCardFinishLevel(profileStats.cardFinishes, cardId);
+        const next = getNextFinishLevel(level);
+        const card = CARD_DB[cardId];
+        if (!next || !card || card.draftable === false) return;
+        if ((profileStats.finishTokens ?? 0) < next.cost) return;
+        profileStats.finishTokens -= next.cost;
+        profileStats.cardFinishes = { ...profileStats.cardFinishes, [cardId]: next.level };
+        persistProfileStats();
+      }
+
       function openNewRunSelection() {
         ui.openLeaderSelection(Boolean(state), state?.leader);
       }
@@ -1797,7 +1818,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           CARD_DB = gameData.cardDatabase;
           RELIC_DB = gameData.relicDatabase;
           ENCOUNTERS = gameData.encounters;
-          STARTER_DECK = gameData.starterDeck;
+          STARTER_DECKS = gameData.starterDecks;
           defaultKeybinds = gameData.defaultKeybinds;
           ui = createGameUI({
             getState: () => state,
@@ -1829,6 +1850,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             onChooseRelic: chooseRelic,
             onUpgradeCard: upgradeCard,
             onSelectLeaderArt: selectLeaderArt,
+            onUpgradeCardFinish: upgradeCardFinish,
             onContinueTour: continueTour,
             getDailyChallenge: getTodayDailyChallenge,
             onCopyReceipt: copyRunReceipt

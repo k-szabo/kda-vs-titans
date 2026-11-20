@@ -1,6 +1,16 @@
 {
-  "currentVersion": "v1.11.1_2b36bbb2",
+  "currentVersion": "v1.13.0_ae7df048",
   "releases": [
+    {
+      "version": "v1.13.0_ae7df048",
+      "date": "2026-11-20",
+      "changes": [
+        "Starter decks are now tied to the chosen leader with keyword-flavored cards.",
+        "Bosses scale by wave: +2% HP per wave and +1 Strength from wave 6.",
+        "New PRESTIGE leader art unlock at 3 full clears per leader, with old profiles carried over.",
+        "New Card Atelier: permanent shiny, platinum, and holo card finishes bought with Spotlight Shards earned per wave."
+      ]
+    },
     {
       "version": "v1.11.1_2b36bbb2",
       "date": "2026-11-20",

@@ -1,6 +1,7 @@
 import { getEffectiveCardCost } from './card-effects.js';
 import { getDeathLogEntries, MEMBER_SYNERGY } from './combat-rules.js';
 import { MEMBER_KEYWORDS } from './keywords.js';
+import { getCardFinishLevel, getFinishClass } from './card-finishes.js';
 import { pickVoiceLine } from './voice-lines.js';
 import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
@@ -34,16 +35,19 @@ export function createGameUI({
   onUpgradeCard,
   onSelectLeaderArt,
   onContinueTour,
-  onCopyReceipt
+  onCopyReceipt,
+  onUpgradeCardFinish
 }) {
   const progressionUI = createProgressionUI({
     getArtAssets,
     getLeaderArts,
+    getCardDatabase,
     getRelicDatabase,
     getProfileStats,
     getEncounters,
     getDailyChallenge,
-    onSelectLeaderArt
+    onSelectLeaderArt,
+    onUpgradeCardFinish
   });
 
   function triggerScreenShake() {
@@ -102,9 +106,10 @@ export function createGameUI({
         }">${damagePreview.lethal ? `LETHAL ${damageLabel}` : damageLabel}</span>`
       : '';
     const el = document.createElement('div');
+    const finishLevel = getCardFinishLevel(getProfileStats().cardFinishes, card.id);
     el.className = `spire-card card-${card.member} p-2.5 sm:p-3 flex flex-col justify-between ${
       playable ? 'playable' : 'unplayable'
-    }${upgradeLevel > 0 ? ' card-upgraded' : ''}${isKept ? ' ring-2 ring-amber-300/70' : ''}`;
+    }${upgradeLevel > 0 ? ' card-upgraded' : ''}${isKept ? ' ring-2 ring-amber-300/70' : ''}${finishLevel > 0 ? ` ${getFinishClass(finishLevel)}` : ''}`;
 
     const badgeColor =
       card.member === 'ahri'

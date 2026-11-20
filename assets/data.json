@@ -1,5 +1,5 @@
 {
-  "version": "v1.11.1_2b36bbb2",
+  "version": "v1.13.0_ae7df048",
   "portraits": {
     "ahri": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_15.jpg",
     "akali": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Akali_9.jpg",
@@ -10,19 +10,23 @@
   "leaderArts": {
     "ahri": {
       "more": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_28.jpg",
-      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_97.jpg"
+      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_97.jpg",
+      "prestige": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_16.jpg"
     },
     "akali": {
       "more": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Akali_32.jpg",
-      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Akali_102.jpg"
+      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Akali_102.jpg",
+      "prestige": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Akali_13.jpg"
     },
     "evelynn": {
       "more": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Evelynn_15.jpg",
-      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Evelynn_66.jpg"
+      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Evelynn_66.jpg",
+      "prestige": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Evelynn_7.jpg"
     },
     "kaisa": {
       "more": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Kaisa_26.jpg",
-      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Kaisa_83.jpg"
+      "firestarter": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Kaisa_83.jpg",
+      "prestige": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Kaisa_15.jpg"
     }
   },
   "cards": "./cards.json",

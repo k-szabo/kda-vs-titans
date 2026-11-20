@@ -151,7 +151,16 @@ overview.
   modal if needed).
 - New World Tour opens leader + Encore selection.
 - Daily World Tour starts the deterministic daily run at Encore 0.
-- Art Studio equips unlocked art and shows per-art ranks.
+- Art Studio equips unlocked art and shows per-art ranks. Leader art tiers:
+  POP/STARS (default), MORE (1 clear), FIRESTARTER (2 clears), PRESTIGE
+  (3 clears, real Prestige splashes). Missing `artWaveClears` keys in old
+  profiles normalize to 0, so no profile reset is needed for new tiers.
+- Holo card finishes are permanent profile unlocks, not run items: each wave
+  clear earns 1 Spotlight Shard (+3 tour victory bonus, `profile.finishTokens`),
+  spent in the Art Studio's Card Atelier along a basic → shiny (2) → platinum
+  (3) → holo (5) track per card ID (`profile.cardFinishes`, validated 0–3).
+  Cards render the finish as an animated CSS sheen (`card-finish-1/2/3`);
+  missing profile keys default to 0 so no profile reset is needed.
 - The combat header's MENU button returns to the main menu without ending the
   run.
 - `#devtools` shows a wave selector; it requires a run state (or opens leader
@@ -260,6 +269,18 @@ overview.
 - Existing profiles keep their stored `maxEncoreLevel`; the fix stops further
   inflation rather than resetting progress.
 
+### Starter decks & wave scaling
+
+- New runs deal a leader-specific 10-card starter (`assets/cards.json` →
+  `starterDecks[leader]`, validated per leader in `js/game-data.js`): basics
+  reweighted toward the leader's member plus one keyword intro card
+  (Ahri Heartseeker, Akali Shadow Dagger, Evelynn Siphon Hunger, Kai'Sa
+  Second Skin). Applies to new runs only; no save migration.
+- Difficulty scales by wave in `startStage()`: boss HP ×(1 + 2% per wave
+  index, W10 ≈ +18%) and +1 boss Strength from wave 6 on. Multiplies with
+  Encore and daily modifiers; materialized into `state.enemy` so saves need
+  no changes.
+
 ### Tour routing
 
 - After each non-final wave, a seeded backstage event fires first
@@ -282,9 +303,9 @@ overview.
   Merch Tokens (deterministic; harder waves and higher Encore pay more).
   Prices are flat: card 12, relic 18, removal 8, heal +15 HP for 6.
   Shop stock is seeded (2 draftable non-starter cards, 1 unowned non-leader
-  relic or sold out) and never offers owned relics. Cut (+10 HP) and Rest
-  (+25 HP) no longer exist as free rewards — thinning and healing are
-  shop-only. Shop purchases update `masterDeck` + `discardPile` together so
+  relic or sold out) and never offers owned relics. Cut (+10 HP)
+  and Rest (+25 HP) no longer exist as free rewards — thinning and healing
+  are shop-only. Shop purchases update `masterDeck` + `discardPile` together so
   save coverage stays valid; unaffordable/sold-out options disable, already-owned
   relic choices are pruned whenever a relic is granted, and the route buttons
   always work so the shop can never lock the run.
@@ -472,7 +493,8 @@ Supported effect types (`js/card-effects.js`):
 - `desc` and `upgrade.description` are rendered as HTML; keep authored markup
   limited to simple formatting tags.
 - Draft pool = `!starter && draftable !== false`.
-- Add starter cards to `starterDeck`; duplicate IDs are allowed there.
+- Add starter cards to `starterDecks[leader]` (exactly 10 IDs per leader);
+  duplicate IDs are allowed there.
 
 ### Buff cards (`type: "BUFF"`)
 
@@ -646,8 +668,8 @@ The version also drives cache clearing and JSON cache-busting.
 
 1. Add an object to `cards` in `assets/cards.json`.
 2. Use an existing effect type or add engine + validation support.
-3. Set `starter: false` for the draft pool; add the ID to `starterDeck` if it
-   belongs in a new run.
+3. Set `starter: false` for the draft pool; add the ID to a leader's
+   `starterDecks` entry if it belongs in a new run (10 IDs per leader).
 4. Provide `upgrade.description` if the card can be upgraded.
 5. Keep `log.template` placeholders limited to the supported set.
 
@@ -734,7 +756,7 @@ card art mappings and tests across these files.
 Run through this before considering a change complete:
 
 1. Serve over HTTP; no console errors and no `#loadError`.
-2. New run: leader selection, Encore tier gating, starter deck/relic, wave 1.
+2. New run: leader selection, Encore tier gating, leader-specific starter deck (10 cards, keyword intro), wave 1.
 3. Play cards; verify cost, upgrades, exhaust, retain, status cards, and hand cap.
    Mark a card with the 📌 toggle and confirm it survives one turn and that the
    next hand is 4 + kept card. Use Kai'Sa's ability on a full hand and confirm

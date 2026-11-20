@@ -28,7 +28,8 @@ export const LEADERS = [
 export const LEADER_ART_STYLES = [
   { id: 'popstars', name: 'POP/STARS' },
   { id: 'more', name: 'MORE', winsRequired: 1 },
-  { id: 'firestarter', name: 'FIRESTARTER', winsRequired: 2 }
+  { id: 'firestarter', name: 'FIRESTARTER', winsRequired: 2 },
+  { id: 'prestige', name: 'PRESTIGE', winsRequired: 3 }
 ];
 
 export const RANK_TIERS = [

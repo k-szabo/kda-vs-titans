@@ -69,14 +69,16 @@ export async function loadGameData() {
       !manifest.portraits[leaderId] ||
       !additionalArts ||
       typeof additionalArts.more !== 'string' ||
-      typeof additionalArts.firestarter !== 'string'
+      typeof additionalArts.firestarter !== 'string' ||
+      typeof additionalArts.prestige !== 'string'
     ) {
       throw new Error(`The asset manifest is missing leader art for ${leaderId}.`);
     }
     return [leaderId, {
       popstars: manifest.portraits[leaderId],
       more: additionalArts.more,
-      firestarter: additionalArts.firestarter
+      firestarter: additionalArts.firestarter,
+      prestige: additionalArts.prestige
     }];
   }));
 
@@ -112,10 +114,18 @@ export async function loadGameData() {
     throw new Error('The keybind file must define one unique printable key for every game action.');
   }
 
-  if (!Array.isArray(cardData.cards) || !Array.isArray(cardData.starterDeck) || cardData.cards.length === 0) {
+  if (!Array.isArray(cardData.cards) || cardData.cards.length === 0) {
     throw new Error('The card file must define cards and a starter deck.');
   }
   const cardDatabase = Object.fromEntries(cardData.cards.map((card) => [card.id, card]));
+  const starterDeckLeaders = ['ahri', 'akali', 'evelynn', 'kaisa'];
+  const starterDecks = cardData.starterDecks;
+  const starterDecksValid = starterDecks !== null && typeof starterDecks === 'object' && !Array.isArray(starterDecks) &&
+    starterDeckLeaders.every((id) =>
+      Array.isArray(starterDecks[id]) &&
+      starterDecks[id].length === 10 &&
+      starterDecks[id].every((cardId) => Object.hasOwn(cardDatabase, cardId))
+    );
   if (
     Object.keys(cardDatabase).length !== cardData.cards.length ||
     cardData.cards.some((card) =>
@@ -170,7 +180,7 @@ export async function loadGameData() {
             typeof effect.when.status !== 'string'))
       )
     ) ||
-    cardData.starterDeck.some((cardId) => !Object.hasOwn(cardDatabase, cardId))
+    !starterDecksValid
   ) {
     throw new Error('The card file contains invalid or duplicate card data.');
   }
@@ -308,6 +318,6 @@ export async function loadGameData() {
     defaultKeybinds: keybindData,
     encounters,
     relicDatabase,
-    starterDeck: cardData.starterDeck
+    starterDecks,
   };
 }
