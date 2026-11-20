@@ -78,6 +78,10 @@
           <span class="block font-display text-sm font-black text-purple-100">⚙ OPTIONS</span>
           <span class="mt-1 block text-xs text-slate-400">Adjust sound and keyboard shortcuts.</span>
         </button>
+        <button id="btnMenuMissions" type="button" class="rounded-xl border border-amber-300/40 bg-amber-400/10 px-4 py-4 text-left transition hover:bg-amber-400/20">
+          <span class="block font-display text-sm font-black text-amber-100">🏆 MISSIONS</span>
+          <span id="menuMissionsDetails" class="mt-1 block text-xs text-amber-200/75"></span>
+        </button>
         <button id="btnDailyTour" type="button" class="rounded-xl border border-orange-300/40 bg-orange-400/10 px-4 py-4 text-left transition hover:bg-orange-400/20">
           <span class="block font-display text-sm font-black text-orange-100">📅 DAILY WORLD TOUR</span>
           <span id="menuDailyDetails" class="mt-1 block text-xs text-orange-200/75"></span>
@@ -120,6 +124,9 @@
       </button>
       <button id="btnArtStudio" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
         🎨 ART STUDIO
+      </button>
+      <button id="btnMissions" type="button" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
+        🏆 MISSIONS
       </button>
       <button id="btnOptions" type="button" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-display text-[11px] font-bold text-slate-200 transition">
         ⚙ OPTIONS
@@ -405,6 +412,23 @@
       <p class="mb-3 text-xs text-slate-300">Choose the buff to discard. The new card takes its slot.</p>
       <div id="buffReplaceChoices" class="grid gap-2"></div>
       <button id="btnCancelBuffReplace" type="button" class="mt-4 w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 font-display text-xs font-bold text-slate-200 transition hover:bg-white/10">CANCEL</button>
+    </div>
+  </section>
+
+  <section id="missionsModal" role="dialog" aria-modal="true" aria-labelledby="missionsHeading" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+    <div class="glass-panel max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-amber-400/40 p-5 sm:p-7">
+      <div class="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <span class="font-display text-[10px] tracking-widest text-amber-300">ACHIEVEMENTS</span>
+          <h2 id="missionsHeading" class="font-display text-xl font-black holo-text">MISSIONS</h2>
+          <p class="mt-1 text-[11px] text-slate-400">Complete missions to earn Spotlight Shards for the Card Atelier.</p>
+        </div>
+        <button id="btnCloseMissions" type="button" class="rounded-lg bg-white/10 px-3 py-1.5 font-display text-xs font-bold text-white hover:bg-white/20">CLOSE ✕</button>
+      </div>
+      <div class="mb-3 text-right">
+        <span id="missionsShardBalance" class="font-display text-xs font-black text-amber-200">0 ✦ SPOTLIGHT SHARDS</span>
+      </div>
+      <div id="missionsGrid" class="grid grid-cols-1 gap-2 sm:grid-cols-2"></div>
     </div>
   </section>
 

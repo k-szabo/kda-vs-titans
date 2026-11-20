@@ -20,6 +20,7 @@ export function createGameUI({
   getEncounters,
   getCurrentEnemyIntent,
   getDailyChallenge,
+  getMissions,
   onPlayCard,
   onToggleKeep,
   onChooseRoute,
@@ -46,6 +47,7 @@ export function createGameUI({
     getRelicDatabase,
     getProfileStats,
     getEncounters,
+    getMissions,
     getDailyChallenge,
     onSelectLeaderArt,
     onUpgradeCardFinish,
@@ -1034,6 +1036,7 @@ export function createGameUI({
     document.getElementById('draftModal').classList.add('hidden');
     document.getElementById('tourRoutingModal')?.classList.add('hidden');
     document.getElementById('tourEventModal')?.classList.add('hidden');
+    document.getElementById('missionsModal')?.classList.add('hidden');
     document.getElementById('leaderSelectionModal').classList.add('hidden');
     document.getElementById('artStudioModal').classList.add('hidden');
   }
@@ -1058,6 +1061,9 @@ export function createGameUI({
     if (event.key === 'Escape') setChangelogOpen(false);
   });
   window.addEventListener('resize', fitChangelogToFour);
+  document.getElementById('btnCloseMissions')?.addEventListener('click', progressionUI.hideMissions);
+  document.getElementById('btnMissions')?.addEventListener('click', progressionUI.showMissions);
+  document.getElementById('btnMenuMissions')?.addEventListener('click', progressionUI.showMissions);
   document.getElementById('btnArtStudio').addEventListener('click', progressionUI.showArtStudio);
   document.getElementById('btnMenuArtStudio').addEventListener('click', progressionUI.showArtStudio);
   document.getElementById('btnCopyReceipt').addEventListener('click', onCopyReceipt);
@@ -1101,6 +1107,8 @@ export function createGameUI({
     renderAll,
     setChangelog,
     showArtStudio: progressionUI.showArtStudio,
+    showMissions: progressionUI.showMissions,
+    hideMissions: progressionUI.hideMissions,
     showRunEndModal,
     showReceiptCopyStatus,
     showSaveNotice,

@@ -20,6 +20,7 @@ export function createProgressionUI({
   getRelicDatabase,
   getProfileStats,
   getEncounters,
+  getMissions,
   getDailyChallenge,
   onSelectLeaderArt,
   onUpgradeCardFinish,
@@ -101,6 +102,13 @@ export function createProgressionUI({
     document.getElementById('menuDailyDetails').textContent =
       `${dailyChallenge.date} UTC // ${dailyLeader.name} // ${dailyRelic}`;
     document.getElementById('menuDailyRule').textContent = modifier.description;
+    const missions = getMissions();
+    const missionsDone = missions.filter((mission) =>
+      (profileStats.completedMissions ?? []).includes(mission.id)).length;
+    const missionsDetails = document.getElementById('menuMissionsDetails');
+    if (missionsDetails) {
+      missionsDetails.textContent = `${missionsDone} / ${missions.length} complete // ${profileStats.finishTokens ?? 0} ✦ shards`;
+    }
 
     const continueButton = document.getElementById('btnContinueTour');
     const hasActiveRun = savedRun && ['playing', 'draft'].includes(savedRun.runStatus);
@@ -269,6 +277,36 @@ export function createProgressionUI({
     return section;
   }
 
+  function showMissions() {
+    const profileStats = getProfileStats();
+    const missions = getMissions();
+    const done = new Set(profileStats.completedMissions ?? []);
+    const balance = document.getElementById('missionsShardBalance');
+    if (balance) balance.textContent = `${profileStats.finishTokens ?? 0} ✦ SPOTLIGHT SHARDS`;
+    const grid = document.getElementById('missionsGrid');
+    if (grid) {
+      grid.replaceChildren();
+      missions.forEach((mission) => {
+        const completed = done.has(mission.id);
+        const entry = document.createElement('div');
+        entry.className = `rounded-xl border p-3 ${completed ? 'border-amber-300/40 bg-amber-500/10' : 'border-white/10 bg-black/25'}`;
+        const name = document.createElement('span');
+        name.className = `block font-display text-xs font-bold ${completed ? 'text-amber-200' : 'text-slate-300'}`;
+        name.textContent = `${completed ? '🏆 ' : ''}${mission.name}`;
+        const desc = document.createElement('span');
+        desc.className = 'mt-0.5 block text-[11px] leading-relaxed text-slate-400';
+        desc.textContent = `${mission.description} // Reward: +${mission.reward} ✦`;
+        entry.append(name, desc);
+        grid.appendChild(entry);
+      });
+    }
+    document.getElementById('missionsModal').classList.remove('hidden');
+  }
+
+  function hideMissions() {
+    document.getElementById('missionsModal').classList.add('hidden');
+  }
+
   function renderEncoreChoices() {
     const maxLevel = getProfileStats().maxEncoreLevel ?? 0;
     if (selectedEncoreLevel > maxLevel) selectedEncoreLevel = 0;
@@ -355,6 +393,8 @@ export function createProgressionUI({
     showMainMenu,
     hideMainMenu,
     showArtStudio,
+    showMissions,
+    hideMissions,
     openLeaderSelection,
     getSelectedLeader: () => selectedLeader,
     getSelectedEncoreLevel: () => selectedEncoreLevel

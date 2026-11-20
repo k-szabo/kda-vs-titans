@@ -33,6 +33,7 @@ export function createOptionsUI({
       ? '—'
       : `${Math.floor(profileStats.fastestWinMs / 60000)}m ${Math.floor((profileStats.fastestWinMs % 60000) / 1000)}s`;
 
+
     const unlocked = new Set(profileStats.unlockedKaiju);
     const grid = document.getElementById('optionsCodexGrid');
     grid.replaceChildren();

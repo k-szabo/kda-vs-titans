@@ -53,6 +53,7 @@ export async function loadGameData() {
     !manifest.backdrops ||
     !manifest.cards ||
     !manifest.relics ||
+    !manifest.missions ||
     typeof manifest.keybinds !== 'string' ||
     !manifest.keybinds ||
     !manifest.changelog ||
@@ -86,11 +87,13 @@ export async function loadGameData() {
 
   const cardDataUrl = new URL(manifest.cards, DATA_MANIFEST_URL);
   const relicDataUrl = new URL(manifest.relics, DATA_MANIFEST_URL);
+  const missionDataUrl = new URL(manifest.missions, DATA_MANIFEST_URL);
   const keybindDataUrl = new URL(manifest.keybinds, DATA_MANIFEST_URL);
   const changelogUrl = new URL(manifest.changelog, DATA_MANIFEST_URL);
-  const [cardData, relicData, keybindData, changelogData, encounters] = await Promise.all([
+  const [cardData, relicData, missionData, keybindData, changelogData, encounters] = await Promise.all([
     loadJson(cardDataUrl, manifest.version),
     loadJson(relicDataUrl, manifest.version),
+    loadJson(missionDataUrl, manifest.version),
     loadJson(keybindDataUrl, manifest.version),
     loadJson(changelogUrl, manifest.version),
     Promise.all(manifest.bosses.map(async (bossPath) => {
@@ -289,6 +292,36 @@ export async function loadGameData() {
     throw new Error('The relic file contains invalid or duplicate relic data.');
   }
 
+  const missionStats = Object.freeze({
+    run: Object.freeze(['wavesCleared', 'peakDamage', 'deckSize', 'relicCount', 'isVictory', 'encoreLevel']),
+    profile: Object.freeze(['bestWave', 'maxEncore', 'totalWins', 'winsAhri', 'winsAkali', 'winsEvelynn', 'winsKaisa'])
+  });
+  const isMissionClause = (clause) =>
+    isRecord(clause) &&
+    (clause.scope === 'run' || clause.scope === 'profile') &&
+    missionStats[clause.scope].includes(clause.stat) &&
+    ['gte', 'lte', 'eq'].includes(clause.op) &&
+    Number.isFinite(clause.value);
+  if (
+    !Array.isArray(missionData.missions) ||
+    missionData.missions.length === 0 ||
+    new Set(missionData.missions.map((mission) => mission?.id)).size !== missionData.missions.length ||
+    missionData.missions.some((mission) =>
+      !isRecord(mission) ||
+      typeof mission.id !== 'string' ||
+      typeof mission.name !== 'string' ||
+      typeof mission.description !== 'string' ||
+      !Number.isInteger(mission.reward) ||
+      mission.reward <= 0 ||
+      (!Array.isArray(mission.requiresAll) || !Array.isArray(mission.requiresAny)) ||
+      (mission.requiresAll.length === 0 && mission.requiresAny.length === 0) ||
+      !mission.requiresAll.every(isMissionClause) ||
+      !mission.requiresAny.every(isMissionClause)
+    )
+  ) {
+    throw new Error('The mission file contains invalid or duplicate mission data.');
+  }
+
   const versionPattern = /^v\d+\.\d+\.\d+_[0-9a-f]{8}$/;
   if (
     !isRecord(changelogData) ||
@@ -320,5 +353,6 @@ export async function loadGameData() {
     encounters,
     relicDatabase,
     starterDecks,
+    missions: missionData.missions,
   };
 }

@@ -1,0 +1,107 @@
+{
+  "missions": [
+    {
+      "id": "soundcheck_passed",
+      "name": "Soundcheck Passed",
+      "description": "Clear Wave 1.",
+      "reward": 2,
+      "requiresAny": [
+        { "scope": "run", "stat": "wavesCleared", "op": "gte", "value": 1 },
+        { "scope": "profile", "stat": "bestWave", "op": "gte", "value": 1 }
+      ]
+    },
+    {
+      "id": "halfway_there",
+      "name": "Halfway There",
+      "description": "Clear Wave 5.",
+      "reward": 3,
+      "requiresAny": [
+        { "scope": "run", "stat": "wavesCleared", "op": "gte", "value": 5 },
+        { "scope": "profile", "stat": "bestWave", "op": "gte", "value": 5 }
+      ]
+    },
+    {
+      "id": "world_tour_saved",
+      "name": "World Tour Saved",
+      "description": "Complete all 10 waves.",
+      "reward": 5,
+      "requiresAny": [
+        { "scope": "run", "stat": "isVictory", "op": "eq", "value": 1 },
+        { "scope": "profile", "stat": "totalWins", "op": "gte", "value": 1 }
+      ]
+    },
+    {
+      "id": "encore_unlocked",
+      "name": "Encore Unlocked",
+      "description": "Reach Encore tier 1.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "profile", "stat": "maxEncore", "op": "gte", "value": 1 }
+      ]
+    },
+    {
+      "id": "ahri_headliner",
+      "name": "Ahri Headliner",
+      "description": "Complete a full tour with Ahri.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "profile", "stat": "winsAhri", "op": "gte", "value": 1 }
+      ]
+    },
+    {
+      "id": "akali_headliner",
+      "name": "Akali Headliner",
+      "description": "Complete a full tour with Akali.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "profile", "stat": "winsAkali", "op": "gte", "value": 1 }
+      ]
+    },
+    {
+      "id": "evelynn_headliner",
+      "name": "Evelynn Headliner",
+      "description": "Complete a full tour with Evelynn.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "profile", "stat": "winsEvelynn", "op": "gte", "value": 1 }
+      ]
+    },
+    {
+      "id": "kaisa_headliner",
+      "name": "Kai'Sa Headliner",
+      "description": "Complete a full tour with Kai'Sa.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "profile", "stat": "winsKaisa", "op": "gte", "value": 1 }
+      ]
+    },
+    {
+      "id": "overkill",
+      "name": "Overkill",
+      "description": "Deal 50+ damage in a single turn.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "run", "stat": "peakDamage", "op": "gte", "value": 50 }
+      ]
+    },
+    {
+      "id": "minimalist",
+      "name": "Minimalist",
+      "description": "Win a tour with 12 or fewer cards in your deck.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "run", "stat": "isVictory", "op": "eq", "value": 1 },
+        { "scope": "run", "stat": "deckSize", "op": "lte", "value": 12 }
+      ]
+    },
+    {
+      "id": "curator",
+      "name": "Curator",
+      "description": "Hold 6 or more relics at once.",
+      "reward": 4,
+      "requiresAll": [
+        { "scope": "run", "stat": "relicCount", "op": "gte", "value": 6 }
+      ]
+    }
+  ]
+}

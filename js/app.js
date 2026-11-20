@@ -52,11 +52,13 @@ import { isValidSavedRun, migrateSavedRun } from './run-state.js';
 import { createGameUI } from './ui.js';
 import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
+import { testMission } from './missions.js';
 
 (function () {
   'use strict';
 
   let ART_ASSETS = null;
+  let MISSION_DEFS = [];
   let CARD_DB = {};
   let RELIC_DB = {};
   let ENCOUNTERS = [];
@@ -903,6 +905,7 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
         state.player.hp = 0;
         state.runStatus = 'defeat';
         recordDailyResult(false);
+        evaluateMissions();
         renderAll();
         ui.showRunEndModal(false);
         return true;
@@ -959,6 +962,7 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
         if (state.stageIndex >= ENCOUNTERS.length - 1) {
           state.runStatus = 'victory';
           recordDailyResult(true);
+          evaluateMissions();
           saveRunState();
           ui.showRunEndModal(true);
           return;
@@ -1348,11 +1352,30 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
         renderAll();
       }
 
+      function evaluateMissions() {
+        if (!state || !profileStats) return;
+        const done = new Set(profileStats.completedMissions ?? []);
+        const newly = MISSION_DEFS.filter((mission) => {
+          if (!mission || done.has(mission.id)) return false;
+          try {
+            return testMission(mission, state, profileStats) === true;
+          } catch {
+            return false;
+          }
+        });
+        if (newly.length === 0) return;
+        profileStats.completedMissions = [...done, ...newly.map((mission) => mission.id)];
+        const earned = newly.reduce((sum, mission) => sum + mission.reward, 0);
+        profileStats.finishTokens = (Number.isInteger(profileStats.finishTokens) ? profileStats.finishTokens : 0) + earned;
+        newly.forEach((mission) => addLog(`🏆 Mission complete: ${mission.name}! +${mission.reward} ✦ Spotlight Shards.`, 'text-amber-300 font-bold'));
+      }
+
       function recordStageClear() {
         state.wavesCleared += 1;
         applyRelicEffects('waveClear');
         profileStats.finishTokens = (Number.isInteger(profileStats.finishTokens) ? profileStats.finishTokens : 0) + 1;
         addLog('✦ Earned 1 Spotlight Shard for clearing the wave.', 'text-amber-300');
+        evaluateMissions();
         profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
         const artId = profileStats.selectedArts[state.leader];
         profileStats.artWaveClears[state.leader][artId] += 1;
@@ -1831,6 +1854,7 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
           RELIC_DB = gameData.relicDatabase;
           ENCOUNTERS = gameData.encounters;
           STARTER_DECKS = gameData.starterDecks;
+          MISSION_DEFS = gameData.missions;
           defaultKeybinds = gameData.defaultKeybinds;
           ui = createGameUI({
             getState: () => state,
@@ -1847,6 +1871,7 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
             getProfileStats: () => profileStats,
             getEncounters: () => ENCOUNTERS,
             getCurrentEnemyIntent,
+            getMissions: () => MISSION_DEFS,
             onPlayCard: playCardAtIndex,
             onToggleKeep: toggleKeptCard,
             onChooseRoute: chooseTourRoute,

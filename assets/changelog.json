@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.13.5_0466b1e9",
+  "currentVersion": "v1.14.0_1b3e5adc",
   "releases": [
+    {
+      "version": "v1.14.0_1b3e5adc",
+      "date": "2026-11-20",
+      "changes": [
+        "New missions system: 11 profile-tracked achievements paying Spotlight Shards, with their own menu.",
+        "Mission progress evaluates at every wave clear and run end with no save migration."
+      ]
+    },
     {
       "version": "v1.13.5_0466b1e9",
       "date": "2026-11-20",

@@ -99,6 +99,8 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/combat-rules.js` | Pure-ish combat helpers: damage/shield/Cheer resolution, enemy Strength, interrupts, Encore scaling, member-chain tracking, hand cap, death-log slicing. |
 | `js/card-effects.js` | Interprets ordered card effect actions, upgrade deltas, conditions, and log templates. Supports `pierce` on damage and `stealBlock` (Drain). |
 | `js/keywords.js` | Single source of truth for member keyword identities (Charm/Pierce/Drain/Encore). |
+| `js/missions.js` | Mission condition-DSL interpreter (requiresAll/requiresAny over run/profile stats). |
+| `assets/missions.json` | Mission definitions (id, reward, requires clauses); validated in `js/game-data.js`. |
 | `js/voice-lines.js` | Cosmetic voice-line pools and picker for combos, finales, and run endings. |
 | `js/tour-events.js` | Mid-run backstage event definitions and seeded event roller. |
 | `js/tour-routes.js` | Leona tour-route definitions (upgrade/relic/card) mapping onto reward tabs. |
@@ -362,6 +364,20 @@ After each non-final wave, `state.runStatus = 'draft'` and the player chooses:
   free version.
 
 Clearing wave 10 sets `runStatus = 'victory'`. Player death sets `'defeat'`.
+
+### Missions
+
+- Achievements in `assets/missions.json` (11 total: wave milestones, full clear,
+  Encore unlock, one per leader, 50+ single-turn damage, ≤12-card victory,
+  6+ relics) pay Spotlight Shards into the profile. Conditions are a small
+  `requiresAll`/`requiresAny` DSL over run/profile stats, interpreted by
+  `js/missions.js` (`testMission`) and validated in `js/game-data.js`, so
+  adding a mission is a data edit.
+- `evaluateMissions()` runs at every wave clear, victory, and defeat; tests
+  are pure functions over existing run/profile stats, completion persists in
+  `profile.completedMissions` (validated, defaults to empty), and each mission
+  pays once. No run-save or profile-version changes. Missions render in their
+  own modal (`missionsModal`), opened from the main menu or combat header.
 
 ## 6. Boss intents, passives, and hazards
 

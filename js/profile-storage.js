@@ -60,7 +60,8 @@ export function createDefaultProfileStats(defaultKeybinds) {
     selectedArts,
     artWaveClears,
     finishTokens: 0,
-    cardFinishes: {}
+    cardFinishes: {},
+    completedMissions: []
   };
 }
 
@@ -99,6 +100,12 @@ export function loadProfileStats(defaultKeybinds) {
       typeof cardId === 'string' && Number.isInteger(level) && level >= 0 && level <= 3
     )
   );
+  const completed = profile.completedMissions;
+  const hasMissions = completed === undefined || completed === null || (
+    Array.isArray(completed) &&
+    completed.every((id) => typeof id === 'string') &&
+    new Set(completed).size === completed.length
+  );
   const hasLeaderProgress = LEADERS.every(({ id }) =>
     isNonNegativeInteger(profile?.leaderWins?.[id]) &&
     getUnlockedArtStyles(profile.leaderWins[id]).some((style) =>
@@ -127,7 +134,8 @@ export function loadProfileStats(defaultKeybinds) {
     !profile.artWaveClears ||
     !hasLeaderProgress ||
     (profile.finishTokens !== undefined && !isNonNegativeInteger(profile.finishTokens)) ||
-    !hasCardFinishes
+    !hasCardFinishes ||
+    !hasMissions
   ) {
     throw new InvalidProfileStatsError('Saved profile stats have an unsupported shape.');
   }
@@ -154,7 +162,8 @@ export function loadProfileStats(defaultKeybinds) {
       ]))
     ])),
     finishTokens: profile.finishTokens ?? 0,
-    cardFinishes: { ...(profile.cardFinishes ?? {}) }
+    cardFinishes: { ...(profile.cardFinishes ?? {}) },
+    completedMissions: [...(profile.completedMissions ?? [])]
   };
 }
 
