@@ -2,7 +2,7 @@
 
 This file is the authoritative technical and agent guide for the project,
 superseding the earlier architecture handoff. It is verified against the current
-code (`v1.7.1_9532654b`). When this file and another document disagree, **the
+code (`v1.14.2_87f59de5`). When this file and another document disagree, **the
 code is the source of truth**; update this file when behavior changes.
 
 Related docs: `README.md` is player-facing, and `docs/dev-readme.md` covers local
@@ -110,11 +110,12 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/run-state.js` | Migrates legacy v1 saves and strictly validates v5 run state. |
 | `js/profile-storage.js` | Persistent profile, settings, codex, art progress, daily streaks (`PROFILE_VERSION = 3`). |
 | `js/leader-data.js` | Leader definitions, art styles, rank tiers, unlock helpers. |
+| `js/card-finishes.js` | Permanent card finish track (shiny/platinum/holo) and costs. |
 | `js/daily-challenge.js` | UTC-date-seeded Daily World Tour assignment and seeded RNG. |
 | `js/keybinds.js` | Default/custom keybind validation, normalization, lookup, and rebinding. |
 | `js/audio.js` | Synthesized Web Audio SFX and mute handling. |
-| `js/ui.js` | Combat rendering, card views, reward/pile/run-end modals, changelog dropdown, battle-log collapse. |
-| `js/progression-ui.js` | Main menu, Art Studio, leader selection, Encore tier UI. |
+| `js/ui.js` | Combat rendering, card views, reward/pile/run-end/missions modals, changelog dropdown, battle-log collapse. |
+| `js/progression-ui.js` | Main menu, Art Studio, Card Atelier, Missions, leader selection, Encore tier UI. |
 | `js/options-ui.js` | How to Play, Options (sound, keybinds, codex, changelog). |
 | `js/changelog-ui.js` | Shared changelog renderer. |
 | `assets/data.json` | Version, portrait/leader-art URLs, backdrop URLs, and ordered data-file paths. |
@@ -664,7 +665,8 @@ modal is open or a rebind is listening.
 Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
 `lastDailyWinDate`, `unlockedKaiju`, `leaderWins`, `selectedArts`,
-`artWaveClears`.
+`artWaveClears`, `finishTokens`, `cardFinishes` (card id → 0–3),
+`completedMissions` (unique mission ids).
 
 ### Release versioning
 
@@ -795,6 +797,10 @@ Run through this before considering a change complete:
     insufficient-funds disables, sold-out relic when all owned, removal blocked
     with 1-card deck, heal blocked at full HP; reload mid-shop and confirm the
     shop, tokens, and routing return; receipt shows the token balance.
+7c. Missions and finishes: clear a wave and confirm shards and the mission log;
+    open Missions from the menu and header, confirm done/locked states; buy a
+    finish in the Card Atelier (with preview), confirm the sheen shows on the
+    card everywhere; reload and confirm profile progress persists.
 8. Reload mid-combat and mid-draft; confirm state, piles, logs, and modal.
 9. Win and lose a run; copy the Tour Receipt; verify profile stats, codex,
    Encore unlock, and Art Studio progress.

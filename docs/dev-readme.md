@@ -22,13 +22,13 @@ Open <http://localhost:8000/#devtools> to use the testing-only wave selector. Se
 
 The World Tour main menu is shown on boot unless `#devtools` is in the URL. It displays each member's equipped art and rank, total wins, highest wave, unlocked art, Codex progress, Encore tier, and daily streak. It offers Continue Tour, New World Tour, Daily World Tour, Art Studio, How to Play, and Options. The Codex and career records are inside Options. The combat header's MENU button returns to the main menu without ending the active run. Continue Tour restores the saved combat or reward screen.
 
-A new tour begins with leader and Encore-tier selection. A leader's special ability can be used once during that run. Completing all 10 waves with a leader unlocks that member's MORE art; a second full run unlocks FIRESTARTER; a third unlocks PRESTIGE. Choose unlocked character art in the Art Studio. Each cleared wave advances only the run leader's equipped art border, which advances once per 10 waves. The Art Studio's Card Atelier spends Spotlight Shards (earned per wave cleared) on permanent shiny, platinum, and holo card finishes.
+A new tour begins with leader and Encore-tier selection. A leader's special ability can be used once during that run. Each leader starts with a flavored 10-card starter deck leaning into their keyword identity (Charm, Pierce, Drain, Encore). Completing all 10 waves with a leader unlocks that member's MORE art; a second full run unlocks FIRESTARTER; a third unlocks PRESTIGE. Choose unlocked character art in the Art Studio. Each cleared wave advances only the run leader's equipped art border, which advances once per 10 waves. The Art Studio's Card Atelier spends Spotlight Shards (earned per wave cleared) on permanent shiny, platinum, and holo card finishes. Missions in the Missions menu pay bonus Shards for wave, victory, leader, damage, deck-size, and collection goals.
 
 Leader art uses official League of Legends Data Dragon splash assets configured in `assets/data.json`.
 
 ## Encore Ascension
 
-Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is stored in the persistent profile and ranges from `0` (Normal) through `5`. Release v1.6.1 bumps `PROFILE_VERSION` to 3 and `RUN_SAVE_VERSION` to 4, intentionally resetting previous profile progress and run saves so all players begin a fresh tour.
+Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is stored in the persistent profile and ranges from `0` (Normal) through `5`. Later releases keep `PROFILE_VERSION` at 3 (profile stats, art, and codex carry over) while run saves reset with each `RUN_SAVE_VERSION` bump (currently 5), intentionally resetting active runs so all players begin a fresh tour.
 
 - **Encore 1:** +15% boss maximum HP.
 - **Encore 2:** Card and relic rewards heal 12 HP instead of 18 HP.
@@ -36,7 +36,9 @@ Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is store
 - **Encore 4:** New runs include one non-draftable Stage Fright Status card in the starter deck.
 - **Encore 5:** Charged-interrupt thresholds increase by 4 damage and boss Phase 2 triggers at 60% HP instead of 50%.
 
-Each new standard run also receives the selected leader's signature starter Relic: Ahri gets Nine-Tail Mic, Akali gets Neon Kunai, Evelynn gets Velvet Shades, and Kai'Sa gets Void Core. Signature Relics are leader-bound and never appear in random Relic rewards; Daily Tours draw only from the general Relic pool.
+Bosses also scale by wave independent of Encore: +2% maximum HP per wave index and +1 Strength from wave 6 on.
+
+Each new standard run also receives the selected leader's signature starter Relic and flavored 10-card starter deck: Ahri gets Nine-Tail Mic, Akali gets Neon Kunai, Evelynn gets Velvet Shades, and Kai'Sa gets Void Core. Signature Relics are leader-bound and never appear in random Relic rewards; Daily Tours draw only from the general Relic pool.
 
 ## Reactive boss mechanics
 
@@ -86,10 +88,11 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 ├── assets/
 │   ├── bosses/       # One JSON encounter definition per boss
 │   ├── kaiju/        # Kaiju SVG illustrations
-│   ├── cards.json    # Card definitions, upgrades, effects, and starter deck
+│   ├── cards.json    # Card definitions, upgrades, effects, and per-leader starter decks
 │   ├── changelog.json # Version identifiers and release notes
 │   ├── data.json     # Portrait/backdrop URLs and ordered data paths
 │   ├── keybinds.json # Default keyboard shortcuts for game actions
+│   ├── missions.json # Mission definitions with data-driven unlock conditions
 │   ├── relics.json   # Passive relic definitions and effects
 │   └── favicon.svg   # Browser tab icon
 ├── css/
@@ -100,16 +103,24 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 │   ├── app.js             # Game state, run flow, and event wiring
 │   ├── audio.js           # Synthesized Web Audio effects
 │   ├── card-effects.js    # Data-driven card effect interpreter
+│   ├── card-finishes.js   # Permanent card finish track (shiny/platinum/holo)
 │   ├── changelog-ui.js    # Shared release-history rendering
 │   ├── combat-rules.js    # Player damage, shield, and Cheer resolution
 │   ├── daily-challenge.js # Date-seeded Daily World Tour assignments and modifiers
+│   ├── deck.js            # Shared deck-instance helpers (add/remove)
 │   ├── game-data.js       # Asset and encounter loading
 │   ├── keybinds.js        # Validated, normalized, and remappable keyboard controls
+│   ├── keywords.js        # Member keyword identities
+│   ├── missions.js        # Mission condition-DSL interpreter
 │   ├── options-ui.js      # How to Play, Options, and Codex UI
 │   ├── profile-storage.js # Persistent profile stats and codex
-│   ├── progression-ui.js  # Main menu, Codex, Art Studio, and leader selection
+│   ├── progression-ui.js  # Main menu, Codex, Art Studio, Card Atelier, Missions, and leader selection
 │   ├── run-state.js       # Run-save migration and validation
 │   ├── run-storage.js     # Versioned local run save/load
+│   ├── shop.js            # Merch shop prices and purchase flow
+│   ├── tour-events.js     # Tour-event data and between-wave event flow
+│   ├── tour-routes.js     # Leona tour-route definitions
+│   ├── voice-lines.js     # Member voice lines for combos and finales
 │   └── ui.js              # Combat rendering, card views, and reward/run modals
 └── index.html
 ```

@@ -9,14 +9,18 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Ten boss encounters with telegraphed attacks and distinct artwork
 - Draftable cards, individual card upgrades, passive relics, shields, and status effects
 - Crowd Cheer-powered K/DA Joint Finale
-- Four selectable run leaders, each with a once-per-run special ability
-- Encore Ascension tiers 1–5 with cumulative boss modifiers
-- Leader-specific signature starter relics
-- Unlockable POP/STARS, MORE, and FIRESTARTER leader art with ranked portrait borders
+- Four selectable run leaders, each with a once-per-run special ability, a signature starter relic, and a flavored starter deck
+- Member keyword identities (Charm, Pierce, Drain, Encore) with keyword payoff cards
+- Member combos, voice lines, and stage buffs with speech-bubble callouts
+- Between-wave tour events, Leona tour routing, and a Merch Token shop (cards, relics, removal, healing, no free Cut/Rest)
+- Missions and achievements paying Spotlight Shards; Card Atelier with permanent shiny/platinum/holo card finishes
+- Encore Ascension tiers 1–5 with cumulative boss modifiers, plus per-wave boss scaling
+- Unlockable POP/STARS, MORE, FIRESTARTER, and PRESTIGE leader art with ranked portrait borders
 - Collapsible battle log, compact by default on smaller screens
-- Synthesized sound effects and persistent run records / Kaiju codex
+- Death log on defeat, copyable Tour Receipt, persistent run records / Kaiju codex
+- Synthesized sound effects and persistent profile statistics
 - In-app version number and release changelog
-- Keyboard shortcuts and a testing-only wave selector on the `#devtools` subpage
+- Keyboard shortcuts (`1`–`5` play, `E` end turn, `Q` finale, `R` leader ability) and a testing-only wave selector on the `#devtools` subpage
 - Current run and profile statistics save to this browser (not synced across devices); starting a new run replaces the active run
 - Responsive, static web app
 
@@ -30,7 +34,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 | Leader ability button | Use your chosen leader's special ability once per run |
 
 For testing, open the `#devtools` subpage (for example, append `#devtools` to the game URL) to jump directly to a wave.
-Choose a leader when starting a new run. Clear all 10 waves with that leader to unlock MORE art; a second full clear unlocks FIRESTARTER. Use **ART STUDIO** to equip unlocked art. Each 10 waves cleared while an art style is equipped advances its ranked border.
+Choose a leader when starting a new run. Clear all 10 waves with that leader to unlock MORE art; further full clears unlock FIRESTARTER, then PRESTIGE. Use **ART STUDIO** to equip unlocked art and spend Spotlight Shards on permanent card finishes. Each 10 waves cleared while an art style is equipped advances its ranked border.
 
 ## Development
 
