@@ -2,7 +2,7 @@
 
 This file is the authoritative technical and agent guide for the project,
 superseding the earlier architecture handoff. It is verified against the current
-code (`v1.14.2_87f59de5`). When this file and another document disagree, **the
+code (`v1.17.1_7ab2e0dd`). When this file and another document disagree, **the
 code is the source of truth**; update this file when behavior changes.
 
 Related docs: `README.md` is player-facing, and `docs/dev-readme.md` covers local
@@ -831,3 +831,9 @@ Run through this before considering a change complete:
 developer guide for setup, features, progression, and deployment. This file is
 the authoritative technical reference for agents and contributors. When behavior
 changes, update the affected document; when documents conflict, the code wins.
+
+Docs are part of done. Every feature or fix must end with a docs pass:
+check `README.md`, `docs/dev-readme.md`, and this file for anything the change
+invalidates (feature lists, version numbers, save-version notes, How to Play
+coverage, project-structure maps, test-checklist steps, release history) and
+update it in the same change. A version bump alone is not a docs update.

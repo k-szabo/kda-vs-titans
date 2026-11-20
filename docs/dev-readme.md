@@ -51,7 +51,7 @@ Bosses may define optional `passives` in their encounter JSON:
 
 Enemy Strength is added to each hit. Charged intents may define `interruptThreshold` to be skipped when K/DA deals that much HP damage during the player turn; `interruptBonus` sets the extra damage if the interrupt is missed, and `pierce` controls the share of damage that bypasses Holo Shield. The `injectStatus` intent adds non-draftable Status card copies to the discard pile.
 
-Status cards may set `endTurnDamage` and `ethereal` to deal direct HP damage and exhaust if left in hand. The hand is capped at five cards, including when loading a saved run; overflow cards return to the draw pile. The current run-save version is 4. Version 1.6.1 deliberately invalidates previous run saves and profile data.
+Status cards may set `endTurnDamage` and `ethereal` to deal direct HP damage and exhaust if left in hand. The hand is capped at five cards, including when loading a saved run; overflow cards return to the draw pile. The current run-save version is 6.
 
 Cards may set `retain: true` to stay in hand instead of being discarded at turn end; the older `retainInHand` field remains supported for compatibility. Void Prism Bastion and Starlight Aria are draftable retained cards. Waves award deterministic Merch Tokens (`10 + wave index + Encore tier × 2`) shown in the combat header and on the tour receipt; the between-wave merch shop alongside Leona's routing sells cards (12), relics (18), deck removal (8), and +15 HP patch-ups (6). There is no free Cut or Rest — thinning and healing are economic decisions. EMP Static and Stage Fright retain until played, while Micro-Oxygen costs 1 Hype Energy and deals 4 direct HP damage if left in hand.
 
@@ -59,9 +59,9 @@ Playing cards from all four K/DA members in one player turn triggers Quartet Har
 
 Boss encounters may define an optional `stageEffect` field. Supported hazards are `overcharge_grid` (3 direct HP damage per unspent Energy at turn end), `thermonuclear_heat` (3 direct HP damage at turn end if Shield is 0), and `luminous_spores` (+3% Crowd Cheer for each Skill played). Overcharge Grid is used by King Ghidorah and Mechagodzilla; Thermonuclear Heat by Rodan and Burning Godzilla; Luminous Spores by Mothra. The active hazard is shown in the boss panel.
 
-Daily World Tour uses the UTC date as a deterministic seed for its assigned leader, Relic, rule modifier, deck shuffles, and rewards. Acoustic Set starts with 4 max Energy and no starter Relic; Encore Pressure gives bosses +15% HP and a random starter Relic; Crowd Surf grants +15% Crowd Cheer at each wave start and a random starter Relic. Daily wins update current and best consecutive-day streaks in the existing profile.
+Daily World Tour uses the UTC date as a deterministic seed for its assigned leader, Relic, rule modifier, deck shuffles, encounter drafts, and rewards. Each wave drafts its boss from a rotating pool (29 kaiju across the 10 waves); standard runs roll randomly while Daily runs roll the same setlist all day. Acoustic Set starts with 4 max Energy and no starter Relic; Encore Pressure gives bosses +15% HP and a random starter Relic; Crowd Surf grants +15% Crowd Cheer at each wave start and a random starter Relic. Daily wins update current and best consecutive-day streaks in the existing profile.
 
-Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. These run metrics are stored with the v4 run state.
+Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. These run metrics are stored with the v6 run state.
 
 The battle log can be collapsed from its header control. It defaults to collapsed on narrow screens to preserve combat and hand space.
 
@@ -90,7 +90,7 @@ GitHub Pages publishes `index.html` and the `assets/`, `css/`, and `js/` folders
 │   ├── kaiju/        # Kaiju SVG illustrations
 │   ├── cards.json    # Card definitions, upgrades, effects, and per-leader starter decks
 │   ├── changelog.json # Version identifiers and release notes
-│   ├── data.json     # Portrait/backdrop URLs and ordered data paths
+│   ├── data.json     # Portrait/backdrop URLs, encounter pools, and ordered data paths
 │   ├── keybinds.json # Default keyboard shortcuts for game actions
 │   ├── missions.json # Mission definitions with data-driven unlock conditions
 │   ├── relics.json   # Passive relic definitions and effects
