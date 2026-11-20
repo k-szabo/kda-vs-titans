@@ -22,7 +22,8 @@ export function createProgressionUI({
   getEncounters,
   getDailyChallenge,
   onSelectLeaderArt,
-  onUpgradeCardFinish
+  onUpgradeCardFinish,
+  onPreviewCard
 }) {
   let selectedLeader = LEADERS[0].id;
   let selectedEncoreLevel = 0;
@@ -231,11 +232,14 @@ export function createProgressionUI({
         const next = getNextFinishLevel(level);
         const row = document.createElement('div');
         row.className = 'flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/25 px-3 py-2';
-        const name = document.createElement('span');
-        name.className = 'min-w-0 flex-1 truncate text-xs text-slate-200';
+        const preview = document.createElement('button');
+        preview.type = 'button';
+        preview.className = 'min-w-0 flex-1 truncate text-left text-xs text-slate-200 transition hover:text-amber-100';
+        preview.title = `Preview ${card.name}`;
         const pips = [1, 2, 3].map((tier) => (tier <= level ? '●' : '○')).join('');
-        name.textContent = `${card.name} ${pips}`;
-        row.appendChild(name);
+        preview.textContent = `👁 ${card.name} ${pips}`;
+        preview.addEventListener('click', () => onPreviewCard(card.id));
+        row.appendChild(preview);
         if (!next) {
           const maxed = document.createElement('span');
           maxed.className = 'font-display text-[10px] font-black text-amber-200';

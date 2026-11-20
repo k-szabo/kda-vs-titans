@@ -1629,6 +1629,12 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
         persistProfileStats();
       }
 
+      function previewCardFinish(cardId) {
+        const card = CARD_DB[cardId];
+        if (!card) return;
+        ui.openPileModal(card.name, [{ instanceId: 0, cardId, upgradeLevel: 0 }]);
+      }
+
       function openNewRunSelection() {
         ui.openLeaderSelection(Boolean(state), state?.leader);
       }
@@ -1857,6 +1863,7 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
             onUpgradeCard: upgradeCard,
             onSelectLeaderArt: selectLeaderArt,
             onUpgradeCardFinish: upgradeCardFinish,
+            onPreviewCard: previewCardFinish,
             onContinueTour: continueTour,
             getDailyChallenge: getTodayDailyChallenge,
             onCopyReceipt: copyRunReceipt

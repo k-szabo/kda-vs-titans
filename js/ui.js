@@ -36,7 +36,8 @@ export function createGameUI({
   onSelectLeaderArt,
   onContinueTour,
   onCopyReceipt,
-  onUpgradeCardFinish
+  onUpgradeCardFinish,
+  onPreviewCard
 }) {
   const progressionUI = createProgressionUI({
     getArtAssets,
@@ -47,7 +48,8 @@ export function createGameUI({
     getEncounters,
     getDailyChallenge,
     onSelectLeaderArt,
-    onUpgradeCardFinish
+    onUpgradeCardFinish,
+    onPreviewCard
   });
 
   function triggerScreenShake() {

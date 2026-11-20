@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.13.2_911cf0d9",
+  "currentVersion": "v1.13.3_dcef7daf",
   "releases": [
+    {
+      "version": "v1.13.3_dcef7daf",
+      "date": "2026-11-20",
+      "changes": [
+        "Card Atelier rows now preview the full card before upgrading its finish."
+      ]
+    },
     {
       "version": "v1.13.2_911cf0d9",
       "date": "2026-11-20",
