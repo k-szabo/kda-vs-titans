@@ -18,7 +18,7 @@ export function getEffectiveCardCost(card, upgradeLevel = 0) {
 }
 
 export function executeCardEffects(card, ctx, upgradeLevel = 0) {
-  const values = { damage: 0, block: 0, heal: 0, encore: 0 };
+  const values = { damage: 0, block: 0, heal: 0, encore: 0, stolen: 0 };
 
   card.effects.forEach((effect) => {
     if (!matchesCondition(effect.when, ctx)) return;
@@ -27,17 +27,25 @@ export function executeCardEffects(card, ctx, upgradeLevel = 0) {
       : effect.amount + (effect.upgradeAmount || 0) * upgradeLevel;
 
     switch (effect.type) {
-      case 'damage':
+      case 'damage': {
+        const pierce = Number.isFinite(effect.pierce) ? Math.min(1, Math.max(0, effect.pierce)) : 0;
         for (let hit = 0; hit < (effect.hits || 1); hit++) {
           const damage = ctx.calcDmg(amount);
-          ctx.dealEnemyDmg(damage);
+          ctx.dealEnemyDmg(damage, pierce);
           values.damage += damage;
         }
         break;
+      }
       case 'gainBlock':
         ctx.gainBlock(amount);
         values.block += amount;
         break;
+      case 'stealBlock': {
+        const stolen = ctx.stealEnemyBlock(amount);
+        values.stolen += stolen;
+        values.block += stolen;
+        break;
+      }
       case 'healPlayer':
         ctx.healPlayer(amount);
         values.heal += amount;

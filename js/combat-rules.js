@@ -17,6 +17,11 @@ export const MEMBER_SYNERGY = Object.freeze({
   })
 });
 
+export function getDeathLogEntries(logs, limit = 8) {
+  if (!Array.isArray(logs) || logs.length === 0) return [];
+  return logs.slice(0, limit).reverse();
+}
+
 export function createTurnMemberState() {
   return {
     turnMembersPlayed: [],

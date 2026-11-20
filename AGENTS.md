@@ -96,8 +96,12 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `css/styles.css` | Hand-written theme, card styling, log layout, and combat animations. |
 | `js/app.js` | Run lifecycle, combat engine, progression, persistence wiring, event binding, boot sequence. |
 | `js/game-data.js` | Loads and validates the manifest, cards, relics, keybinds, changelog, and bosses; cache-busts by version. |
-| `js/combat-rules.js` | Pure-ish combat helpers: damage/shield/Cheer resolution, enemy Strength, interrupts, Encore scaling, member-chain tracking, hand cap. |
-| `js/card-effects.js` | Interprets ordered card effect actions, upgrade deltas, conditions, and log templates. |
+| `js/combat-rules.js` | Pure-ish combat helpers: damage/shield/Cheer resolution, enemy Strength, interrupts, Encore scaling, member-chain tracking, hand cap, death-log slicing. |
+| `js/card-effects.js` | Interprets ordered card effect actions, upgrade deltas, conditions, and log templates. Supports `pierce` on damage and `stealBlock` (Drain). |
+| `js/keywords.js` | Single source of truth for member keyword identities (Charm/Pierce/Drain/Encore). |
+| `js/voice-lines.js` | Cosmetic voice-line pools and picker for combos, finales, and run endings. |
+| `js/tour-events.js` | Mid-run backstage event definitions and seeded event roller. |
+| `js/tour-routes.js` | Leona tour-route definitions (upgrade/relic/card/rest) mapping onto reward tabs. |
 | `js/run-storage.js` | Versioned run save/load in `localStorage` (`RUN_SAVE_VERSION = 4`). |
 | `js/run-state.js` | Migrates legacy v1 saves and strictly validates v4 run state. |
 | `js/profile-storage.js` | Persistent profile, settings, codex, art progress, daily streaks (`PROFILE_VERSION = 3`). |
@@ -258,10 +262,20 @@ overview.
 
 ### Tour routing
 
-- After each non-final wave, Leona offers up to 3 stops
-  (`js/tour-routes.js` → `TOUR_ROUTES`): Backstage Pass (upgrade), Merch Stand
-  (relic), Fan Meet (card), Soundcheck (rest +25 HP). Only stops with a real
-  reward are offered (`getAvailableRouteIds()` / `isRewardAvailable()`).
+- After each non-final wave, a seeded backstage event fires first
+  (`js/tour-events.js` → `TOUR_EVENTS`): Meet & Greet, Rooftop Street Show,
+  Mysterious Sound Tech. Each offers 2–3 options with visible tradeoffs
+  (max HP, heal, Cheer, random upgrade, random relic, curse, removal).
+  Impossible options are hidden (`canCut`, `hasRelicAvailable`, `canTune`).
+- `state.tourEventId` holds the pending event and persists with the run, so
+  reloading mid-event reopens the event modal (`restoreRunModal()`). Curses
+  reuse the STATUS path (`stage_fright`, `burn`, `micro_oxygen`) and are added
+  to both `masterDeck` and `discardPile` to keep save coverage valid. Random
+  upgrades update every pile copy plus buffs.
+- Resolving the event clears `tourEventId` and opens Leona routing: up to 3
+  stops (`js/tour-routes.js` → `TOUR_ROUTES`): Backstage Pass (upgrade), Merch
+  Stand (relic), Fan Meet (card), Soundcheck (rest +25 HP). Only stops with a
+  real reward are offered (`getAvailableRouteIds()` / `isRewardAvailable()`).
 - `state.routeChoices` holds the offered route IDs and `state.rewardMode` holds
   the chosen reward tab. Both persist with the run, so reloading mid-routing
   reopens the routing screen (`restoreRunModal()`), refreshing stale routes.
@@ -269,8 +283,39 @@ overview.
   the Skip button is hidden while a route is active. Sold-out picks reroute
   instead of locking, and an invalid `rewardMode` falls back to all available
   tabs (`ui.js` → `openDraftModal()`).
-- `leaveRewardPhase()` clears `routeChoices`/`rewardMode` and starts the next
-  wave, so every reward path (card, relic, upgrade, cut, rest) ends the same way.
+- `leaveRewardPhase()` clears `routeChoices`/`rewardMode`/`tourEventId` and
+  starts the next wave, so every reward path (card, relic, upgrade, cut, rest)
+  ends the same way.
+
+### Member keywords
+
+- Single source of truth in `js/keywords.js` → `MEMBER_KEYWORDS`, rendered in
+  How to Play (`ui.js` → `renderComboReference()`):
+  Ahri Charm (control, -25% enemy DMG), Akali Pierce (burst, ignores Block),
+  Evelynn Drain (attrition, steal Block as Shield), Kai'Sa Encore (scaling,
+  +1 Attack DMG per stack).
+- Eight keyword cards (2 per member) in `assets/cards.json`: Heartseeker /
+  Spirit Bloom (Charm), Shadow Dagger / Neon Assault (Pierce via
+  `pierce: 0..1` on damage), Siphon Hunger / Agony's Embrace (`stealBlock`),
+  Evolve Burst / Second Skin (`when: player encore`).
+- Engine: `damage.pierce` passes through to `dealDamageToEnemy`; preview in
+  `app.js` is pierce-aware. `stealBlock` steals up to X Block and counts as
+  `{stolen}`/`{block}` for logs. Conditional damage (`when`) sums for preview
+  (max potential); lethal uses pierce-adjusted Block.
+
+### Voice lines
+
+- Cosmetic only in `js/voice-lines.js` (`pickVoiceLine`); never read by logic,
+  never saved. Speech bubble `#voiceBubble` shows Solo Spotlight (member),
+  Quartet Harmony (together), Joint Finale (together), and Leader Ability
+  (member reuse). Run-end modal shows victory/defeat lines via
+  `showRunEndVoice()`.
+
+### Death log
+
+- `getDeathLogEntries(logs, 8)` in `js/combat-rules.js` returns the last 8
+  entries oldest-first. Defeat modal shows them in `#deathLogSection`, and
+  the copied tour receipt appends a `Death Log // Final Moments` block.
 
 ### Post-battle rewards
 
@@ -395,7 +440,8 @@ Common fields:
 ```
 
 Supported effect types (`js/card-effects.js`):
-`damage` (optional `hits`), `gainBlock`, `healPlayer`, `applyEnemyStatus`,
+`damage` (optional `hits`, optional `pierce: 0..1`), `gainBlock`, `stealBlock`
+(Drain), `healPlayer`, `applyEnemyStatus`,
 `addPlayerStatus`, `clearPlayerStatus`, `addCheer`, `draw`, `gainEnergy`,
 `raiseHandLimit`.
 
@@ -408,8 +454,8 @@ Supported effect types (`js/card-effects.js`):
 - `"when": { "target": "enemy" | "player", "status": "..." }` gates an effect.
 - Log alternatives use the same `when` shape and may override `template` /
   `colorClass`.
-- Log placeholders are `{damage}`, `{block}`, `{heal}`, `{encore}`. Unknown
-  placeholders throw.
+- Log placeholders are `{damage}`, `{block}`, `{heal}`, `{encore}`, `{stolen}`.
+  Unknown placeholders throw.
 - `desc` and `upgrade.description` are rendered as HTML; keep authored markup
   limited to simple formatting tags.
 - Draft pool = `!starter && draftable !== false`.
@@ -548,7 +594,8 @@ modal is open or a rebind is listening.
   `state.buffs` holds at most 3 `{ instanceId, cardId, upgradeLevel, remaining }`
   entries; buff instances stay out of the four piles and count as an active
   location for deck coverage. `routeChoices` is a unique subset of
-  `TOUR_ROUTES` ids, `rewardMode` is `null` or a valid reward tab, and
+  `TOUR_ROUTES` ids, `rewardMode` is `null` or a valid reward tab,
+  `tourEventId` is `null` or a valid `TOUR_EVENTS` id, and
   `energyPenalty` is an integer 0–3 applied when the next turn refills Hype
   Energy, then reset to 0.
 

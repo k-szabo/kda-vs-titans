@@ -14,6 +14,7 @@ import {
   applyPlayerDamage,
   calculateEnemyAttackDamage,
   createTurnMemberState,
+  getDeathLogEntries,
   getEncoreBossMaxHp,
   getEncoreInterruptThreshold,
   getEncorePhase2Ratio,
@@ -24,6 +25,7 @@ import {
   recordMemberPlay,
   shouldInterruptChargedIntent
 } from './combat-rules.js';
+import { pickVoiceLine } from './voice-lines.js';
 import { loadGameData } from './game-data.js';
 import { createDailyChallenge, nextSeededRandom } from './daily-challenge.js';
 import {
@@ -36,6 +38,7 @@ import {
 } from './profile-storage.js';
 import { getActionForKey, normalizeKeybinds } from './keybinds.js';
 import { getTourRoute, TOUR_ROUTES } from './tour-routes.js';
+import { getTourEvent, rollTourEvent, TOUR_EVENTS } from './tour-events.js';
 import { createOptionsUI } from './options-ui.js';
 import {
   clearSavedRun,
@@ -149,6 +152,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           relicChoices: [],
           routeChoices: [],
           rewardMode: null,
+          tourEventId: null,
           relics: initialRelics,
           isPlayerTurn: true,
           masterDeck,
@@ -193,6 +197,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.runStatus = 'playing';
         state.draftChoices = [];
         state.relicChoices = [];
+        state.routeChoices = [];
+        state.rewardMode = null;
+        state.tourEventId = null;
         state.isPlayerTurn = true;
         expireTimedBuffsAtWaveEnd();
         const activeBuffIds = new Set(state.buffs.map((buff) => buff.instanceId));
@@ -254,11 +261,17 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const upgradeLevel = cardInstance.upgradeLevel || 0;
         const parts = damageEffects.map((effect) => ({
           perHit: computeCardAttackDamage(effect.amount + (effect.upgradeAmount || 0) * upgradeLevel),
-          hits: effect.hits || 1
+          hits: effect.hits || 1,
+          pierce: Number.isFinite(effect.pierce) ? Math.min(1, Math.max(0, effect.pierce)) : 0
         }));
         const total = parts.reduce((sum, part) => sum + part.perHit * part.hits, 0);
         const single = parts.length === 1 ? parts[0] : null;
-        const hpDamage = Math.max(0, total - (state.enemy.block || 0));
+        const blockable = parts.reduce(
+          (sum, part) => sum + Math.ceil(part.perHit * (1 - part.pierce)) * part.hits,
+          0
+        );
+        const blocked = Math.min(state.enemy.block || 0, blockable);
+        const hpDamage = Math.max(0, total - blocked);
         return {
           perHit: single ? single.perHit : null,
           hits: single ? single.hits : null,
@@ -524,6 +537,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             `🎶 QUARTET HARMONY! +${quartet.energy} Energy, +${quartet.block} Shield, and +${quartet.cheer}% Crowd Cheer!`,
             'text-amber-300 font-bold'
           );
+          playVoiceLine('quartet');
         }
         if (!spotlightTriggered) return;
 
@@ -572,6 +586,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           default:
             throw new Error(`Unknown member in Solo Spotlight chain: ${member}`);
         }
+        playVoiceLine('spotlight', member);
+      }
+
+      function playVoiceLine(category, memberId = null) {
+        const line = pickVoiceLine(category, memberId);
+        if (line) ui.showVoiceLine(line.speaker, line.text);
       }
 
       // Trigger K/DA 4-Member Joint Finale when Crowd Cheer hits 100%
@@ -593,6 +613,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           `🌟 K/DA WORLD TOUR FINALE! All 4 members struck for ${finaleDmg} DMG, +10 Shield, +1 Energy & 2 Charm!`,
           'text-amber-300 font-bold'
         );
+        playVoiceLine('finale');
 
         if (state.enemy.hp <= 0) {
           state.enemy.hp = 0;
@@ -636,6 +657,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           default:
             throw new Error(`Unknown run leader: ${state.leader}`);
         }
+        playVoiceLine('spotlight', state.leader);
 
         if (state.enemy.hp <= 0) {
           state.enemy.hp = 0;
@@ -942,6 +964,17 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         )).slice(0, 3);
         state.rewardMode = null;
         state.routeChoices = getAvailableRouteIds();
+        state.tourEventId = rollTourEvent(nextRandom);
+        saveRunState();
+        if (state.tourEventId && getTourEvent(state.tourEventId)) {
+          ui.openTourEventModal(
+            getTourEvent(state.tourEventId),
+            getAvailableEventOptions(state.tourEventId),
+            state.masterDeck
+          );
+          return;
+        }
+        state.tourEventId = null;
         saveRunState();
         ui.openTourRoutingModal(
           state.routeChoices.map((routeId) => getTourRoute(routeId)),
@@ -999,6 +1032,184 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         addLog(`🎫 Leona routed K/DA to ${route.name}.`, 'text-amber-300');
         ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck, route.rewardMode);
         saveRunState();
+      }
+
+      function getUnownedRelicIds() {
+        const owned = new Set(state.relics);
+        return Object.keys(RELIC_DB).filter((id) => !owned.has(id) && !RELIC_DB[id].leaderId);
+      }
+
+      function getUpgradeableInstances() {
+        const seen = new Set();
+        return state.masterDeck.filter((instance) => {
+          if (instance.upgradeLevel !== 0 || !CARD_DB[instance.cardId]?.upgrade) return false;
+          if (seen.has(instance.cardId)) return false;
+          seen.add(instance.cardId);
+          return true;
+        });
+      }
+
+      function isEventOptionAvailable(option) {
+        if (!option || !option.requires) return true;
+        if (option.requires === 'canCut') return state.masterDeck.length > 1;
+        if (option.requires === 'hasRelicAvailable') return getUnownedRelicIds().length > 0;
+        if (option.requires === 'canTune') {
+          return getUpgradeableInstances().length > 0 && state.player.hp > 8;
+        }
+        return true;
+      }
+
+      function getAvailableEventOptions(eventId) {
+        const event = getTourEvent(eventId);
+        if (!event) return [];
+        const base = Array.isArray(event.options) ? event.options : [];
+        const available = base.filter(isEventOptionAvailable);
+        if (eventId === 'street_show') {
+          return available.filter((option) => {
+            if (option.id === 'gear_upgrade') return getUpgradeableInstances().length > 0;
+            return true;
+          });
+        }
+        return available;
+      }
+
+      function addCurseToDeck(cardId) {
+        const card = CARD_DB[cardId];
+        if (!card || card.type !== 'STATUS' || card.draftable !== false) {
+          throw new Error(`Invalid curse card: ${cardId}`);
+        }
+        const instance = {
+          instanceId: state.nextCardInstanceId++,
+          cardId,
+          upgradeLevel: 0
+        };
+        state.masterDeck.push(instance);
+        state.discardPile.push({ ...instance });
+      }
+
+      function upgradeRandomCard() {
+        const candidates = getUpgradeableInstances();
+        if (candidates.length === 0) return null;
+        const picked = shuffle(candidates)[0];
+        const master = state.masterDeck.find((instance) => instance.instanceId === picked.instanceId);
+        if (master) master.upgradeLevel = 1;
+        [state.drawPile, state.hand, state.discardPile, state.exhaustPile].forEach((pile) => {
+          const copy = Array.isArray(pile) ? pile.find((instance) => instance.instanceId === picked.instanceId) : null;
+          if (copy) copy.upgradeLevel = 1;
+        });
+        const buff = state.buffs.find((entry) => entry.instanceId === picked.instanceId);
+        if (buff) buff.upgradeLevel = 1;
+        return picked;
+      }
+
+      function finishTourEvent(message) {
+        state.tourEventId = null;
+        saveRunState();
+        ui.closeTourEventModal();
+        if (message) addLog(message, 'text-amber-300');
+        ui.openTourRoutingModal(
+          state.routeChoices.map((routeId) => getTourRoute(routeId)),
+          getDraftHealAmount()
+        );
+      }
+
+      function chooseTourEventOption(eventId, optionId) {
+        if (state.runStatus !== 'draft' || state.tourEventId !== eventId) return;
+        const event = getTourEvent(eventId);
+        const option = event?.options?.find((entry) => entry.id === optionId);
+        if (!option || !isEventOptionAvailable(option)) {
+          state.tourEventId = getTourEvent(eventId) ? eventId : null;
+          saveRunState();
+          ui.openTourEventModal(event, getAvailableEventOptions(eventId), state.masterDeck);
+          addLog('🎫 Leona rerouted K/DA: that event option sold out.', 'text-amber-300');
+          return;
+        }
+        if (optionId === 'wardrobe_purge') return;
+        applyTourEventOption(optionId);
+      }
+
+      function applyTourEventOption(optionId, extra = {}) {
+        switch (optionId) {
+          case 'sign_session': {
+            state.player.maxHp += 15;
+            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 15);
+            finishTourEvent('🤝 Meet & Greet signing session: +15 Max HP and healed 15 HP!');
+            break;
+          }
+          case 'backstage_deal': {
+            const pool = getUnownedRelicIds();
+            if (pool.length === 0) return;
+            const relicId = shuffle(pool)[0];
+            state.relics.push(relicId);
+            addCurseToDeck('stage_fright');
+            finishTourEvent(`🤝 Backstage deal: gained ${RELIC_DB[relicId].name} and took Stage Fright!`);
+            break;
+          }
+          case 'hype_train': {
+            state.player.cheer = Math.min(100, state.player.cheer + 20);
+            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 10);
+            finishTourEvent('🎤 Rooftop hype train: +20% Crowd Cheer and healed 10 HP!');
+            break;
+          }
+          case 'gear_upgrade': {
+            const upgraded = upgradeRandomCard();
+            finishTourEvent(upgraded
+              ? `🎤 Soundcheck tweak: upgraded ${CARD_DB[upgraded.cardId].name}!`
+              : '🎤 Soundcheck tweak fizzled: nothing left to upgrade.');
+            break;
+          }
+          case 'risky_pyro': {
+            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
+            addCurseToDeck('burn');
+            finishTourEvent('🎤 Risky pyro healed 25 HP but left a Burn curse in the deck!');
+            break;
+          }
+          case 'restful_mix': {
+            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 20);
+            finishTourEvent('🎛️ Restful mix: healed 20 HP. No strings attached.');
+            break;
+          }
+          case 'fine_tune': {
+            const upgraded = upgradeRandomCard();
+            state.player.hp = Math.max(1, state.player.hp - 8);
+            finishTourEvent(upgraded
+              ? `🎛️ Fine tune: upgraded ${CARD_DB[upgraded.cardId].name} for 8 HP!`
+              : '🎛️ Fine tune fizzled: nothing left to upgrade.');
+            break;
+          }
+          case 'cursed_gear': {
+            const pool = getUnownedRelicIds();
+            if (pool.length === 0) return;
+            const relicId = shuffle(pool)[0];
+            state.relics.push(relicId);
+            addCurseToDeck('micro_oxygen');
+            finishTourEvent(`🎛️ Cursed gear: gained ${RELIC_DB[relicId].name} and took Micro-Oxygen!`);
+            break;
+          }
+          default:
+            throw new Error(`Unknown tour event option: ${optionId}`);
+        }
+      }
+
+      function removeEventCard(instanceId) {
+        if (state.runStatus !== 'draft' || !state.tourEventId) return;
+        if (state.masterDeck.length <= 1) return;
+        const deckIndex = state.masterDeck.findIndex((instance) => instance.instanceId === instanceId);
+        if (deckIndex < 0) return;
+        const activePiles = [state.drawPile, state.hand, state.discardPile, state.exhaustPile];
+        const activeBuffIndex = state.buffs.findIndex((buff) => buff.instanceId === instanceId);
+        const activePile = activePiles.find((pile) =>
+          Array.isArray(pile) && pile.some((instance) => instance.instanceId === instanceId)
+        );
+        if (activeBuffIndex < 0 && !activePile) return;
+        const [removed] = state.masterDeck.splice(deckIndex, 1);
+        if (activeBuffIndex >= 0) {
+          state.buffs.splice(activeBuffIndex, 1);
+        } else {
+          activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
+        }
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 8);
+        finishTourEvent(`🤝 Wardrobe purge: removed ${CARD_DB[removed.cardId].name} and healed 8 HP!`);
       }
 
       function recordStageClear() {
@@ -1063,14 +1274,26 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const dailyDescription = state.dailyChallenge
           ? `Daily Tour ${state.dailyChallenge.date} // ${state.dailyChallenge.modifier.replaceAll('_', ' ')}`
           : 'Standard Tour';
-        return [
+        const lines = [
           'K/DA // ENCORE SPIRE TOUR RECEIPT',
           `Mode: ${dailyDescription}`,
           `Leader: ${LEADERS.find(({ id }) => id === state.leader).name}`,
           `Waves Cleared: ${state.wavesCleared} / ${ENCOUNTERS.length}`,
           `Most-Played Card: ${cardName}${mostPlayed ? ` (${mostPlayed[1]} plays)` : ''}`,
           `Peak Single-Turn Damage: ${state.peakSingleTurnDamage}`
-        ].join('\n');
+        ];
+        if (state.runStatus === 'defeat') {
+          const deathEntries = getDeathLogEntries(state.logs, 8);
+          lines.push('Death Log // Final Moments:');
+          if (deathEntries.length === 0) {
+            lines.push('- No combat actions were logged.');
+          } else {
+            deathEntries.forEach((entry) => {
+              lines.push(`[T${entry.turn}] ${entry.text}`);
+            });
+          }
+        }
+        return lines.join('\n');
       }
 
       async function copyRunReceipt() {
@@ -1259,8 +1482,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.relicChoices = [];
         state.routeChoices = [];
         state.rewardMode = null;
+        state.tourEventId = null;
         document.getElementById('draftModal').classList.add('hidden');
         document.getElementById('tourRoutingModal').classList.add('hidden');
+        ui.closeTourEventModal();
         if (message) addLog(message, className);
         startStage(state.stageIndex + 1);
       }
@@ -1407,6 +1632,15 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
       function restoreRunModal() {
         if (state.runStatus === 'draft') {
+          if (state.tourEventId && getTourEvent(state.tourEventId)) {
+            const options = getAvailableEventOptions(state.tourEventId);
+            if (options.length > 0) {
+              ui.openTourEventModal(getTourEvent(state.tourEventId), options, state.masterDeck);
+              return;
+            }
+            state.tourEventId = null;
+            saveRunState();
+          }
           if (state.rewardMode) {
             ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck, state.rewardMode);
           } else if (Array.isArray(state.routeChoices) && state.routeChoices.length > 0) {
@@ -1455,6 +1689,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             onPlayCard: playCardAtIndex,
             onToggleKeep: toggleKeptCard,
             onChooseRoute: chooseTourRoute,
+            onChooseEventOption: chooseTourEventOption,
+            onRemoveEventCard: removeEventCard,
             getCardDamagePreview,
             onJumpToStage: startStage,
             onChooseDraftCard: chooseDraftCard,

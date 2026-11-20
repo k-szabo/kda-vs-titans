@@ -1,5 +1,7 @@
 import { getEffectiveCardCost } from './card-effects.js';
-import { MEMBER_SYNERGY } from './combat-rules.js';
+import { getDeathLogEntries, MEMBER_SYNERGY } from './combat-rules.js';
+import { MEMBER_KEYWORDS } from './keywords.js';
+import { pickVoiceLine } from './voice-lines.js';
 import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { renderChangelogEntries } from './changelog-ui.js';
@@ -20,6 +22,8 @@ export function createGameUI({
   onPlayCard,
   onToggleKeep,
   onChooseRoute,
+  onChooseEventOption,
+  onRemoveEventCard,
   onJumpToStage,
   onChooseDraftCard,
   onChooseRelic,
@@ -216,6 +220,16 @@ export function createGameUI({
     if (howTo && howTo.dataset.rendered !== 'true') {
       howTo.innerHTML = buildComboReference();
       howTo.dataset.rendered = 'true';
+    }
+    const keywordsEl = document.getElementById('howToPlayKeywords');
+    if (keywordsEl && keywordsEl.dataset.rendered !== 'true') {
+      const rows = LEADERS.map(({ id, name }) => {
+        const keyword = MEMBER_KEYWORDS[id];
+        if (!keyword) return '';
+        return `<li><span class="font-bold text-white">${name} — ${keyword.name} (${keyword.tagline})</span>: ${keyword.description}</li>`;
+      }).join('');
+      keywordsEl.innerHTML = `<ul class="list-disc space-y-1 pl-4">${rows}</ul>`;
+      keywordsEl.dataset.rendered = 'true';
     }
   }
 
@@ -575,6 +589,76 @@ export function createGameUI({
     document.getElementById('tourRoutingModal')?.classList.add('hidden');
   }
 
+  function openTourEventModal(event, options, masterDeck) {
+    const modal = document.getElementById('tourEventModal');
+    const heading = document.getElementById('tourEventHeading');
+    const description = document.getElementById('tourEventDescription');
+    const grid = document.getElementById('tourEventChoices');
+    const cutSection = document.getElementById('tourEventCutSection');
+    const cutGrid = document.getElementById('tourEventCutGrid');
+    if (!modal || !heading || !description || !grid) return;
+    heading.textContent = `${event.icon} ${event.name}`;
+    description.textContent = event.description;
+    cutSection?.classList.add('hidden');
+    cutGrid?.replaceChildren();
+    grid.replaceChildren();
+    (Array.isArray(options) ? options : []).forEach((option) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'group flex items-center gap-3 rounded-2xl border border-white/15 bg-black/30 p-3 text-left transition hover:border-fuchsia-300/70 hover:bg-fuchsia-400/10';
+      const title = document.createElement('span');
+      title.className = 'min-w-0 flex-1';
+      const name = document.createElement('span');
+      name.className = 'block font-display text-sm font-black text-white';
+      name.textContent = option.label;
+      const summary = document.createElement('span');
+      summary.className = 'block text-[11px] leading-snug text-slate-300';
+      summary.textContent = option.summary;
+      title.append(name, summary);
+      const tag = document.createElement('span');
+      tag.className = 'shrink-0 rounded-full border border-fuchsia-300/40 bg-fuchsia-400/10 px-2 py-1 font-display text-[8px] font-black text-fuchsia-200';
+      tag.textContent = option.tag;
+      card.append(title, tag);
+      card.addEventListener('click', () => {
+        if (option.id === 'wardrobe_purge') {
+          showEventCutPicker(event, masterDeck);
+          return;
+        }
+        onChooseEventOption(event.id, option.id);
+      });
+      grid.appendChild(card);
+    });
+    modal.classList.remove('hidden');
+  }
+
+  function showEventCutPicker(event, masterDeck) {
+    const cutSection = document.getElementById('tourEventCutSection');
+    const cutGrid = document.getElementById('tourEventCutGrid');
+    const cardDatabase = getCardDatabase();
+    if (!cutSection || !cutGrid) {
+      onChooseEventOption(event.id, 'wardrobe_purge');
+      return;
+    }
+    cutGrid.replaceChildren();
+    masterDeck.forEach((instance) => {
+      const card = cardDatabase[instance.cardId];
+      if (!card || masterDeck.length <= 1) return;
+      const choice = document.createElement('button');
+      choice.type = 'button';
+      choice.className = 'rounded-2xl border border-rose-300/30 bg-black/25 p-2 text-left transition hover:border-rose-200 hover:bg-rose-500/10';
+      choice.appendChild(createCardElement(card, true, -1, instance));
+      choice.addEventListener('click', () => onRemoveEventCard(instance.instanceId));
+      cutGrid.appendChild(choice);
+    });
+    cutSection.classList.remove('hidden');
+    cutSection.scrollIntoView({ block: 'nearest' });
+  }
+
+  function closeTourEventModal() {
+    document.getElementById('tourEventModal')?.classList.add('hidden');
+    document.getElementById('tourEventCutSection')?.classList.add('hidden');
+  }
+
   function openDraftModal(cardIds, relicIds, masterDeck, rewardMode = null) {
     const modal = document.getElementById('draftModal');
     const cardGrid = document.getElementById('draftChoicesGrid');
@@ -715,6 +799,8 @@ export function createGameUI({
       title.textContent = 'STAGE COLLAPSED';
       desc.textContent = `${state.enemy.name} shattered the concert dome on Wave ${state.stageIndex + 1}. Tweak your draft and try another run!`;
     }
+    const endVoice = pickVoiceLine(isVictory ? 'victory' : 'defeat');
+    if (endVoice) showRunEndVoice(endVoice.speaker, endVoice.text);
 
     const mostPlayed = Object.entries(state.cardPlayCounts || {})
       .filter(([, count]) => count > 0)
@@ -737,7 +823,54 @@ export function createGameUI({
       dailyDetails.classList.add('hidden');
     }
     document.getElementById('receiptCopyStatus').textContent = '';
+    const deathSection = document.getElementById('deathLogSection');
+    const deathList = document.getElementById('deathLogList');
+    if (!isVictory && deathSection && deathList) {
+      const entries = getDeathLogEntries(state.logs, 8);
+      deathList.replaceChildren();
+      entries.forEach((entry) => {
+        const item = document.createElement('li');
+        const turn = document.createElement('span');
+        turn.className = 'text-[9px] font-display text-slate-500 mr-1';
+        turn.textContent = `[T${entry.turn}]`;
+        const text = document.createElement('span');
+        text.textContent = entry.text;
+        item.append(turn, text);
+        item.className = entry.colorClass || 'text-slate-300';
+        deathList.appendChild(item);
+      });
+      const empty = document.createElement('li');
+      if (entries.length === 0) {
+        empty.textContent = 'No combat actions were logged.';
+        empty.className = 'text-slate-500 italic';
+        deathList.appendChild(empty);
+      }
+      deathSection.classList.remove('hidden');
+    } else if (deathSection) {
+      deathSection.classList.add('hidden');
+    }
     modal.classList.remove('hidden');
+  }
+
+  let voiceBubbleTimer = null;
+
+  function showVoiceLine(speaker, text, durationMs = 2600) {
+    const bubble = document.getElementById('voiceBubble');
+    const speakerEl = document.getElementById('voiceSpeaker');
+    const textEl = document.getElementById('voiceText');
+    if (!bubble || !speakerEl || !textEl) return;
+    speakerEl.textContent = speaker;
+    textEl.textContent = `“${text}”`;
+    bubble.classList.remove('hidden');
+    if (voiceBubbleTimer) clearTimeout(voiceBubbleTimer);
+    voiceBubbleTimer = setTimeout(() => bubble.classList.add('hidden'), durationMs);
+  }
+
+  function showRunEndVoice(speaker, text) {
+    const el = document.getElementById('runEndVoice');
+    if (!el) return;
+    el.textContent = `${speaker}: “${text}”`;
+    el.classList.remove('hidden');
   }
 
   function showReceiptCopyStatus(message) {
@@ -759,6 +892,8 @@ export function createGameUI({
   function hideRunModals() {
     document.getElementById('runEndModal').classList.add('hidden');
     document.getElementById('draftModal').classList.add('hidden');
+    document.getElementById('tourRoutingModal')?.classList.add('hidden');
+    document.getElementById('tourEventModal')?.classList.add('hidden');
     document.getElementById('leaderSelectionModal').classList.add('hidden');
     document.getElementById('artStudioModal').classList.add('hidden');
   }
@@ -796,6 +931,9 @@ export function createGameUI({
   document.getElementById('btnCancelLeaderSelection').addEventListener('click', () => {
     document.getElementById('leaderSelectionModal').classList.add('hidden');
   });
+  document.getElementById('btnCancelEventCut')?.addEventListener('click', () => {
+    document.getElementById('tourEventCutSection')?.classList.add('hidden');
+  });
   document.getElementById('btnToggleBattleLog').addEventListener('click', () => {
     const panel = document.getElementById('battleLogPanel');
     setBattleLogCollapsed(!panel.classList.contains('battle-log-collapsed'));
@@ -810,6 +948,8 @@ export function createGameUI({
     openDraftModal,
     openTourRoutingModal,
     closeTourRoutingModal,
+    openTourEventModal,
+    closeTourEventModal,
     openBuffReplaceModal,
     closeBuffReplaceModal,
     openPileModal,
@@ -819,6 +959,8 @@ export function createGameUI({
     showRunEndModal,
     showReceiptCopyStatus,
     showSaveNotice,
+    showVoiceLine,
+    showRunEndVoice,
     getSelectedLeader: progressionUI.getSelectedLeader,
     getSelectedEncoreLevel: progressionUI.getSelectedEncoreLevel,
     spawnPopup,

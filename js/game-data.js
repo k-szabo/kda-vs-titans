@@ -154,8 +154,20 @@ export async function loadGameData() {
       card.effects.some((effect) =>
         !effect ||
         typeof effect !== 'object' ||
-        effect.upgradeAmount !== undefined &&
-        (!Number.isFinite(effect.upgradeAmount) || effect.upgradeAmount < 0)
+        typeof effect.type !== 'string' ||
+        !['damage', 'gainBlock', 'stealBlock', 'healPlayer', 'applyEnemyStatus', 'addPlayerStatus', 'clearPlayerStatus', 'addCheer', 'draw', 'gainEnergy', 'raiseHandLimit'].includes(effect.type) ||
+        (effect.upgradeAmount !== undefined &&
+          (!Number.isFinite(effect.upgradeAmount) || effect.upgradeAmount < 0)) ||
+        (effect.type === 'damage' &&
+          ((!Number.isFinite(effect.amount) || effect.amount <= 0) ||
+            (effect.pierce !== undefined && (!Number.isFinite(effect.pierce) || effect.pierce < 0 || effect.pierce > 1)) ||
+            (effect.hits !== undefined && (!Number.isInteger(effect.hits) || effect.hits < 1)))) ||
+        (effect.type === 'stealBlock' &&
+          (!Number.isFinite(effect.amount) || effect.amount <= 0)) ||
+        (effect.when !== undefined &&
+          (typeof effect.when !== 'object' ||
+            !['enemy', 'player'].includes(effect.when.target) ||
+            typeof effect.when.status !== 'string'))
       )
     ) ||
     cardData.starterDeck.some((cardId) => !Object.hasOwn(cardDatabase, cardId))

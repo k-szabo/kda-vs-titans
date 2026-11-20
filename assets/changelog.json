@@ -1,6 +1,16 @@
 {
-  "currentVersion": "v1.8.1_b662648b",
+  "currentVersion": "v1.9.0_a18db540",
   "releases": [
+    {
+      "version": "v1.9.0_a18db540",
+      "date": "2026-11-20",
+      "changes": [
+        "Death log shows final moments on defeat and in the tour receipt.",
+        "Member voice lines call out combos, finales, victory, and defeat.",
+        "Member keyword identities with eight Pierce, Drain, Charm, and Encore cards.",
+        "Three persistent mid-run tour events with relic, curse, upgrade, and removal tradeoffs."
+      ]
+    },
     {
       "version": "v1.8.1_b662648b",
       "date": "2026-11-20",

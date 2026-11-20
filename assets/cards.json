@@ -493,6 +493,188 @@
       }
     },
     {
+      "id": "ahri_heartseeker",
+      "name": "Heartseeker",
+      "member": "ahri",
+      "memberName": "AHRI",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "desc": "Deal <b>5</b> damage. If the Kaiju is <b>Charmed</b>, deal <b>5</b> more.",
+      "upgrade": { "description": "Deal 7 damage. If the Kaiju is Charmed, deal 7 more." },
+      "effects": [
+        { "type": "damage", "amount": 5, "upgradeAmount": 2 },
+        { "type": "damage", "amount": 5, "upgradeAmount": 2, "when": { "target": "enemy", "status": "charm" } }
+      ],
+      "log": {
+        "template": "🦊 Ahri's Heartseeker hit for {damage} DMG!",
+        "colorClass": "text-pink-300",
+        "alternatives": [
+          {
+            "when": { "target": "enemy", "status": "charm" },
+            "template": "🦊 Ahri's Heartseeker charmed through for {damage} DMG!"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ahri_spirit_bloom",
+      "name": "Spirit Bloom",
+      "member": "ahri",
+      "memberName": "AHRI",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "desc": "If the Kaiju is <b>Charmed</b>, gain <b>6</b> Holo Shield. Apply <b>1 Charm</b>.",
+      "upgrade": { "description": "If the Kaiju is Charmed, gain 8 Holo Shield. Apply 1 Charm." },
+      "effects": [
+        { "type": "gainBlock", "amount": 6, "upgradeAmount": 2, "when": { "target": "enemy", "status": "charm" } },
+        { "type": "applyEnemyStatus", "status": "charm", "turns": 1 }
+      ],
+      "log": {
+        "template": "🦊 Ahri bloomed Spirit Blossom and applied 1 Charm.",
+        "colorClass": "text-pink-300",
+        "alternatives": [
+          {
+            "when": { "target": "enemy", "status": "charm" },
+            "template": "🦊 Ahri's Spirit Bloom shielded for +{block} and applied 1 Charm!"
+          }
+        ]
+      }
+    },
+    {
+      "id": "akali_shadow_dagger",
+      "name": "Shadow Dagger",
+      "member": "akali",
+      "memberName": "AKALI",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "desc": "Deal <b>7</b> damage. <b>Pierce</b> ignores enemy Block.",
+      "upgrade": { "description": "Deal 10 damage. Pierce ignores enemy Block." },
+      "effects": [
+        { "type": "damage", "amount": 7, "upgradeAmount": 3, "pierce": 1 }
+      ],
+      "log": {
+        "template": "🥷 Akali's Shadow Dagger pierced for {damage} DMG!",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "akali_neon_assault",
+      "name": "Neon Assault",
+      "member": "akali",
+      "memberName": "AKALI",
+      "type": "ATTACK",
+      "cost": 2,
+      "starter": false,
+      "draftable": true,
+      "desc": "Deal <b>6</b> damage <b>2 times</b>. <b>Pierce 50%</b> bypasses half of Block.",
+      "upgrade": { "description": "Deal 8 damage 2 times. Pierce 50% bypasses half of Block." },
+      "effects": [
+        { "type": "damage", "amount": 6, "upgradeAmount": 2, "hits": 2, "pierce": 0.5 }
+      ],
+      "log": {
+        "template": "🥷 Akali's Neon Assault struck twice for {damage} DMG!",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "evelynn_siphon",
+      "name": "Siphon Hunger",
+      "member": "evelynn",
+      "memberName": "EVELYNN",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "desc": "Deal <b>4</b> damage. <b>Drain 4</b> (steal up to 4 Block as Holo Shield).",
+      "upgrade": { "description": "Deal 6 damage. Drain 6 (steal up to 6 Block as Holo Shield)." },
+      "effects": [
+        { "type": "damage", "amount": 4, "upgradeAmount": 2 },
+        { "type": "stealBlock", "amount": 4, "upgradeAmount": 2 }
+      ],
+      "log": {
+        "template": "💜 Evelynn siphoned for {damage} DMG and drained {stolen} Block!",
+        "colorClass": "text-purple-300"
+      }
+    },
+    {
+      "id": "evelynn_agony_embrace",
+      "name": "Agony's Embrace",
+      "member": "evelynn",
+      "memberName": "EVELYNN",
+      "type": "ATTACK",
+      "cost": 2,
+      "starter": false,
+      "draftable": true,
+      "desc": "Deal <b>8</b> damage. <b>Drain 6</b> (steal up to 6 Block as Holo Shield).",
+      "upgrade": { "description": "Deal 11 damage. Drain 8 (steal up to 8 Block as Holo Shield)." },
+      "effects": [
+        { "type": "damage", "amount": 8, "upgradeAmount": 3 },
+        { "type": "stealBlock", "amount": 6, "upgradeAmount": 2 }
+      ],
+      "log": {
+        "template": "💜 Evelynn embraced agony for {damage} DMG and drained {stolen} Block!",
+        "colorClass": "text-purple-300"
+      }
+    },
+    {
+      "id": "kaisa_evolve_burst",
+      "name": "Evolve Burst",
+      "member": "kaisa",
+      "memberName": "KAI'SA",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "desc": "Deal <b>5</b> damage. If you have <b>Encore</b>, deal <b>4</b> more.",
+      "upgrade": { "description": "Deal 7 damage. If you have Encore, deal 6 more." },
+      "effects": [
+        { "type": "damage", "amount": 5, "upgradeAmount": 2 },
+        { "type": "damage", "amount": 4, "upgradeAmount": 2, "when": { "target": "player", "status": "encore" } }
+      ],
+      "log": {
+        "template": "✨ Kai'Sa fired Evolve Burst for {damage} DMG!",
+        "colorClass": "text-indigo-300",
+        "alternatives": [
+          {
+            "when": { "target": "player", "status": "encore" },
+            "template": "✨ Kai'Sa's Evolve Burst surged with Encore for {damage} DMG!"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kaisa_second_skin",
+      "name": "Second Skin",
+      "member": "kaisa",
+      "memberName": "KAI'SA",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "desc": "Gain <b>6</b> Holo Shield. If you have <b>Encore</b>, gain <b>1 Hype Energy</b>.",
+      "upgrade": { "description": "Gain 8 Holo Shield. If you have Encore, gain 1 Hype Energy." },
+      "effects": [
+        { "type": "gainBlock", "amount": 6, "upgradeAmount": 2 },
+        { "type": "gainEnergy", "amount": 1, "when": { "target": "player", "status": "encore" } }
+      ],
+      "log": {
+        "template": "✨ Kai'Sa hardened Second Skin (+{block} Shield).",
+        "colorClass": "text-indigo-300",
+        "alternatives": [
+          {
+            "when": { "target": "player", "status": "encore" },
+            "template": "✨ Kai'Sa's Second Skin surged (+{block} Shield, +1 Energy)!"
+          }
+        ]
+      }
+    },
+    {
       "id": "burn",
       "name": "Burn",
       "member": "squad",

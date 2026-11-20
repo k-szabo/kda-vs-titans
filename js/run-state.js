@@ -3,6 +3,7 @@ import { InvalidSavedRunError, RUN_SAVE_VERSION } from './run-storage.js';
 import { LEADERS } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { TOUR_ROUTES } from './tour-routes.js';
+import { TOUR_EVENTS } from './tour-events.js';
 
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -57,6 +58,7 @@ function normalizeKeptCard(state, hand) {
 }
 
 const TOUR_ROUTE_IDS = new Set(TOUR_ROUTES.map((route) => route.id));
+const TOUR_EVENT_IDS = new Set(TOUR_EVENTS.map((event) => event.id));
 const REWARD_MODES = new Set(['cards', 'relics', 'upgrades', 'cuts', 'rest']);
 
 function normalizeTourRouting(state) {
@@ -64,7 +66,10 @@ function normalizeTourRouting(state) {
     routeChoices: Array.isArray(state.routeChoices)
       ? [...new Set(state.routeChoices.filter((id) => TOUR_ROUTE_IDS.has(id)))]
       : [],
-    rewardMode: REWARD_MODES.has(state.rewardMode) ? state.rewardMode : null
+    rewardMode: REWARD_MODES.has(state.rewardMode) ? state.rewardMode : null,
+    tourEventId: typeof state.tourEventId === 'string' && TOUR_EVENT_IDS.has(state.tourEventId)
+      ? state.tourEventId
+      : null
   };
 }
 
@@ -373,6 +378,7 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.routeChoices.some((id) => typeof id !== 'string' || !TOUR_ROUTE_IDS.has(id)) ||
     new Set(saved.routeChoices).size !== saved.routeChoices.length ||
     !(saved.rewardMode === null || REWARD_MODES.has(saved.rewardMode)) ||
+    !(saved.tourEventId === null || saved.tourEventId === undefined || (typeof saved.tourEventId === 'string' && TOUR_EVENT_IDS.has(saved.tourEventId))) ||
     saved.hand.length > (Number.isInteger(saved.handLimit) ? saved.handLimit : MAX_HAND_SIZE) ||
     !saved.masterDeck.every(isCardInstance) ||
     !allInstances.every(isCardInstance) ||
