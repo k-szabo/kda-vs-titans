@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.17.0_75253a01",
+  "currentVersion": "v1.17.1_7ab2e0dd",
   "releases": [
+    {
+      "version": "v1.17.1_7ab2e0dd",
+      "date": "2026-11-20",
+      "changes": [
+        "Fixed game boot failure: wrong variable passed to the changelog fetch."
+      ]
+    },
     {
       "version": "v1.17.0_75253a01",
       "date": "2026-11-20",

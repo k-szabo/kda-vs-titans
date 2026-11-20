@@ -99,7 +99,7 @@ export async function loadGameData() {
     loadJson(relicDataUrl, manifest.version),
     loadJson(missionDataUrl, manifest.version),
     loadJson(keybindDataUrl, manifest.version),
-    loadJson(changelogData, manifest.version),
+    loadJson(changelogUrl, manifest.version),
     Promise.all(manifest.encounterPools.map(async (slot, slotIndex) => Promise.all(slot.map(async (bossPath) => {
       const bossUrl = new URL(bossPath, DATA_MANIFEST_URL);
       const boss = await loadJson(bossUrl, manifest.version);
