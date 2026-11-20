@@ -51,6 +51,70 @@
       "effects": [
         { "trigger": "attackPlayed", "type": "gainBlock", "amount": 2 }
       ]
+    },
+    {
+      "id": "crowd_caller",
+      "name": "Crowd Caller",
+      "description": "Increase Crowd Cheer gained from playing cards by 25%.",
+      "effects": [
+        { "trigger": "cardPlayed", "type": "cheerGainPercent", "amount": 25 }
+      ]
+    },
+    {
+      "id": "pyro_rig",
+      "name": "Pyro Rig",
+      "description": "Gain +3 Holo Shield whenever you play an Attack.",
+      "effects": [
+        { "trigger": "attackPlayed", "type": "gainBlock", "amount": 3 }
+      ]
+    },
+    {
+      "id": "encore_pedal",
+      "name": "Encore Pedal",
+      "description": "Gain 4 Holo Shield whenever you play a Skill.",
+      "effects": [
+        { "trigger": "skillPlayed", "type": "skillGainBlock", "amount": 4 }
+      ]
+    },
+    {
+      "id": "sirens_contract",
+      "name": "Siren's Contract",
+      "description": "Skills grant Charm for 2 additional turns.",
+      "effects": [
+        { "trigger": "skillPlayed", "type": "charmDuration", "amount": 2 }
+      ]
+    },
+    {
+      "id": "street_blade",
+      "name": "Street Blade",
+      "description": "0-cost Attack cards deal 5 additional damage.",
+      "effects": [
+        { "trigger": "attackPlayed", "type": "zeroCostAttackDamage", "amount": 5 }
+      ]
+    },
+    {
+      "id": "backstage_medic",
+      "name": "Backstage Medic",
+      "description": "Restore 6 HP at the start of each wave.",
+      "effects": [
+        { "trigger": "stageStart", "type": "heal", "amount": 6 }
+      ]
+    },
+    {
+      "id": "roadie_barricade",
+      "name": "Roadie Barricade",
+      "description": "Start each wave with +8 Holo Shield.",
+      "effects": [
+        { "trigger": "stageStart", "type": "startingBlock", "amount": 8 }
+      ]
+    },
+    {
+      "id": "victory_lap",
+      "name": "Victory Lap",
+      "description": "Restore 10 HP whenever you clear a wave.",
+      "effects": [
+        { "trigger": "waveClear", "type": "heal", "amount": 10 }
+      ]
     }
   ]
 }

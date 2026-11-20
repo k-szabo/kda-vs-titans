@@ -513,6 +513,9 @@ Supported pairs (enforced in `js/game-data.js`):
 | Trigger | Type |
 | --- | --- |
 | `stageStart` | `startingEnergy` |
+| `stageStart` | `startingBlock` |
+| `stageStart` | `heal` |
+| `waveClear` | `heal` |
 | `attackPlayed` | `gainBlock` |
 | `attackPlayed` | `zeroCostAttackDamage` |
 | `cardPlayed` | `cheerGainPercent` |

@@ -247,6 +247,9 @@ export async function loadGameData() {
   const relicDatabase = Object.fromEntries(relicData.relics.map((relic) => [relic.id, relic]));
   const supportedRelicEffects = [
     { trigger: 'stageStart', type: 'startingEnergy' },
+    { trigger: 'stageStart', type: 'startingBlock' },
+    { trigger: 'stageStart', type: 'heal' },
+    { trigger: 'waveClear', type: 'heal' },
     { trigger: 'attackPlayed', type: 'gainBlock' },
     { trigger: 'cardPlayed', type: 'cheerGainPercent' },
     { trigger: 'attackPlayed', type: 'zeroCostAttackDamage' },

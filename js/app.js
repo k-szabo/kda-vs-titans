@@ -1344,6 +1344,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 
       function recordStageClear() {
         state.wavesCleared += 1;
+        applyRelicEffects('waveClear');
         profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
         const artId = profileStats.selectedArts[state.leader];
         profileStats.artWaveClears[state.leader][artId] += 1;
@@ -1473,6 +1474,20 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
                 state.player.energy += effect.amount;
                 addLog(`✦ ${relic.name}: +${effect.amount} starting Hype Energy.`, 'text-amber-300');
                 break;
+              case 'startingBlock':
+                state.player.block += effect.amount;
+                ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
+                addLog(`✦ ${relic.name}: started the wave with +${effect.amount} Holo Shield.`, 'text-cyan-300');
+                break;
+              case 'heal': {
+                const healed = Math.min(state.player.maxHp - state.player.hp, effect.amount);
+                state.player.hp += healed;
+                if (healed > 0) {
+                  ui.spawnPopup('playerArenaCard', `+${healed} ❤️`, 'text-emerald-300 font-display font-black text-lg');
+                }
+                addLog(`✦ ${relic.name}: restored +${healed} HP.`, 'text-emerald-300');
+                break;
+              }
               case 'gainBlock':
                 state.player.block += effect.amount;
                 ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');

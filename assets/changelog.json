@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.10.1_6c50f1ae",
+  "currentVersion": "v1.11.0_a668ab7b",
   "releases": [
+    {
+      "version": "v1.11.0_a668ab7b",
+      "date": "2026-11-20",
+      "changes": [
+        "Eight new general relics: Cheer, Shield, Charm, zero-cost, heal, and wave-clear sustain.",
+        "New relic triggers: wave-start healing and Shield, plus healing on every wave clear."
+      ]
+    },
     {
       "version": "v1.10.1_6c50f1ae",
       "date": "2026-11-20",
