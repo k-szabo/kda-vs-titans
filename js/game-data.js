@@ -312,12 +312,13 @@ export async function loadGameData() {
       typeof mission.id !== 'string' ||
       typeof mission.name !== 'string' ||
       typeof mission.description !== 'string' ||
+      typeof mission.reward !== 'number' ||
       !Number.isInteger(mission.reward) ||
       mission.reward <= 0 ||
-      (!Array.isArray(mission.requiresAll) || !Array.isArray(mission.requiresAny)) ||
-      (mission.requiresAll.length === 0 && mission.requiresAny.length === 0) ||
-      !mission.requiresAll.every(isMissionClause) ||
-      !mission.requiresAny.every(isMissionClause)
+      (!Array.isArray(mission.requiresAll) && !Array.isArray(mission.requiresAny)) ||
+      ((mission.requiresAll?.length ?? 0) === 0 && (mission.requiresAny?.length ?? 0) === 0) ||
+      !(mission.requiresAll ?? []).every(isMissionClause) ||
+      !(mission.requiresAny ?? []).every(isMissionClause)
     )
   ) {
     throw new Error('The mission file contains invalid or duplicate mission data.');

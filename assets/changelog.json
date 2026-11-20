@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.14.1_8c0c8e08",
+  "currentVersion": "v1.14.2_87f59de5",
   "releases": [
+    {
+      "version": "v1.14.2_87f59de5",
+      "date": "2026-11-20",
+      "changes": [
+        "Fixed game boot failure: mission validation wrongly required both condition lists on every mission."
+      ]
+    },
     {
       "version": "v1.14.1_8c0c8e08",
       "date": "2026-11-20",
