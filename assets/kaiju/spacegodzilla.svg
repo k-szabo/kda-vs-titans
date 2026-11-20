@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="sgCrystal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e9d5ff"/>
+      <stop offset="55%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#2e1065"/>
+    </linearGradient>
+    <linearGradient id="sgHide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#166534"/>
+      <stop offset="100%" stop-color="#052e16"/>
+    </linearGradient>
+  </defs>
+  <!-- Crystal shoulder pylons -->
+  <polygon points="104,92 84,40 104,52 112,84" fill="url(#sgCrystal)" stroke="#e9d5ff" stroke-width="1.2"/>
+  <polygon points="176,92 196,40 176,52 168,84" fill="url(#sgCrystal)" stroke="#e9d5ff" stroke-width="1.2"/>
+  <!-- Back crystal spires -->
+  <polygon points="132,78 126,52 138,66" fill="url(#sgCrystal)" stroke="#e9d5ff" stroke-width="1"/>
+  <polygon points="148,78 154,52 142,66" fill="url(#sgCrystal)" stroke="#e9d5ff" stroke-width="1"/>
+  <!-- Bulky torso -->
+  <path d="M116,88 L164,88 L158,150 L122,150 Z" fill="url(#sgHide)" stroke="#4ade80" stroke-width="1.4"/>
+  <!-- Crown horn -->
+  <polygon points="140,58 128,26 140,40 152,26" fill="#e9d5ff" stroke="#7c3aed" stroke-width="1.2"/>
+  <!-- Glowing eyes -->
+  <circle cx="131" cy="70" r="4" fill="#e9d5ff" stroke="#2e1065" stroke-width="1"/>
+  <circle cx="149" cy="70" r="4" fill="#e9d5ff" stroke="#2e1065" stroke-width="1"/>
+  <!-- Crystal core -->
+  <polygon points="140,106 130,124 140,142 150,124" fill="url(#sgCrystal)" stroke="#e9d5ff" stroke-width="1.2"/>
+  <!-- Clawed arms -->
+  <path d="M118,100 L92,118 M162,100 L188,118" stroke="#166534" stroke-width="6" stroke-linecap="round"/>
+  <path d="M92,118 L80,112 M92,118 L82,124 M188,118 L200,112 M188,118 L198,124" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

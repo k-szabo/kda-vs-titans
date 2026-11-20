@@ -1,0 +1,43 @@
+{
+  "id": "spacegodzilla_w6",
+  "name": "SPACEGODZILLA: CRYSTAL TYRANT",
+  "subtitle": "WAVE 6 // COSMIC FORTRESS",
+  "maxHp": 122,
+  "spriteType": "spacegodzilla",
+  "burning": false,
+  "stageEffect": "overcharge_grid",
+  "passives": [
+    {
+      "trigger": "onTurnEnd",
+      "effect": "gainStrength",
+      "value": 1,
+      "desc": "Crystal Growth: gains +1 Strength at the end of every turn."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "charge",
+      "block": 20,
+      "label": "💠 CRYSTAL AEGIS: +20 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "steal_energy",
+      "amount": 2,
+      "label": "🔋 GRAVITY DRAIN: -2 HYPE NEXT TURN"
+    },
+    {
+      "type": "atomic",
+      "dmg": 27,
+      "label": "☄️ CORONA BEAM: 27 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "mechagodzilla",
+    "illustration": "./kaiju/spacegodzilla.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(124, 58, 237, 0.32), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "gabara_w3",
+  "name": "GABARA: WART BULLY",
+  "subtitle": "WAVE 3 // TOXIC TAUNTER",
+  "maxHp": 88,
+  "spriteType": "gabara",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "debuff_atk",
+      "dmg": 11,
+      "weak": 2,
+      "label": "🤢 BULLY SPIT: 11 DMG + WEAK"
+    },
+    {
+      "type": "multi",
+      "dmg": 6,
+      "hits": 2,
+      "label": "👊 THUG RUSH: 6x2 DMG"
+    },
+    {
+      "type": "attack",
+      "dmg": 16,
+      "label": "🦎 HEADBUTT: 16 DMG"
+    }
+  ],
+  "assets": {
+    "backdrop": "rodan",
+    "illustration": "./kaiju/gabara.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(77, 124, 15, 0.32), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

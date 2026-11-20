@@ -1,0 +1,43 @@
+{
+  "id": "gorosaurus_w4",
+  "name": "GOROSAURUS: KANGAROO KICKER",
+  "subtitle": "WAVE 4 // SAVAGE STRIKER",
+  "maxHp": 92,
+  "spriteType": "gorosaurus",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onSkillPlayed",
+      "effect": "gainStrengthEvery",
+      "value": 1,
+      "every": 3,
+      "desc": "Striking Rhythm: gains +1 Strength for every 3 Skills K/DA plays in a turn."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 6,
+      "hits": 2,
+      "label": "🦵 KANGAROO KICKS: 6x2 DMG"
+    },
+    {
+      "type": "attack",
+      "dmg": 15,
+      "label": "🦖 TAIL SWEEP: 15 DMG"
+    },
+    {
+      "type": "charge",
+      "block": 12,
+      "label": "🛡️ THICK HIDE: +12 BLOCK",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "kong",
+    "illustration": "./kaiju/gorosaurus.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(101, 163, 13, 0.3), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

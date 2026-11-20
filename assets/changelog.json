@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.15.0_260840f7",
+  "currentVersion": "v1.16.0_717c95f2",
   "releases": [
+    {
+      "version": "v1.16.0_717c95f2",
+      "date": "2026-11-20",
+      "changes": [
+        "Encounter rotation: waves 3-6 now draft from multiple bosses each.",
+        "New kaiju Megalon, Gabara, Gorosaurus, Manda, Gigan, and SpaceGodzilla.",
+        "No save reset; profiles and runs carry over."
+      ]
+    },
     {
       "version": "v1.15.0_260840f7",
       "date": "2026-11-20",

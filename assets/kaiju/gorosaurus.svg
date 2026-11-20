@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="goroHide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#65a30d"/>
+      <stop offset="55%" stop-color="#3f6212"/>
+      <stop offset="100%" stop-color="#1a2e05"/>
+    </linearGradient>
+  </defs>
+  <!-- Massive kicking legs -->
+  <path d="M118,130 L96,168 L60,172 L52,160" fill="url(#goroHide)" stroke="#d9f99d" stroke-width="1.5"/>
+  <path d="M162,130 L184,168 L220,172 L228,160" fill="url(#goroHide)" stroke="#d9f99d" stroke-width="1.5"/>
+  <!-- Coiled tail -->
+  <path d="M140,150 Q108,170 84,158" stroke="#3f6212" stroke-width="8" stroke-linecap="round"/>
+  <!-- Torso -->
+  <path d="M122,96 L158,96 L152,142 L128,142 Z" fill="url(#goroHide)" stroke="#d9f99d" stroke-width="1.5"/>
+  <!-- Tiny arms -->
+  <path d="M124,110 L108,122 M156,110 L172,122" stroke="#3f6212" stroke-width="4" stroke-linecap="round"/>
+  <!-- Jaw head -->
+  <path d="M122,96 L158,96 L154,70 L126,70 Z" fill="#4d7c0f" stroke="#d9f99d" stroke-width="1.5"/>
+  <path d="M126,78 L186,74 L154,88 L126,88 Z" fill="#65a30d" stroke="#d9f99d" stroke-width="1.2"/>
+  <polygon points="132,70 128,58 136,68" fill="#ecfccb"/>
+  <polygon points="148,70 152,58 144,68" fill="#ecfccb"/>
+  <circle cx="138" cy="80" r="3.5" fill="#fef08a" stroke="#1a2e05" stroke-width="1"/>
+</svg>

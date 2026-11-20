@@ -1,0 +1,35 @@
+{
+  "id": "megalon_w3",
+  "name": "MEGALON: SIEGE DRILL",
+  "subtitle": "WAVE 3 // SUBTERRANEAN SPEAR",
+  "maxHp": 82,
+  "spriteType": "megalon",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "atomic",
+      "dmg": 19,
+      "pierce": 0.5,
+      "label": "💥 DRILL NOVA: 19 DMG",
+      "charged": true
+    },
+    {
+      "type": "attack",
+      "dmg": 14,
+      "label": "⛏️ BURROW SLAM: 14 DMG"
+    },
+    {
+      "type": "charge",
+      "block": 12,
+      "label": "🛡️ CARAPACE PLATING: +12 BLOCK",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "rodan",
+    "illustration": "./kaiju/megalon.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(161, 98, 7, 0.32), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

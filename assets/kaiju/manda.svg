@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="mandaScale" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0e7490"/>
+      <stop offset="55%" stop-color="#155e75"/>
+      <stop offset="100%" stop-color="#083344"/>
+    </linearGradient>
+  </defs>
+  <!-- Coiled serpent body -->
+  <path d="M40,150 Q90,170 130,150 Q170,130 210,150 Q235,162 244,148" stroke="url(#mandaScale)" stroke-width="20" stroke-linecap="round"/>
+  <path d="M60,150 Q90,164 120,152" stroke="#67e8f9" stroke-width="2" opacity="0.6"/>
+  <path d="M150,142 Q180,132 205,146" stroke="#67e8f9" stroke-width="2" opacity="0.6"/>
+  <!-- Dorsal fins -->
+  <path d="M96,138 L88,118 L104,132 M128,142 L122,120 L138,136 M160,136 L156,114 L172,130 M192,142 L190,122 L206,136" fill="#155e75" stroke="#67e8f9" stroke-width="1"/>
+  <!-- Dragon head -->
+  <path d="M218,150 L258,132 L262,146 L228,160 Z" fill="url(#mandaScale)" stroke="#67e8f9" stroke-width="1.5"/>
+  <polygon points="232,140 226,122 238,136" fill="#a5f3fc" stroke="#0e7490" stroke-width="1"/>
+  <polygon points="244,136 242,118 252,132" fill="#a5f3fc" stroke="#0e7490" stroke-width="1"/>
+  <circle cx="246" cy="144" r="3.5" fill="#fef08a" stroke="#083344" stroke-width="1"/>
+  <!-- Whiskers -->
+  <path d="M258,140 L276,132 M258,148 L276,148" stroke="#a5f3fc" stroke-width="1.4" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,43 @@
+{
+  "id": "gigan_w5",
+  "name": "GIGAN: BUZZSAW TERROR",
+  "subtitle": "WAVE 5 // CYBERNETIC REAPER",
+  "maxHp": 108,
+  "spriteType": "gigan",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onPlayerAttack",
+      "effect": "gainBlock",
+      "value": 2,
+      "desc": "Alloy Plating: gains +2 Block each time K/DA plays an Attack."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 6,
+      "hits": 3,
+      "label": "🪚 BUZZSAW FRENZY: 6x3 DMG"
+    },
+    {
+      "type": "atomic",
+      "dmg": 23,
+      "label": "🔪 GUILLOTINE DROP: 23 DMG",
+      "charged": true
+    },
+    {
+      "type": "charge",
+      "block": 12,
+      "label": "🛡️ CHROME GUARD: +12 BLOCK",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "ghidorah",
+    "illustration": "./kaiju/gigan.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(168, 162, 158, 0.3), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}
