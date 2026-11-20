@@ -72,8 +72,7 @@ export async function loadGameData() {
       !additionalArts ||
       typeof additionalArts.more !== 'string' ||
       typeof additionalArts.firestarter !== 'string' ||
-      typeof additionalArts.prestige !== 'string' ||
-      typeof additionalArts.eternal !== 'string'
+      typeof additionalArts.prestige !== 'string'
     ) {
       throw new Error(`The asset manifest is missing leader art for ${leaderId}.`);
     }
@@ -81,8 +80,7 @@ export async function loadGameData() {
       popstars: manifest.portraits[leaderId],
       more: additionalArts.more,
       firestarter: additionalArts.firestarter,
-      prestige: additionalArts.prestige,
-      eternal: additionalArts.eternal
+      prestige: additionalArts.prestige
     }];
   }));
 

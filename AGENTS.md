@@ -158,9 +158,8 @@ overview.
 - Daily World Tour starts the deterministic daily run at Encore 0.
 - Art Studio equips unlocked art and shows per-art ranks. Leader art tiers:
   POP/STARS (default), MORE (1 clear), FIRESTARTER (2 clears), PRESTIGE
-  (3 clears, real Prestige splashes), ETERNAL (4 clears, real Prestige 2022
-  splashes with an animated portrait sheen). Missing `artWaveClears` keys in
-  old profiles normalize to 0, so no profile reset is needed for new tiers.
+  (3 clears, real Prestige splashes). Missing `artWaveClears` keys in old
+  profiles normalize to 0, so no profile reset is needed for new tiers.
 - Holo card finishes are permanent profile unlocks, not run items: each wave
   clear earns 1 Spotlight Shard (+3 tour victory bonus, `profile.finishTokens`),
   spent in the Art Studio's Card Atelier along a basic → shiny (2) → platinum

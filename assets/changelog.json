@@ -1,14 +1,6 @@
 {
-  "currentVersion": "v1.15.0_c556abf2",
+  "currentVersion": "v1.14.2_87f59de5",
   "releases": [
-    {
-      "version": "v1.15.0_c556abf2",
-      "date": "2026-11-20",
-      "changes": [
-        "New ETERNAL leader art at 4 full clears per leader with an animated portrait treatment.",
-        "Old profiles carry over without reset."
-      ]
-    },
     {
       "version": "v1.14.2_87f59de5",
       "date": "2026-11-20",

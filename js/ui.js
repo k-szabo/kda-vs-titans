@@ -349,7 +349,6 @@ export function createGameUI({
       const rank = getArtRank(profileStats.artWaveClears[member][artId]);
       if (slot) {
         slot.classList.add('border-2', 'border-white/10');
-        slot.classList.toggle('art-eternal', artId === 'eternal');
         if (slot.dataset.artUrl !== artAssets[member]) {
           const image = document.createElement('img');
           image.src = artAssets[member];

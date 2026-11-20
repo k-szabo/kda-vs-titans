@@ -15,7 +15,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Between-wave tour events, Leona tour routing, and a Merch Token shop (cards, relics, removal, healing, no free Cut/Rest)
 - Missions and achievements paying Spotlight Shards; Card Atelier with permanent shiny/platinum/holo card finishes
 - Encore Ascension tiers 1–5 with cumulative boss modifiers, plus per-wave boss scaling
-- Unlockable POP/STARS, MORE, FIRESTARTER, PRESTIGE, and ETERNAL leader art with ranked portrait borders
+- Unlockable POP/STARS, MORE, FIRESTARTER, and PRESTIGE leader art with ranked portrait borders
 - Collapsible battle log, compact by default on smaller screens
 - Death log on defeat, copyable Tour Receipt, persistent run records / Kaiju codex
 - Synthesized sound effects and persistent profile statistics
@@ -34,7 +34,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 | Leader ability button | Use your chosen leader's special ability once per run |
 
 For testing, open the `#devtools` subpage (for example, append `#devtools` to the game URL) to jump directly to a wave.
-Choose a leader when starting a new run. Clear all 10 waves with that leader to unlock MORE art; further full clears unlock FIRESTARTER, PRESTIGE, then ETERNAL (animated). Use **ART STUDIO** to equip unlocked art and spend Spotlight Shards on permanent card finishes. Each 10 waves cleared while an art style is equipped advances its ranked border.
+Choose a leader when starting a new run. Clear all 10 waves with that leader to unlock MORE art; further full clears unlock FIRESTARTER, then PRESTIGE. Use **ART STUDIO** to equip unlocked art and spend Spotlight Shards on permanent card finishes. Each 10 waves cleared while an art style is equipped advances its ranked border.
 
 ## Development
 
