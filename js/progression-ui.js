@@ -42,6 +42,7 @@ export function createProgressionUI({
       const rank = getArtRank(profileStats.artWaveClears[id][artId]);
       const card = document.createElement('article');
       card.className = 'overflow-hidden rounded-2xl border bg-black/40 shadow-lg';
+      if (artId === 'eternal') card.classList.add('art-eternal');
       card.style.borderColor = rank?.color || 'rgba(255,255,255,0.15)';
       if (rank) card.style.boxShadow = `0 0 16px ${rank.color}55`;
 
@@ -188,6 +189,7 @@ export function createProgressionUI({
         details.append(artName, status);
         choice.append(image, details);
         if (rank) choice.style.borderColor = rank.color;
+        if (style.id === 'eternal') choice.classList.add('art-eternal');
         if (unlocked) {
           choice.addEventListener('click', () => {
             onSelectLeaderArt(id, style.id);
