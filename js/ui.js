@@ -1009,10 +1009,22 @@ export function createGameUI({
     const cardDatabase = getCardDatabase();
     document.getElementById('pileModalTitle').textContent = `${title} (${cardInstances.length})`;
     const grid = document.getElementById('pileModalGrid');
+    const spotlight = cardInstances.length === 1;
+    grid.className = spotlight
+      ? 'pile-spotlight grid grid-cols-1 justify-items-center gap-3 overflow-y-auto pr-1'
+      : 'grid grid-cols-2 sm:grid-cols-4 gap-3 overflow-y-auto pr-1';
     grid.innerHTML = '';
     cardInstances.forEach((instance) => {
       const card = cardDatabase[instance.cardId];
-      if (card) grid.appendChild(createCardElement(card, true, -1, instance));
+      if (!card) return;
+      if (spotlight) {
+        const frame = document.createElement('div');
+        frame.className = 'w-full max-w-64 sm:max-w-72';
+        frame.appendChild(createCardElement(card, true, -1, instance));
+        grid.appendChild(frame);
+      } else {
+        grid.appendChild(createCardElement(card, true, -1, instance));
+      }
     });
     document.getElementById('pileModal').classList.remove('hidden');
   }

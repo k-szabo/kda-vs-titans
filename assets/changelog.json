@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.13.4_85116001",
+  "currentVersion": "v1.13.5_0466b1e9",
   "releases": [
+    {
+      "version": "v1.13.5_0466b1e9",
+      "date": "2026-11-20",
+      "changes": [
+        "Single-card pile previews now render large and centered without the hover lift."
+      ]
+    },
     {
       "version": "v1.13.4_85116001",
       "date": "2026-11-20",
