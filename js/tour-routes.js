@@ -28,14 +28,6 @@ export const TOUR_ROUTES = Object.freeze([
     rewardMode: 'cards',
     summary: 'Draft a new card and recover HP.',
     tag: 'CARD'
-  },
-  {
-    id: 'soundcheck',
-    name: 'SOUNDCHECK',
-    icon: '🎤',
-    rewardMode: 'rest',
-    summary: 'Skip rewards and rest backstage.',
-    tag: 'REST +25 HP'
   }
 ]);
 

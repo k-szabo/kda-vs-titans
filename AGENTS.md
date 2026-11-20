@@ -101,9 +101,9 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/keywords.js` | Single source of truth for member keyword identities (Charm/Pierce/Drain/Encore). |
 | `js/voice-lines.js` | Cosmetic voice-line pools and picker for combos, finales, and run endings. |
 | `js/tour-events.js` | Mid-run backstage event definitions and seeded event roller. |
-| `js/tour-routes.js` | Leona tour-route definitions (upgrade/relic/card/rest) mapping onto reward tabs. |
-| `js/run-storage.js` | Versioned run save/load in `localStorage` (`RUN_SAVE_VERSION = 4`). |
-| `js/run-state.js` | Migrates legacy v1 saves and strictly validates v4 run state. |
+| `js/tour-routes.js` | Leona tour-route definitions (upgrade/relic/card) mapping onto reward tabs. |
+| `js/run-storage.js` | Versioned run save/load in `localStorage` (`RUN_SAVE_VERSION = 5`). |
+| `js/run-state.js` | Migrates legacy v1 saves and strictly validates v5 run state. |
 | `js/profile-storage.js` | Persistent profile, settings, codex, art progress, daily streaks (`PROFILE_VERSION = 3`). |
 | `js/leader-data.js` | Leader definitions, art styles, rank tiers, unlock helpers. |
 | `js/daily-challenge.js` | UTC-date-seeded Daily World Tour assignment and seeded RNG. |
@@ -272,10 +272,21 @@ overview.
   reuse the STATUS path (`stage_fright`, `burn`, `micro_oxygen`) and are added
   to both `masterDeck` and `discardPile` to keep save coverage valid. Random
   upgrades update every pile copy plus buffs.
-- Resolving the event clears `tourEventId` and opens Leona routing: up to 3
-  stops (`js/tour-routes.js` → `TOUR_ROUTES`): Backstage Pass (upgrade), Merch
-  Stand (relic), Fan Meet (card), Soundcheck (rest +25 HP). Only stops with a
-  real reward are offered (`getAvailableRouteIds()` / `isRewardAvailable()`).
+- Resolving the event clears `tourEventId` and opens Leona routing alongside
+  the merch shop: up to 3 stops (`js/tour-routes.js` → `TOUR_ROUTES`):
+  Backstage Pass (upgrade), Merch Stand (relic), Fan Meet (card). Only stops
+  with a real reward are offered (`getAvailableRouteIds()` /
+  `isRewardAvailable()`); the fallback when nothing is available is Fan Meet.
+- The shop (`state.shop`, `state.merchTokens`) lives inside the routing modal
+  and persists with the run. Waves award `10 + stageIndex + encoreLevel * 2`
+  Merch Tokens (deterministic; harder waves and higher Encore pay more).
+  Prices are flat: card 12, relic 18, removal 8, heal +15 HP for 6.
+  Shop stock is seeded (2 draftable non-starter cards, 1 unowned non-leader
+  relic or sold out) and never offers owned relics. Cut (+10 HP) and Rest
+  (+25 HP) no longer exist as free rewards — thinning and healing are
+  shop-only. Shop purchases update `masterDeck` + `discardPile` together so
+  save coverage stays valid; unaffordable/sold-out options disable, and the
+  route buttons always work so the shop can never lock the run.
 - `state.routeChoices` holds the offered route IDs and `state.rewardMode` holds
   the chosen reward tab. Both persist with the run, so reloading mid-routing
   reopens the routing screen (`restoreRunModal()`), refreshing stale routes.
@@ -324,8 +335,9 @@ After each non-final wave, `state.runStatus = 'draft'` and the player chooses:
 - **Card**: one of 3 non-starter, draftable cards; heals 18 HP (12 at Encore 2+).
 - **Relic**: one of 3 unowned, non-leader relics; heals 18 HP (12 at Encore 2+).
 - **Upgrade**: upgrade one unupgraded card instance (no heal).
-- **Cut**: remove one deck card and heal 10 HP.
-- **Rest**: skip rewards and heal 25 HP.
+- **Shop** (alongside routing): Merch Tokens buy cards (12), relics (18),
+  deck removal (8, no heal), and +15 HP patch-ups (6). Cut and Rest have no
+  free version.
 
 Clearing wave 10 sets `runStatus = 'victory'`. Player death sets `'defeat'`.
 
@@ -570,7 +582,7 @@ modal is open or a rebind is listening.
 
 | Key | Contents |
 | --- | --- |
-| `encore-spire.run` | `{ version: 4, state }` active run |
+| `encore-spire.run` | `{ version: 5, state }` active run |
 | `encore-spire.profile` | `version: 3` profile/settings/codex/art/daily data |
 | `kda-vs-titans:cache-version` | Last manifest version used to clear Cache Storage |
 
@@ -595,9 +607,14 @@ modal is open or a rebind is listening.
   entries; buff instances stay out of the four piles and count as an active
   location for deck coverage. `routeChoices` is a unique subset of
   `TOUR_ROUTES` ids, `rewardMode` is `null` or a valid reward tab,
-  `tourEventId` is `null` or a valid `TOUR_EVENTS` id, and
+  `tourEventId` is `null` or a valid `TOUR_EVENTS` id, `merchTokens` is an
+  integer 0–9999, `shop` is `null` or `{ cards: [≤2 valid draftable ids],
+  relic: null | valid unowned non-leader relic, removalUsed: bool,
+  healUsed: bool }`, and
   `energyPenalty` is an integer 0–3 applied when the next turn refills Hype
-  Energy, then reset to 0.
+  Energy, then reset to 0. Bumping `RUN_SAVE_VERSION` without bumping
+  `PROFILE_VERSION` resets the active run but preserves profile stats, art,
+  and codex.
 
 Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
@@ -724,10 +741,15 @@ Run through this before considering a change complete:
 6. Enemy intents: attack, multi, charge, atomic, debuff, inject; charged
    interrupt success/failure; piercing damage; enrage/phase 2; each hazard.
    Also verify burn injection, energy drain, and the once-per-turn reflect.
-7. Post-battle rewards: card, relic, upgrade, cut, rest; confirm heals.
+7. Post-battle rewards: card, relic, upgrade; confirm heals. No free cut/rest exists.
 7a. Buff zone: play a timed buff and confirm its countdown; play a fourth buff
     and confirm the replace prompt; let a timed buff expire at a wave end;
     trigger Guardian Angel and Zhonya's and confirm they are consumed.
+7b. Merch shop: tokens award on wave clear (`10 + stageIndex + encore*2`) and show
+    in the header; buy a card, a relic, a removal, and a heal; confirm
+    insufficient-funds disables, sold-out relic when all owned, removal blocked
+    with 1-card deck, heal blocked at full HP; reload mid-shop and confirm the
+    shop, tokens, and routing return; receipt shows the token balance.
 8. Reload mid-combat and mid-draft; confirm state, piles, logs, and modal.
 9. Win and lose a run; copy the Tour Receipt; verify profile stats, codex,
    Encore unlock, and Art Studio progress.

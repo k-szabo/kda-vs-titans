@@ -73,6 +73,36 @@ function normalizeTourRouting(state) {
   };
 }
 
+function normalizeShop(state, cardDatabase, relicDatabase) {
+  const tokens = Number.isInteger(state.merchTokens) && state.merchTokens >= 0
+    ? Math.min(state.merchTokens, 9999)
+    : 0;
+  const raw = isRecord(state.shop) ? state.shop : null;
+  if (!raw) return { merchTokens: tokens, shop: null };
+  const cards = Array.isArray(raw.cards)
+    ? [...new Set(raw.cards.filter((id) =>
+      typeof id === 'string' &&
+      Object.hasOwn(cardDatabase, id) &&
+      !cardDatabase[id].starter &&
+      cardDatabase[id].draftable !== false
+    ))].slice(0, 2)
+    : [];
+  const relic = typeof raw.relic === 'string' &&
+    Object.hasOwn(relicDatabase, raw.relic) &&
+    !relicDatabase[raw.relic].leaderId
+    ? raw.relic
+    : null;
+  return {
+    merchTokens: tokens,
+    shop: {
+      cards,
+      relic,
+      removalUsed: raw.removalUsed === true,
+      healUsed: raw.healUsed === true
+    }
+  };
+}
+
 function normalizeBuffs(state, cardDatabase) {  const raw = Array.isArray(state.buffs) ? state.buffs : [];
   const buffs = [];
   const orphans = [];
@@ -242,6 +272,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         ...normalizeTurnMemberState(state),
         ...normalizeRunTracking(state, cardDatabase, encounters.length, relicDatabase),
         ...normalizeTourRouting(state),
+        ...normalizeShop(state, cardDatabase, relicDatabase),
         encoreLevel,
         damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
         handLimit,
@@ -379,6 +410,27 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     new Set(saved.routeChoices).size !== saved.routeChoices.length ||
     !(saved.rewardMode === null || REWARD_MODES.has(saved.rewardMode)) ||
     !(saved.tourEventId === null || saved.tourEventId === undefined || (typeof saved.tourEventId === 'string' && TOUR_EVENT_IDS.has(saved.tourEventId))) ||
+    !Number.isInteger(saved.merchTokens) ||
+    saved.merchTokens < 0 ||
+    saved.merchTokens > 9999 ||
+    !(saved.shop === null || saved.shop === undefined || (
+      isRecord(saved.shop) &&
+      Array.isArray(saved.shop.cards) &&
+      saved.shop.cards.length <= 2 &&
+      saved.shop.cards.every((id) =>
+        typeof id === 'string' &&
+        Object.hasOwn(cardDatabase, id) &&
+        !cardDatabase[id].starter &&
+        cardDatabase[id].draftable !== false) &&
+      new Set(saved.shop.cards).size === saved.shop.cards.length &&
+      (saved.shop.relic === null ||
+        (typeof saved.shop.relic === 'string' &&
+          Object.hasOwn(relicDatabase, saved.shop.relic) &&
+          !relicDatabase[saved.shop.relic].leaderId &&
+          !saved.relics.includes(saved.shop.relic))) &&
+      typeof saved.shop.removalUsed === 'boolean' &&
+      typeof saved.shop.healUsed === 'boolean'
+    )) ||
     saved.hand.length > (Number.isInteger(saved.handLimit) ? saved.handLimit : MAX_HAND_SIZE) ||
     !saved.masterDeck.every(isCardInstance) ||
     !allInstances.every(isCardInstance) ||

@@ -153,6 +153,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           routeChoices: [],
           rewardMode: null,
           tourEventId: null,
+          merchTokens: 0,
+          shop: null,
           relics: initialRelics,
           isPlayerTurn: true,
           masterDeck,
@@ -200,6 +202,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.routeChoices = [];
         state.rewardMode = null;
         state.tourEventId = null;
+        state.shop = null;
         state.isPlayerTurn = true;
         expireTimedBuffsAtWaveEnd();
         const activeBuffIds = new Set(state.buffs.map((buff) => buff.instanceId));
@@ -965,6 +968,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.rewardMode = null;
         state.routeChoices = getAvailableRouteIds();
         state.tourEventId = rollTourEvent(nextRandom);
+        awardMerchTokens();
+        rollShopInventory();
         saveRunState();
         if (state.tourEventId && getTourEvent(state.tourEventId)) {
           ui.openTourEventModal(
@@ -978,7 +983,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         saveRunState();
         ui.openTourRoutingModal(
           state.routeChoices.map((routeId) => getTourRoute(routeId)),
-          getDraftHealAmount()
+          getDraftHealAmount(),
+          state.shop,
+          state.merchTokens
         );
       }
 
@@ -998,7 +1005,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       function getAvailableRouteIds() {
         const available = TOUR_ROUTES.filter((route) => isRewardAvailable(route.rewardMode));
         const ids = shuffle(available).slice(0, 3).map((route) => route.id);
-        if (ids.length === 0) return ['soundcheck'];
+        if (ids.length === 0) return ['fanmeet'];
         return ids;
       }
 
@@ -1015,10 +1022,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           state.routeChoices = getAvailableRouteIds();
           state.rewardMode = null;
           saveRunState();
-          ui.openTourRoutingModal(
-            state.routeChoices.map((id) => getTourRoute(id)),
-            getDraftHealAmount()
-          );
+          refreshRoutingModal();
           addLog('🎫 Leona rerouted K/DA: that stop sold out.', 'text-amber-300');
           return;
         }
@@ -1107,10 +1111,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         saveRunState();
         ui.closeTourEventModal();
         if (message) addLog(message, 'text-amber-300');
-        ui.openTourRoutingModal(
-          state.routeChoices.map((routeId) => getTourRoute(routeId)),
-          getDraftHealAmount()
-        );
+        refreshRoutingModal();
       }
 
       function chooseTourEventOption(eventId, optionId) {
@@ -1212,6 +1213,119 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         finishTourEvent(`🤝 Wardrobe purge: removed ${CARD_DB[removed.cardId].name} and healed 8 HP!`);
       }
 
+      const SHOP_PRICES = Object.freeze({ card: 12, relic: 18, removal: 8, heal: 6 });
+      const SHOP_HEAL_AMOUNT = 15;
+
+      function awardMerchTokens() {
+        const award = 10 + state.stageIndex + state.encoreLevel * 2;
+        state.merchTokens = Math.min(9999, state.merchTokens + award);
+        addLog(`🪙 Merch stand payout: +${award} Merch Tokens (${state.merchTokens} total).`, 'text-amber-300');
+      }
+
+      function rollShopInventory() {
+        const draftPool = Object.values(CARD_DB).filter((c) => !c.starter && c.draftable !== false);
+        const cards = shuffle(draftPool).slice(0, 2).map((card) => card.id);
+        const owned = new Set(state.relics);
+        const relicPool = shuffle(Object.keys(RELIC_DB).filter((id) =>
+          !owned.has(id) && !RELIC_DB[id].leaderId
+        ));
+        state.shop = {
+          cards,
+          relic: relicPool.length > 0 ? relicPool[0] : null,
+          removalUsed: false,
+          healUsed: false
+        };
+      }
+
+      function refreshRoutingModal() {
+        ui.openTourRoutingModal(
+          state.routeChoices.map((routeId) => getTourRoute(routeId)),
+          getDraftHealAmount(),
+          state.shop,
+          state.merchTokens
+        );
+      }
+
+      function buyShopCard(cardId) {
+        if (state.runStatus !== 'draft' || !state.shop) return;
+        if (!state.shop.cards.includes(cardId)) return;
+        if (state.merchTokens < SHOP_PRICES.card) return;
+        const card = CARD_DB[cardId];
+        if (!card || card.starter || card.draftable === false) return;
+        state.merchTokens -= SHOP_PRICES.card;
+        const instance = {
+          instanceId: state.nextCardInstanceId++,
+          cardId,
+          upgradeLevel: 0
+        };
+        state.masterDeck.push(instance);
+        state.discardPile.push({ ...instance });
+        state.shop.cards = state.shop.cards.filter((id) => id !== cardId);
+        addLog(`🪙 Bought "${card.name}" for ${SHOP_PRICES.card} Merch Tokens.`, 'text-amber-300');
+        saveRunState();
+        refreshRoutingModal();
+        renderAll();
+      }
+
+      function buyShopRelic() {
+        if (state.runStatus !== 'draft' || !state.shop || !state.shop.relic) return;
+        if (state.merchTokens < SHOP_PRICES.relic) return;
+        if (state.relics.includes(state.shop.relic)) {
+          state.shop.relic = null;
+          saveRunState();
+          refreshRoutingModal();
+          return;
+        }
+        const relic = RELIC_DB[state.shop.relic];
+        if (!relic || relic.leaderId) return;
+        state.merchTokens -= SHOP_PRICES.relic;
+        state.relics.push(state.shop.relic);
+        addLog(`🪙 Bought ${relic.name} for ${SHOP_PRICES.relic} Merch Tokens.`, 'text-amber-300');
+        state.shop.relic = null;
+        saveRunState();
+        refreshRoutingModal();
+        renderAll();
+      }
+
+      function buyShopRemoval(instanceId) {
+        if (state.runStatus !== 'draft' || !state.shop || state.shop.removalUsed) return;
+        if (state.merchTokens < SHOP_PRICES.removal) return;
+        if (state.masterDeck.length <= 1) return;
+        const deckIndex = state.masterDeck.findIndex((instance) => instance.instanceId === instanceId);
+        if (deckIndex < 0) return;
+        const activePiles = [state.drawPile, state.hand, state.discardPile, state.exhaustPile];
+        const activeBuffIndex = state.buffs.findIndex((buff) => buff.instanceId === instanceId);
+        const activePile = activePiles.find((pile) =>
+          Array.isArray(pile) && pile.some((instance) => instance.instanceId === instanceId)
+        );
+        if (activeBuffIndex < 0 && !activePile) return;
+        state.merchTokens -= SHOP_PRICES.removal;
+        const [removed] = state.masterDeck.splice(deckIndex, 1);
+        if (activeBuffIndex >= 0) {
+          state.buffs.splice(activeBuffIndex, 1);
+        } else {
+          activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
+        }
+        state.shop.removalUsed = true;
+        addLog(`🪙 Removed ${CARD_DB[removed.cardId].name} for ${SHOP_PRICES.removal} Merch Tokens.`, 'text-amber-300');
+        saveRunState();
+        refreshRoutingModal();
+        renderAll();
+      }
+
+      function buyShopHeal() {
+        if (state.runStatus !== 'draft' || !state.shop || state.shop.healUsed) return;
+        if (state.merchTokens < SHOP_PRICES.heal) return;
+        if (state.player.hp >= state.player.maxHp) return;
+        state.merchTokens -= SHOP_PRICES.heal;
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + SHOP_HEAL_AMOUNT);
+        state.shop.healUsed = true;
+        addLog(`🪙 Backstage patch-up: +${SHOP_HEAL_AMOUNT} HP for ${SHOP_PRICES.heal} Merch Tokens.`, 'text-amber-300');
+        saveRunState();
+        refreshRoutingModal();
+        renderAll();
+      }
+
       function recordStageClear() {
         state.wavesCleared += 1;
         profileStats.highestWaveCleared = Math.max(profileStats.highestWaveCleared, state.stageIndex + 1);
@@ -1280,7 +1394,8 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           `Leader: ${LEADERS.find(({ id }) => id === state.leader).name}`,
           `Waves Cleared: ${state.wavesCleared} / ${ENCOUNTERS.length}`,
           `Most-Played Card: ${cardName}${mostPlayed ? ` (${mostPlayed[1]} plays)` : ''}`,
-          `Peak Single-Turn Damage: ${state.peakSingleTurnDamage}`
+          `Peak Single-Turn Damage: ${state.peakSingleTurnDamage}`,
+          `Merch Tokens: ${state.merchTokens ?? 0}`
         ];
         if (state.runStatus === 'defeat') {
           const deathEntries = getDeathLogEntries(state.logs, 8);
@@ -1483,6 +1598,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.routeChoices = [];
         state.rewardMode = null;
         state.tourEventId = null;
+        state.shop = null;
         document.getElementById('draftModal').classList.add('hidden');
         document.getElementById('tourRoutingModal').classList.add('hidden');
         ui.closeTourEventModal();
@@ -1515,29 +1631,6 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         leaveRewardPhase(`✦ Equipped ${relic.name} & restored +${heal} HP!`, 'text-amber-300');
       }
 
-      function cutCard(instanceId) {
-        if (state.runStatus !== 'draft' || state.masterDeck.length <= 1) return;
-        const deckIndex = state.masterDeck.findIndex((instance) => instance.instanceId === instanceId);
-        if (deckIndex < 0) return;
-        const activePiles = [state.drawPile, state.hand, state.discardPile, state.exhaustPile];
-        const activeBuffIndex = state.buffs.findIndex((buff) => buff.instanceId === instanceId);
-        const activePile = activePiles.find((pile) =>
-          pile.some((instance) => instance.instanceId === instanceId)
-        );
-        if (activeBuffIndex < 0 && !activePile) {
-          throw new Error(`Card ${instanceId} was missing from active piles during deck thinning.`);
-        }
-        const [removed] = state.masterDeck.splice(deckIndex, 1);
-        if (activeBuffIndex >= 0) {
-          state.buffs.splice(activeBuffIndex, 1);
-        } else {
-          activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
-        }
-        const healed = Math.min(10, state.player.maxHp - state.player.hp);
-        state.player.hp += healed;
-        leaveRewardPhase(`✂️ Removed ${CARD_DB[removed.cardId].name} from the setlist and restored +${healed} HP.`);
-      }
-
       function upgradeCard(instanceId) {
         if (state.runStatus !== 'draft') return;
         const instance = state.masterDeck.find((card) => card.instanceId === instanceId);
@@ -1546,12 +1639,6 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         const activeBuff = state.buffs.find((buff) => buff.instanceId === instanceId);
         if (activeBuff) activeBuff.upgradeLevel = 1;
         leaveRewardPhase(`⬆️ Upgraded "${CARD_DB[instance.cardId].name}" for the rest of the run.`, 'text-amber-300');
-      }
-
-      function skipDraft() {
-        if (state.runStatus !== 'draft') return;
-        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
-        leaveRewardPhase('💖 Skipped draft & rested backstage (+25 HP).');
       }
 
       function wireEvents() {
@@ -1580,7 +1667,6 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         document.getElementById('btnMenuOptions').addEventListener('click', () => optionsUI.showOptions());
         document.getElementById('btnMenuHowToPlay').addEventListener('click', () => optionsUI.showHowToPlay());
 
-        document.getElementById('btnSkipDraft').addEventListener('click', skipDraft);
         document.getElementById('btnDailyTour').addEventListener('click', startDailyRun);
 
         document.getElementById('btnViewDraw').addEventListener('click', () => {
@@ -1649,11 +1735,9 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
               return route && isRewardAvailable(route.rewardMode);
             });
             state.routeChoices = freshIds.length > 0 ? freshIds : getAvailableRouteIds();
+            if (!state.shop) rollShopInventory();
             saveRunState();
-            ui.openTourRoutingModal(
-              state.routeChoices.map((routeId) => getTourRoute(routeId)),
-              getDraftHealAmount()
-            );
+            refreshRoutingModal();
           } else {
             ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck);
           }
@@ -1691,12 +1775,15 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             onChooseRoute: chooseTourRoute,
             onChooseEventOption: chooseTourEventOption,
             onRemoveEventCard: removeEventCard,
+            onBuyShopCard: buyShopCard,
+            onBuyShopRelic: buyShopRelic,
+            onBuyShopRemoval: buyShopRemoval,
+            onBuyShopHeal: buyShopHeal,
             getCardDamagePreview,
             onJumpToStage: startStage,
             onChooseDraftCard: chooseDraftCard,
             onChooseRelic: chooseRelic,
             onUpgradeCard: upgradeCard,
-            onCutCard: cutCard,
             onSelectLeaderArt: selectLeaderArt,
             onContinueTour: continueTour,
             getDailyChallenge: getTodayDailyChallenge,

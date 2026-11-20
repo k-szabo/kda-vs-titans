@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.9.0_a18db540",
+  "currentVersion": "v1.10.0_6899670e",
   "releases": [
+    {
+      "version": "v1.10.0_6899670e",
+      "date": "2026-11-20",
+      "changes": [
+        "Merch Tokens drop after every wave and buy cards, relics, removal, and healing at the between-wave shop.",
+        "Cut and Rest are no longer free; deck thinning and resting are economic decisions.",
+        "Run saves reset to v5 while profile stats and art progress carry over."
+      ]
+    },
     {
       "version": "v1.9.0_a18db540",
       "date": "2026-11-20",
