@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.13.3_dcef7daf",
+  "currentVersion": "v1.13.4_85116001",
   "releases": [
+    {
+      "version": "v1.13.4_85116001",
+      "date": "2026-11-20",
+      "changes": [
+        "Fixed Card Atelier previews opening behind the Art Studio modal."
+      ]
+    },
     {
       "version": "v1.13.3_dcef7daf",
       "date": "2026-11-20",
