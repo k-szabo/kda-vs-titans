@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.17.1_7ab2e0dd",
+  "currentVersion": "v1.17.2_f616d10c",
   "releases": [
+    {
+      "version": "v1.17.2_f616d10c",
+      "date": "2026-11-20",
+      "changes": [
+        "Card finishes now have distinct animations: twinkling shiny, liquid-metal platinum, rainbow holo."
+      ]
+    },
     {
       "version": "v1.17.1_7ab2e0dd",
       "date": "2026-11-20",
