@@ -8,6 +8,7 @@ import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { renderChangelogEntries } from './changelog-ui.js';
 import { createProgressionUI } from './progression-ui.js';
 import { LEONA_MANAGER_ART } from './tour-routes.js';
+import { SHOP_HEAL_AMOUNT, SHOP_PRICES } from './shop.js';
 
 export function createGameUI({
   getState,
@@ -568,9 +569,6 @@ export function createGameUI({
       </div>`)
       .join('');
   }
-
-  const SHOP_PRICES = Object.freeze({ card: 12, relic: 18, removal: 8, heal: 6 });
-  const SHOP_HEAL_AMOUNT = 15;
 
   function openTourRoutingModal(routes, healAmount, shop = null, tokens = 0) {
     const modal = document.getElementById('tourRoutingModal');

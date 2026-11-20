@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.14.0_1b3e5adc",
+  "currentVersion": "v1.14.1_8c0c8e08",
   "releases": [
+    {
+      "version": "v1.14.1_8c0c8e08",
+      "date": "2026-11-20",
+      "changes": [
+        "Extracted the shop and tour-event flows into focused modules with shared deck helpers.",
+        "Removed dead branches and single-sourced shop pricing."
+      ]
+    },
     {
       "version": "v1.14.0_1b3e5adc",
       "date": "2026-11-20",

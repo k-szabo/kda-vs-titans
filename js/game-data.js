@@ -1,4 +1,5 @@
 import { isValidDefaultKeybinds } from './keybinds.js';
+import { TOUR_EVENTS } from './tour-events.js';
 
 const DATA_MANIFEST_URL = new URL('../assets/data.json', import.meta.url);
 const CACHE_VERSION_KEY = 'kda-vs-titans:cache-version';
@@ -320,6 +321,31 @@ export async function loadGameData() {
     )
   ) {
     throw new Error('The mission file contains invalid or duplicate mission data.');
+  }
+
+  const validEventRequires = new Set(['canCut', 'hasRelicAvailable', 'canTune', 'canUpgrade']);
+  if (
+    !Array.isArray(TOUR_EVENTS) ||
+    TOUR_EVENTS.length === 0 ||
+    new Set(TOUR_EVENTS.map((event) => event?.id)).size !== TOUR_EVENTS.length ||
+    TOUR_EVENTS.some((event) =>
+      !isRecord(event) ||
+      typeof event.id !== 'string' ||
+      typeof event.name !== 'string' ||
+      typeof event.description !== 'string' ||
+      !Array.isArray(event.options) ||
+      event.options.length === 0 ||
+      event.options.some((option) =>
+        !isRecord(option) ||
+        typeof option.id !== 'string' ||
+        typeof option.label !== 'string' ||
+        typeof option.summary !== 'string' ||
+        typeof option.tag !== 'string' ||
+        (option.requires !== undefined && !validEventRequires.has(option.requires))
+      )
+    )
+  ) {
+    throw new Error('The tour event file contains invalid or duplicate event data.');
   }
 
   const versionPattern = /^v\d+\.\d+\.\d+_[0-9a-f]{8}$/;

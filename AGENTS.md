@@ -102,8 +102,10 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/missions.js` | Mission condition-DSL interpreter (requiresAll/requiresAny over run/profile stats). |
 | `assets/missions.json` | Mission definitions (id, reward, requires clauses); validated in `js/game-data.js`. |
 | `js/voice-lines.js` | Cosmetic voice-line pools and picker for combos, finales, and run endings. |
-| `js/tour-events.js` | Mid-run backstage event definitions and seeded event roller. |
+| `js/tour-events.js` | Tour-event data plus the between-wave event flow (`createTourEvents`). |
 | `js/tour-routes.js` | Leona tour-route definitions (upgrade/relic/card) mapping onto reward tabs. |
+| `js/shop.js` | Merch shop prices and purchase flow (`createShop`); single source for shop pricing. |
+| `js/deck.js` | Shared deck-instance helpers (add/remove) keeping pile coverage valid. |
 | `js/run-storage.js` | Versioned run save/load in `localStorage` (`RUN_SAVE_VERSION = 5`). |
 | `js/run-state.js` | Migrates legacy v1 saves and strictly validates v5 run state. |
 | `js/profile-storage.js` | Persistent profile, settings, codex, art progress, daily streaks (`PROFILE_VERSION = 3`). |

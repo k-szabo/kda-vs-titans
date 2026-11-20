@@ -38,7 +38,8 @@ import {
 } from './profile-storage.js';
 import { getActionForKey, normalizeKeybinds } from './keybinds.js';
 import { getTourRoute, TOUR_ROUTES } from './tour-routes.js';
-import { getTourEvent, rollTourEvent, TOUR_EVENTS } from './tour-events.js';
+import { createTourEvents, getTourEvent, rollTourEvent } from './tour-events.js';
+import { createShop } from './shop.js';
 import { createOptionsUI } from './options-ui.js';
 import {
   clearSavedRun,
@@ -978,13 +979,13 @@ import { testMission } from './missions.js';
         state.rewardMode = null;
         state.routeChoices = getAvailableRouteIds();
         state.tourEventId = rollTourEvent(nextRandom);
-        awardMerchTokens();
-        rollShopInventory();
+        shop.awardMerchTokens();
+        shop.rollShopInventory();
         saveRunState();
         if (state.tourEventId && getTourEvent(state.tourEventId)) {
           ui.openTourEventModal(
             getTourEvent(state.tourEventId),
-            getAvailableEventOptions(state.tourEventId),
+            tourEvents.getAvailableEventOptions(state.tourEventId),
             state.masterDeck
           );
           return;
@@ -1037,230 +1038,39 @@ import { testMission } from './missions.js';
           return;
         }
         ui.closeTourRoutingModal();
-        if (route.rewardMode === 'rest') {
-          state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
-          leaveRewardPhase('💖 Soundcheck: skipped rewards and rested backstage (+25 HP).');
-          return;
-        }
         state.rewardMode = route.rewardMode;
         addLog(`🎫 Leona routed K/DA to ${route.name}.`, 'text-amber-300');
         ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck, route.rewardMode);
         saveRunState();
       }
 
-      function getUnownedRelicIds() {
-        const owned = new Set(state.relics);
-        return Object.keys(RELIC_DB).filter((id) => !owned.has(id) && !RELIC_DB[id].leaderId);
-      }
+      const tourEvents = createTourEvents({
+        getState: () => state,
+        getCardDatabase: () => CARD_DB,
+        getRelicDatabase: () => RELIC_DB,
+        shuffle,
+        addLog,
+        saveRunState,
+        openEventModal: (event, options, deck) => ui.openTourEventModal(event, options, deck),
+        closeEventModal: () => ui.closeTourEventModal(),
+        showRouting: () => refreshRoutingModal(),
+        isRewardAvailable,
+        getAvailableRouteIds,
+        getTourRoute
+      });
 
-      function getUpgradeableInstances() {
-        const seen = new Set();
-        return state.masterDeck.filter((instance) => {
-          if (instance.upgradeLevel !== 0 || !CARD_DB[instance.cardId]?.upgrade) return false;
-          if (seen.has(instance.cardId)) return false;
-          seen.add(instance.cardId);
-          return true;
-        });
-      }
-
-      function isEventOptionAvailable(option) {
-        if (!option || !option.requires) return true;
-        if (option.requires === 'canCut') return state.masterDeck.length > 1;
-        if (option.requires === 'hasRelicAvailable') return getUnownedRelicIds().length > 0;
-        if (option.requires === 'canTune') {
-          return getUpgradeableInstances().length > 0 && state.player.hp > 8;
-        }
-        return true;
-      }
-
-      function getAvailableEventOptions(eventId) {
-        const event = getTourEvent(eventId);
-        if (!event) return [];
-        const base = Array.isArray(event.options) ? event.options : [];
-        const available = base.filter(isEventOptionAvailable);
-        if (eventId === 'street_show') {
-          return available.filter((option) => {
-            if (option.id === 'gear_upgrade') return getUpgradeableInstances().length > 0;
-            return true;
-          });
-        }
-        return available;
-      }
-
-      function addCurseToDeck(cardId) {
-        const card = CARD_DB[cardId];
-        if (!card || card.type !== 'STATUS' || card.draftable !== false) {
-          throw new Error(`Invalid curse card: ${cardId}`);
-        }
-        const instance = {
-          instanceId: state.nextCardInstanceId++,
-          cardId,
-          upgradeLevel: 0
-        };
-        state.masterDeck.push(instance);
-        state.discardPile.push({ ...instance });
-      }
-
-      function upgradeRandomCard() {
-        const candidates = getUpgradeableInstances();
-        if (candidates.length === 0) return null;
-        const picked = shuffle(candidates)[0];
-        const master = state.masterDeck.find((instance) => instance.instanceId === picked.instanceId);
-        if (master) master.upgradeLevel = 1;
-        [state.drawPile, state.hand, state.discardPile, state.exhaustPile].forEach((pile) => {
-          const copy = Array.isArray(pile) ? pile.find((instance) => instance.instanceId === picked.instanceId) : null;
-          if (copy) copy.upgradeLevel = 1;
-        });
-        const buff = state.buffs.find((entry) => entry.instanceId === picked.instanceId);
-        if (buff) buff.upgradeLevel = 1;
-        return picked;
-      }
-
-      function finishTourEvent(message) {
-        state.tourEventId = null;
-        saveRunState();
-        ui.closeTourEventModal();
-        if (message) addLog(message, 'text-amber-300');
-        refreshRoutingModal();
-      }
-
-      function chooseTourEventOption(eventId, optionId) {
-        if (state.runStatus !== 'draft' || state.tourEventId !== eventId) return;
-        const event = getTourEvent(eventId);
-        const option = event?.options?.find((entry) => entry.id === optionId);
-        if (!option || !isEventOptionAvailable(option)) {
-          state.tourEventId = getTourEvent(eventId) ? eventId : null;
-          saveRunState();
-          ui.openTourEventModal(event, getAvailableEventOptions(eventId), state.masterDeck);
-          addLog('🎫 Leona rerouted K/DA: that event option sold out.', 'text-amber-300');
-          return;
-        }
-        if (optionId === 'wardrobe_purge') return;
-        applyTourEventOption(optionId);
-      }
-
-      function pruneStaleRelicChoices() {
-        const owned = new Set(state.relics);
-        const before = state.relicChoices.length;
-        state.relicChoices = state.relicChoices.filter((id) => !owned.has(id));
-        if (state.relicChoices.length !== before) {
-          state.routeChoices = state.routeChoices.filter((id) => {
-            const route = getTourRoute(id);
-            return route && isRewardAvailable(route.rewardMode);
-          });
-          if (state.routeChoices.length === 0) state.routeChoices = getAvailableRouteIds();
-        }
-      }
-
-      function applyTourEventOption(optionId, extra = {}) {
-        switch (optionId) {
-          case 'sign_session': {
-            state.player.maxHp += 15;
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 15);
-            finishTourEvent('🤝 Meet & Greet signing session: +15 Max HP and healed 15 HP!');
-            break;
-          }
-          case 'backstage_deal': {
-            const pool = getUnownedRelicIds();
-            if (pool.length === 0) return;
-            const relicId = shuffle(pool)[0];
-            state.relics.push(relicId);
-            addCurseToDeck('stage_fright');
-            pruneStaleRelicChoices();
-            finishTourEvent(`🤝 Backstage deal: gained ${RELIC_DB[relicId].name} and took Stage Fright!`);
-            break;
-          }
-          case 'hype_train': {
-            state.player.cheer = Math.min(100, state.player.cheer + 20);
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 10);
-            finishTourEvent('🎤 Rooftop hype train: +20% Crowd Cheer and healed 10 HP!');
-            break;
-          }
-          case 'gear_upgrade': {
-            const upgraded = upgradeRandomCard();
-            finishTourEvent(upgraded
-              ? `🎤 Soundcheck tweak: upgraded ${CARD_DB[upgraded.cardId].name}!`
-              : '🎤 Soundcheck tweak fizzled: nothing left to upgrade.');
-            break;
-          }
-          case 'risky_pyro': {
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
-            addCurseToDeck('burn');
-            finishTourEvent('🎤 Risky pyro healed 25 HP but left a Burn curse in the deck!');
-            break;
-          }
-          case 'restful_mix': {
-            state.player.hp = Math.min(state.player.maxHp, state.player.hp + 20);
-            finishTourEvent('🎛️ Restful mix: healed 20 HP. No strings attached.');
-            break;
-          }
-          case 'fine_tune': {
-            const upgraded = upgradeRandomCard();
-            state.player.hp = Math.max(1, state.player.hp - 8);
-            finishTourEvent(upgraded
-              ? `🎛️ Fine tune: upgraded ${CARD_DB[upgraded.cardId].name} for 8 HP!`
-              : '🎛️ Fine tune fizzled: nothing left to upgrade.');
-            break;
-          }
-          case 'cursed_gear': {
-            const pool = getUnownedRelicIds();
-            if (pool.length === 0) return;
-            const relicId = shuffle(pool)[0];
-            state.relics.push(relicId);
-            addCurseToDeck('micro_oxygen');
-            pruneStaleRelicChoices();
-            finishTourEvent(`🎛️ Cursed gear: gained ${RELIC_DB[relicId].name} and took Micro-Oxygen!`);
-            break;
-          }
-          default:
-            throw new Error(`Unknown tour event option: ${optionId}`);
-        }
-      }
-
-      function removeEventCard(instanceId) {
-        if (state.runStatus !== 'draft' || !state.tourEventId) return;
-        if (state.masterDeck.length <= 1) return;
-        const deckIndex = state.masterDeck.findIndex((instance) => instance.instanceId === instanceId);
-        if (deckIndex < 0) return;
-        const activePiles = [state.drawPile, state.hand, state.discardPile, state.exhaustPile];
-        const activeBuffIndex = state.buffs.findIndex((buff) => buff.instanceId === instanceId);
-        const activePile = activePiles.find((pile) =>
-          Array.isArray(pile) && pile.some((instance) => instance.instanceId === instanceId)
-        );
-        if (activeBuffIndex < 0 && !activePile) return;
-        const [removed] = state.masterDeck.splice(deckIndex, 1);
-        if (activeBuffIndex >= 0) {
-          state.buffs.splice(activeBuffIndex, 1);
-        } else {
-          activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
-        }
-        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 8);
-        finishTourEvent(`🤝 Wardrobe purge: removed ${CARD_DB[removed.cardId].name} and healed 8 HP!`);
-      }
-
-      const SHOP_PRICES = Object.freeze({ card: 12, relic: 18, removal: 8, heal: 6 });
-      const SHOP_HEAL_AMOUNT = 15;
-
-      function awardMerchTokens() {
-        const award = 10 + state.stageIndex + state.encoreLevel * 2;
-        state.merchTokens = Math.min(9999, state.merchTokens + award);
-        addLog(`🪙 Merch stand payout: +${award} Merch Tokens (${state.merchTokens} total).`, 'text-amber-300');
-      }
-
-      function rollShopInventory() {
-        const draftPool = Object.values(CARD_DB).filter((c) => !c.starter && c.draftable !== false);
-        const cards = shuffle(draftPool).slice(0, 2).map((card) => card.id);
-        const owned = new Set(state.relics);
-        const relicPool = shuffle(Object.keys(RELIC_DB).filter((id) =>
-          !owned.has(id) && !RELIC_DB[id].leaderId
-        ));
-        state.shop = {
-          cards,
-          relic: relicPool.length > 0 ? relicPool[0] : null,
-          removalUsed: false,
-          healUsed: false
-        };
-      }
+      const shop = createShop({
+        getState: () => state,
+        getCardDatabase: () => CARD_DB,
+        getRelicDatabase: () => RELIC_DB,
+        shuffle,
+        addLog,
+        saveRunState,
+        renderAll,
+        showRouting: () => refreshRoutingModal(),
+        getUnownedRelicIds: tourEvents.getUnownedRelicIds,
+        pruneStaleRelicChoices: tourEvents.pruneStaleRelicChoices
+      });
 
       function refreshRoutingModal() {
         ui.openTourRoutingModal(
@@ -1269,87 +1079,6 @@ import { testMission } from './missions.js';
           state.shop,
           state.merchTokens
         );
-      }
-
-      function buyShopCard(cardId) {
-        if (state.runStatus !== 'draft' || !state.shop) return;
-        if (!state.shop.cards.includes(cardId)) return;
-        if (state.merchTokens < SHOP_PRICES.card) return;
-        const card = CARD_DB[cardId];
-        if (!card || card.starter || card.draftable === false) return;
-        state.merchTokens -= SHOP_PRICES.card;
-        const instance = {
-          instanceId: state.nextCardInstanceId++,
-          cardId,
-          upgradeLevel: 0
-        };
-        state.masterDeck.push(instance);
-        state.discardPile.push({ ...instance });
-        state.shop.cards = state.shop.cards.filter((id) => id !== cardId);
-        addLog(`🪙 Bought "${card.name}" for ${SHOP_PRICES.card} Merch Tokens.`, 'text-amber-300');
-        saveRunState();
-        refreshRoutingModal();
-        renderAll();
-      }
-
-      function buyShopRelic() {
-        if (state.runStatus !== 'draft' || !state.shop || !state.shop.relic) return;
-        if (state.merchTokens < SHOP_PRICES.relic) return;
-        if (state.relics.includes(state.shop.relic)) {
-          state.shop.relic = null;
-          saveRunState();
-          refreshRoutingModal();
-          return;
-        }
-        const relic = RELIC_DB[state.shop.relic];
-        if (!relic || relic.leaderId) return;
-        state.merchTokens -= SHOP_PRICES.relic;
-        state.relics.push(state.shop.relic);
-        addLog(`🪙 Bought ${relic.name} for ${SHOP_PRICES.relic} Merch Tokens.`, 'text-amber-300');
-        state.shop.relic = null;
-        pruneStaleRelicChoices();
-        saveRunState();
-        refreshRoutingModal();
-        renderAll();
-      }
-
-      function buyShopRemoval(instanceId) {
-        if (state.runStatus !== 'draft' || !state.shop || state.shop.removalUsed) return;
-        if (state.merchTokens < SHOP_PRICES.removal) return;
-        if (state.masterDeck.length <= 1) return;
-        const deckIndex = state.masterDeck.findIndex((instance) => instance.instanceId === instanceId);
-        if (deckIndex < 0) return;
-        const activePiles = [state.drawPile, state.hand, state.discardPile, state.exhaustPile];
-        const activeBuffIndex = state.buffs.findIndex((buff) => buff.instanceId === instanceId);
-        const activePile = activePiles.find((pile) =>
-          Array.isArray(pile) && pile.some((instance) => instance.instanceId === instanceId)
-        );
-        if (activeBuffIndex < 0 && !activePile) return;
-        state.merchTokens -= SHOP_PRICES.removal;
-        const [removed] = state.masterDeck.splice(deckIndex, 1);
-        if (activeBuffIndex >= 0) {
-          state.buffs.splice(activeBuffIndex, 1);
-        } else {
-          activePile.splice(activePile.findIndex((instance) => instance.instanceId === instanceId), 1);
-        }
-        state.shop.removalUsed = true;
-        addLog(`🪙 Removed ${CARD_DB[removed.cardId].name} for ${SHOP_PRICES.removal} Merch Tokens.`, 'text-amber-300');
-        saveRunState();
-        refreshRoutingModal();
-        renderAll();
-      }
-
-      function buyShopHeal() {
-        if (state.runStatus !== 'draft' || !state.shop || state.shop.healUsed) return;
-        if (state.merchTokens < SHOP_PRICES.heal) return;
-        if (state.player.hp >= state.player.maxHp) return;
-        state.merchTokens -= SHOP_PRICES.heal;
-        state.player.hp = Math.min(state.player.maxHp, state.player.hp + SHOP_HEAL_AMOUNT);
-        state.shop.healUsed = true;
-        addLog(`🪙 Backstage patch-up: +${SHOP_HEAL_AMOUNT} HP for ${SHOP_PRICES.heal} Merch Tokens.`, 'text-amber-300');
-        saveRunState();
-        refreshRoutingModal();
-        renderAll();
       }
 
       function evaluateMissions() {
@@ -1819,7 +1548,7 @@ import { testMission } from './missions.js';
       function restoreRunModal() {
         if (state.runStatus === 'draft') {
           if (state.tourEventId && getTourEvent(state.tourEventId)) {
-            const options = getAvailableEventOptions(state.tourEventId);
+            const options = tourEvents.getAvailableEventOptions(state.tourEventId);
             if (options.length > 0) {
               ui.openTourEventModal(getTourEvent(state.tourEventId), options, state.masterDeck);
               return;
@@ -1835,7 +1564,7 @@ import { testMission } from './missions.js';
               return route && isRewardAvailable(route.rewardMode);
             });
             state.routeChoices = freshIds.length > 0 ? freshIds : getAvailableRouteIds();
-            if (!state.shop) rollShopInventory();
+            if (!state.shop) shop.rollShopInventory();
             saveRunState();
             refreshRoutingModal();
           } else {
@@ -1875,12 +1604,12 @@ import { testMission } from './missions.js';
             onPlayCard: playCardAtIndex,
             onToggleKeep: toggleKeptCard,
             onChooseRoute: chooseTourRoute,
-            onChooseEventOption: chooseTourEventOption,
-            onRemoveEventCard: removeEventCard,
-            onBuyShopCard: buyShopCard,
-            onBuyShopRelic: buyShopRelic,
-            onBuyShopRemoval: buyShopRemoval,
-            onBuyShopHeal: buyShopHeal,
+            onChooseEventOption: tourEvents.chooseTourEventOption,
+            onRemoveEventCard: tourEvents.removeEventCard,
+            onBuyShopCard: shop.buyShopCard,
+            onBuyShopRelic: shop.buyShopRelic,
+            onBuyShopRemoval: shop.buyShopRemoval,
+            onBuyShopHeal: shop.buyShopHeal,
             getCardDamagePreview,
             onJumpToStage: startStage,
             onChooseDraftCard: chooseDraftCard,
