@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="primeHide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7f1d1d"/>
+      <stop offset="55%" stop-color="#450a0a"/>
+      <stop offset="100%" stop-color="#1c0505"/>
+    </linearGradient>
+  </defs>
+  <!-- Heavy limbs -->
+  <path d="M96,132 L62,150 L46,146 M104,146 L74,170 L58,172 M184,132 L218,150 L234,146 M176,146 L206,170 L222,172" stroke="#450a0a" stroke-width="7" stroke-linecap="round"/>
+  <!-- Massive torso -->
+  <ellipse cx="140" cy="118" rx="44" ry="40" fill="url(#primeHide)" stroke="#fca5a5" stroke-width="1.5"/>
+  <!-- Dorsal spikes -->
+  <polygon points="104,96 92,62 110,84" fill="#d6d3d1" stroke="#78350f" stroke-width="1.2"/>
+  <polygon points="128,84 120,46 138,74" fill="#e7e5e4" stroke="#78350f" stroke-width="1.2"/>
+  <polygon points="152,84 160,46 142,74" fill="#e7e5e4" stroke="#78350f" stroke-width="1.2"/>
+  <polygon points="176,96 188,62 170,84" fill="#d6d3d1" stroke="#78350f" stroke-width="1.2"/>
+  <!-- Crushing jaws -->
+  <path d="M118,132 L162,132 L156,152 L124,152 Z" fill="#1c0505" stroke="#fca5a5" stroke-width="1.4"/>
+  <path d="M124,132 L120,144 M132,132 L130,144 M140,132 L140,144 M148,132 L150,144 M156,132 L160,144" stroke="#e7e5e4" stroke-width="1.6"/>
+  <!-- Burning eyes -->
+  <circle cx="124" cy="104" r="5" fill="#f97316" stroke="#1c0505" stroke-width="1"/>
+  <circle cx="156" cy="104" r="5" fill="#f97316" stroke="#1c0505" stroke-width="1"/>
+</svg>

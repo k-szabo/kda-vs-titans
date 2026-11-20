@@ -1,0 +1,44 @@
+{
+  "id": "giganrex_w10",
+  "name": "GIGAN REX: CRIMSON REAPER",
+  "subtitle": "WAVE 10 // TWIN-SAW EXECUTIONER",
+  "maxHp": 156,
+  "spriteType": "giganrex",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 4,
+      "block": 15,
+      "desc": "Execution Protocol: enrages below half HP."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 7,
+      "hits": 3,
+      "label": "🪚 TWIN-SAW MAELSTROM: 7x3 DMG"
+    },
+    {
+      "type": "atomic",
+      "dmg": 32,
+      "label": "🔪 RAPTOR DESCENT: 32 DMG",
+      "charged": true
+    },
+    {
+      "type": "charge",
+      "block": 18,
+      "label": "🛡️ CRIMSON PLATE: +18 BLOCK",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "burning_godzilla",
+    "illustration": "./kaiju/giganrex.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(153, 27, 27, 0.35), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

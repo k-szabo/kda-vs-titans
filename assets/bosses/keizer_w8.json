@@ -1,0 +1,42 @@
+{
+  "id": "keizer_w8",
+  "name": "KEIZER GHIDORAH: TRIPLE CROWN",
+  "subtitle": "WAVE 8 // HYDRA ASCENDANT",
+  "maxHp": 142,
+  "spriteType": "keizer",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onPlayerAttack",
+      "effect": "gainBlock",
+      "value": 2,
+      "desc": "Golden Scales: gains +2 Block each time K/DA plays an Attack."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 6,
+      "hits": 3,
+      "label": "⚡ TRIPLE GRAVITY: 6x3 DMG"
+    },
+    {
+      "type": "steal_energy",
+      "amount": 2,
+      "label": "🔋 KEIZER DRAIN: -2 HYPE NEXT TURN"
+    },
+    {
+      "type": "atomic",
+      "dmg": 28,
+      "label": "🌩️ HYDRA ANNIHILATION: 28 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "male_muto",
+    "illustration": "./kaiju/keizer.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(251, 191, 36, 0.3), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

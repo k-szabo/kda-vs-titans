@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <radialGradient id="scyBody" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#0e7490"/>
+      <stop offset="55%" stop-color="#164e63"/>
+      <stop offset="100%" stop-color="#04121a"/>
+    </radialGradient>
+  </defs>
+  <!-- Crab-spider legs -->
+  <path d="M110,110 L76,92 L58,98 M108,126 L72,124 L54,132 M110,142 L74,156 L60,168 M170,110 L204,92 L222,98 M172,126 L208,124 L226,132 M170,142 L206,156 L220,168" stroke="#155e75" stroke-width="4" stroke-linecap="round"/>
+  <!-- Armored cephalothorax -->
+  <ellipse cx="140" cy="128" rx="34" ry="30" fill="url(#scyBody)" stroke="#67e8f9" stroke-width="1.4"/>
+  <!-- Claw pair -->
+  <path d="M114,112 L84,96 L72,104 L96,116 Z" fill="#0e7490" stroke="#67e8f9" stroke-width="1.2"/>
+  <path d="M84,96 L70,82 L78,98 Z" fill="#67e8f9" stroke="#0e7490" stroke-width="1"/>
+  <path d="M166,112 L196,96 L208,104 L184,116 Z" fill="#0e7490" stroke="#67e8f9" stroke-width="1.2"/>
+  <path d="M196,96 L210,82 L202,98 Z" fill="#67e8f9" stroke="#0e7490" stroke-width="1"/>
+  <!-- Eye ridge -->
+  <circle cx="128" cy="114" r="4" fill="#fef08a" stroke="#04121a" stroke-width="1"/>
+  <circle cx="140" cy="110" r="5" fill="#fef08a" stroke="#04121a" stroke-width="1"/>
+  <circle cx="152" cy="114" r="4" fill="#fef08a" stroke="#04121a" stroke-width="1"/>
+  <!-- Shell ridges -->
+  <path d="M118,132 L162,132 M122,142 L158,142" stroke="#67e8f9" stroke-width="1.2" opacity="0.6"/>
+</svg>

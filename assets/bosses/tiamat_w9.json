@@ -1,0 +1,43 @@
+{
+  "id": "tiamat_w9",
+  "name": "TIAMAT: SERPENT CHOIR",
+  "subtitle": "WAVE 9 // VENOM HARMONY",
+  "maxHp": 152,
+  "spriteType": "tiamat",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onTurnEnd",
+      "effect": "gainStrength",
+      "value": 1,
+      "desc": "Relentless Tide: gains +1 Strength at the end of every turn."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 7,
+      "hits": 2,
+      "label": "🐍 CONSTRICTOR CHOIR: 7x2 DMG"
+    },
+    {
+      "type": "debuff_atk",
+      "dmg": 14,
+      "weak": 1,
+      "label": "🧪 VENOM ARIA: 14 DMG + WEAK"
+    },
+    {
+      "type": "atomic",
+      "dmg": 30,
+      "label": "🌪️ MAELSTROM REQUIEM: 30 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "female_muto",
+    "illustration": "./kaiju/tiamat.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(45, 212, 191, 0.3), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

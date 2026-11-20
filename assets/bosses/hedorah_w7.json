@@ -1,0 +1,36 @@
+{
+  "id": "hedorah_w7",
+  "name": "HEDORAH: SMOG TITAN",
+  "subtitle": "WAVE 7 // TOXIC TIDE",
+  "maxHp": 132,
+  "spriteType": "hedorah",
+  "burning": false,
+  "stageEffect": "thermonuclear_heat",
+  "patterns": [
+    {
+      "type": "injectStatus",
+      "cardId": "burn",
+      "count": 2,
+      "label": "☢️ SMOG BANK: +2 BURN"
+    },
+    {
+      "type": "debuff_atk",
+      "dmg": 14,
+      "weak": 1,
+      "label": "🤢 SLUDGE LASH: 14 DMG + WEAK"
+    },
+    {
+      "type": "atomic",
+      "dmg": 27,
+      "label": "🌋 ACID ERUPTION: 27 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "destoroyah",
+    "illustration": "./kaiju/hedorah.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(77, 124, 15, 0.32), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

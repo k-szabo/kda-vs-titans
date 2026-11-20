@@ -1,0 +1,57 @@
+{
+  "id": "shin_w10",
+  "name": "SHIN GODZILLA: EVOLVING HORROR",
+  "subtitle": "WAVE 10 // FORMS UNBOUND",
+  "maxHp": 158,
+  "spriteType": "shin",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 4,
+      "block": 15,
+      "desc": "Forced Evolution: enrages below half HP and takes a new form."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "attack",
+      "dmg": 17,
+      "label": "🦎 JAW UNSHINGE: 17 DMG"
+    },
+    {
+      "type": "injectStatus",
+      "cardId": "burn",
+      "count": 1,
+      "label": "🔥 DORSAL IMMOLATION: +1 BURN"
+    },
+    {
+      "type": "atomic",
+      "dmg": 33,
+      "label": "☢️ ATOMIC VOMIT: 33 DMG",
+      "charged": true
+    }
+  ],
+  "phase2Patterns": [
+    {
+      "type": "multi",
+      "dmg": 7,
+      "hits": 2,
+      "label": "🦎 DORSAL BARRAGE: 7x2 DMG"
+    },
+    {
+      "type": "atomic",
+      "dmg": 36,
+      "label": "☢️ EVOLVED BREATH: 36 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "burning_godzilla",
+    "illustration": "./kaiju/shin.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(239, 68, 68, 0.32), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

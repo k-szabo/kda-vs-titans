@@ -1,0 +1,67 @@
+{
+  "id": "bagan_w10",
+  "name": "BAGAN: HORNED CALAMITY",
+  "subtitle": "WAVE 10 // ANCIENT SUPERGOD",
+  "maxHp": 160,
+  "spriteType": "bagan",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onTurnEnd",
+      "effect": "gainStrength",
+      "value": 1,
+      "desc": "Ancient Wrath: gains +1 Strength at the end of every turn."
+    },
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 5,
+      "block": 20,
+      "desc": "Calamity Awakened: enrages below half HP."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "atomic",
+      "dmg": 34,
+      "label": "💥 PLASMA ERUPTION: 34 DMG",
+      "charged": true,
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35
+    },
+    {
+      "type": "multi",
+      "dmg": 8,
+      "hits": 2,
+      "label": "🦖 CALAMITY HORNS: 8x2 DMG"
+    },
+    {
+      "type": "attack",
+      "dmg": 19,
+      "label": "🔥 GODFIRE SLAM: 19 DMG"
+    }
+  ],
+  "phase2Patterns": [
+    {
+      "type": "atomic",
+      "dmg": 36,
+      "label": "💥 SUPERGOD NOVA: 36 DMG",
+      "charged": true,
+      "interruptThreshold": 18,
+      "interruptBonus": 0.35
+    },
+    {
+      "type": "charge",
+      "block": 22,
+      "label": "🛡️ DIAMOND CARAPACE: +22 BLOCK",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "burning_godzilla",
+    "illustration": "./kaiju/bagan.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(163, 230, 53, 0.3), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

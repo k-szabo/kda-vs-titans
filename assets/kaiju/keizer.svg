@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="kzGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="55%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
+  </defs>
+  <!-- Storm wings -->
+  <path d="M140,152 L60,122 L30,82 L84,98 L120,112 Z" fill="#451a03" stroke="#fbbf24" stroke-width="1.3"/>
+  <path d="M140,152 L220,122 L250,82 L196,98 L160,112 Z" fill="#451a03" stroke="#fbbf24" stroke-width="1.3"/>
+  <!-- Central torso -->
+  <ellipse cx="140" cy="150" rx="30" ry="24" fill="url(#kzGold)" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Three spread serpent necks, drawn over the torso -->
+  <path d="M122,132 Q92,104 72,70" stroke="url(#kzGold)" stroke-width="11" stroke-linecap="round"/>
+  <path d="M140,128 Q132,94 128,60" stroke="url(#kzGold)" stroke-width="11" stroke-linecap="round"/>
+  <path d="M158,132 Q188,104 208,70" stroke="url(#kzGold)" stroke-width="11" stroke-linecap="round"/>
+  <!-- Three horned heads -->
+  <path d="M60,70 L72,46 L76,66 L86,52 L82,72 Z" fill="#b45309" stroke="#fde68a" stroke-width="1.2"/>
+  <path d="M116,60 L128,32 L132,56 L142,40 L138,62 Z" fill="#b45309" stroke="#fde68a" stroke-width="1.2"/>
+  <path d="M196,72 L206,48 L210,68 L220,54 L216,74 Z" fill="#b45309" stroke="#fde68a" stroke-width="1.2"/>
+  <circle cx="74" cy="64" r="3" fill="#ef4444"/>
+  <circle cx="129" cy="54" r="3" fill="#ef4444"/>
+  <circle cx="208" cy="66" r="3" fill="#ef4444"/>
+</svg>

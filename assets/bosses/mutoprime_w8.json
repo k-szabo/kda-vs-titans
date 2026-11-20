@@ -1,0 +1,58 @@
+{
+  "id": "mutoprime_w8",
+  "name": "MUTO PRIME: SWARM MOTHER",
+  "subtitle": "WAVE 8 // APEX PARASITE",
+  "maxHp": 148,
+  "spriteType": "mutoprime",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onHpBelowHalf",
+      "effect": "enrage",
+      "strength": 4,
+      "block": 15,
+      "desc": "Brood Frenzy: enrages below half HP."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 8,
+      "hits": 3,
+      "label": "🦗 SWARM MAW: 8x3 DMG"
+    },
+    {
+      "type": "injectStatus",
+      "cardId": "micro_oxygen",
+      "count": 1,
+      "label": "📻 JAMMING SCREECH: +1 MICRO-OXYGEN"
+    },
+    {
+      "type": "atomic",
+      "dmg": 30,
+      "label": "💥 SEISMIC PULSE: 30 DMG",
+      "charged": true
+    }
+  ],
+  "phase2Patterns": [
+    {
+      "type": "charge",
+      "block": 18,
+      "label": "🛡️ ARMORED HIDE: +18 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 33,
+      "label": "💥 RUPTURE NOVA: 33 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "male_muto",
+    "illustration": "./kaiju/mutoprime.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(127, 29, 29, 0.35), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

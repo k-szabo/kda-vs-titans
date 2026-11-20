@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.16.0_717c95f2",
+  "currentVersion": "v1.17.0_75253a01",
   "releases": [
+    {
+      "version": "v1.17.0_75253a01",
+      "date": "2026-11-20",
+      "changes": [
+        "Late-wave rotation: waves 7-10 now draft from multiple bosses each.",
+        "New kaiju Hedorah, Monster X, MUTO Prime, Keizer Ghidorah, Scylla, Tiamat, Bagan, Shin Godzilla, and Gigan Rex.",
+        "No save reset; profiles and runs carry over."
+      ]
+    },
     {
       "version": "v1.16.0_717c95f2",
       "date": "2026-11-20",

@@ -1,0 +1,43 @@
+{
+  "id": "monsterx_w7",
+  "name": "MONSTER X: SKELETAL KNIGHT",
+  "subtitle": "WAVE 7 // BONE VANGUARD",
+  "maxHp": 138,
+  "spriteType": "monsterx",
+  "burning": false,
+  "passives": [
+    {
+      "trigger": "onTurnEnd",
+      "effect": "gainStrength",
+      "value": 1,
+      "desc": "Adaptive Skeleton: gains +1 Strength at the end of every turn."
+    }
+  ],
+  "patterns": [
+    {
+      "type": "multi",
+      "dmg": 7,
+      "hits": 2,
+      "label": "🦴 RAZOR BARRAGE: 7x2 DMG"
+    },
+    {
+      "type": "atomic",
+      "dmg": 26,
+      "label": "💀 GRAVITY BOLTS: 26 DMG",
+      "charged": true
+    },
+    {
+      "type": "charge",
+      "block": 16,
+      "label": "🛡️ EXOSKELETON: +16 BLOCK",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "destoroyah",
+    "illustration": "./kaiju/monsterx.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(168, 162, 158, 0.3), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

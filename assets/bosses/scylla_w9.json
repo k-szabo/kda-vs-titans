@@ -1,0 +1,35 @@
+{
+  "id": "scylla_w9",
+  "name": "SCYLLA: ABYSSAL MAW",
+  "subtitle": "WAVE 9 // CRUSHING DEPTHS",
+  "maxHp": 148,
+  "spriteType": "scylla",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "charge",
+      "block": 22,
+      "label": "🦀 ABYSS CARAPACE: +22 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "multi",
+      "dmg": 6,
+      "hits": 2,
+      "label": "🦞 CLAW VOLLEY: 6x2 DMG"
+    },
+    {
+      "type": "atomic",
+      "dmg": 29,
+      "label": "🌊 PRESSURE BURST: 29 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "female_muto",
+    "illustration": "./kaiju/scylla.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(14, 116, 144, 0.32), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

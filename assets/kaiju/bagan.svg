@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="baganHide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#365314"/>
+      <stop offset="55%" stop-color="#1a2e05"/>
+      <stop offset="100%" stop-color="#0a0f02"/>
+    </linearGradient>
+  </defs>
+  <!-- Pillar legs -->
+  <path d="M104,134 L92,172 L66,176 M176,134 L188,172 L214,176" stroke="#1a2e05" stroke-width="12" stroke-linecap="round"/>
+  <path d="M66,176 L56,186 M66,176 L78,186 M214,176 L204,186 M214,176 L226,186" stroke="#d9f99d" stroke-width="2"/>
+  <!-- Massive torso -->
+  <ellipse cx="140" cy="112" rx="42" ry="38" fill="url(#baganHide)" stroke="#a3e635" stroke-width="1.5"/>
+  <!-- Ivory back spikes -->
+  <polygon points="112,84 104,52 120,74" fill="#ecfccb" stroke="#3f6212" stroke-width="1.2"/>
+  <polygon points="140,78 140,42 152,74" fill="#ecfccb" stroke="#3f6212" stroke-width="1.2"/>
+  <polygon points="168,84 176,52 160,74" fill="#ecfccb" stroke="#3f6212" stroke-width="1.2"/>
+  <!-- Demon horns -->
+  <path d="M114,70 Q96,52 92,30" stroke="#d9f99d" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M166,70 Q184,52 188,30" stroke="#d9f99d" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- Snarling maw -->
+  <path d="M122,102 L158,102 L154,120 L126,120 Z" fill="#0a0f02" stroke="#a3e635" stroke-width="1.4"/>
+  <path d="M126,102 L124,112 M134,102 L134,112 M142,102 L142,112 M150,102 L152,112" stroke="#ecfccb" stroke-width="1.4"/>
+  <circle cx="128" cy="88" r="4" fill="#ef4444"/>
+  <circle cx="152" cy="88" r="4" fill="#ef4444"/>
+</svg>

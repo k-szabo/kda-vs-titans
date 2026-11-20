@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="tiaScale" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="55%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#04211f"/>
+    </linearGradient>
+  </defs>
+  <!-- Serpent coils -->
+  <path d="M36,156 Q86,176 128,154 Q168,134 208,154 Q234,166 246,152" stroke="url(#tiaScale)" stroke-width="19" stroke-linecap="round"/>
+  <path d="M108,148 Q130,162 152,150" stroke="#99f6e4" stroke-width="2" opacity="0.7"/>
+  <!-- Feathered fins -->
+  <path d="M96,142 L84,118 L102,132 M126,148 L118,122 L136,140 M156,142 L152,116 L168,136 M188,148 L188,124 L202,142" fill="#14b8a6" stroke="#99f6e4" stroke-width="1"/>
+  <!-- Viper head -->
+  <path d="M214,156 L256,140 L260,154 L224,166 Z" fill="url(#tiaScale)" stroke="#99f6e4" stroke-width="1.4"/>
+  <polygon points="230,146 224,128 236,142" fill="#5eead4" stroke="#0f766e" stroke-width="1"/>
+  <circle cx="244" cy="150" r="4" fill="#f0abfd" stroke="#04211f" stroke-width="1"/>
+  <!-- Forked tongue -->
+  <path d="M258,146 L272,142 M258,146 L272,150" stroke="#f0abfd" stroke-width="1.6" stroke-linecap="round"/>
+</svg>
