@@ -69,7 +69,11 @@ function normalizeTourRouting(state) {
     rewardMode: REWARD_MODES.has(state.rewardMode) ? state.rewardMode : null,
     tourEventId: typeof state.tourEventId === 'string' && TOUR_EVENT_IDS.has(state.tourEventId)
       ? state.tourEventId
-      : null
+      : null,
+    encounterOrder: Array.isArray(state.encounterOrder) &&
+      state.encounterOrder.length > 0 &&
+      state.encounterOrder.every((id) => typeof id === 'string')
+      ? [...state.encounterOrder] : null
   };
 }
 
@@ -374,7 +378,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
   }, { cardDatabase, relicDatabase, encounters, shuffle });
 }
 
-export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encounters }) {
+export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encounters, encounterPools = [] }) {
   if (!savedRun || savedRun.version !== RUN_SAVE_VERSION || !isRecord(savedRun.state)) return false;
   const saved = savedRun.state;
   const piles = [saved.drawPile, saved.hand, saved.discardPile, saved.exhaustPile];
@@ -410,6 +414,13 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     new Set(saved.routeChoices).size !== saved.routeChoices.length ||
     !(saved.rewardMode === null || REWARD_MODES.has(saved.rewardMode)) ||
     !(saved.tourEventId === null || saved.tourEventId === undefined || (typeof saved.tourEventId === 'string' && TOUR_EVENT_IDS.has(saved.tourEventId))) ||
+    !Array.isArray(saved.encounterOrder) ||
+    saved.encounterOrder.length !== encounters.length ||
+    saved.encounterOrder.some((id, index) => {
+      if (typeof id !== 'string') return true;
+      const slot = encounterPools[index];
+      return !Array.isArray(slot) || !slot.includes(id);
+    }) ||
     !Number.isInteger(saved.merchTokens) ||
     saved.merchTokens < 0 ||
     saved.merchTokens > 9999 ||

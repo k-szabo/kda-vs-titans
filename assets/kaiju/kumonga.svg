@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <radialGradient id="kumoAbdomen" cx="50%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="55%" stop-color="#3b0764"/>
+      <stop offset="100%" stop-color="#10021f"/>
+    </radialGradient>
+  </defs>
+  <!-- Eight bent legs -->
+  <path d="M112,108 L64,84 L34,92 M110,124 L60,122 L28,134 M110,140 L62,158 L36,172 M114,154 L76,182 L58,190 M168,108 L216,84 L246,92 M170,124 L220,122 L252,134 M170,140 L218,158 L244,172 M166,154 L204,182 L222,190" stroke="#2e1065" stroke-width="4" stroke-linecap="round"/>
+  <!-- Abdomen with markings -->
+  <ellipse cx="140" cy="150" rx="30" ry="26" fill="url(#kumoAbdomen)" stroke="#a855f7" stroke-width="1.4"/>
+  <path d="M140,130 L128,146 L140,162 L152,146 Z" fill="#e9d5ff" opacity="0.75"/>
+  <!-- Cephalothorax -->
+  <ellipse cx="140" cy="98" rx="26" ry="24" fill="#3b0764" stroke="#a855f7" stroke-width="1.4"/>
+  <!-- Fangs -->
+  <path d="M128,116 L122,136 L132,122 Z" fill="#e9d5ff"/>
+  <path d="M152,116 L158,136 L148,122 Z" fill="#e9d5ff"/>
+  <!-- Eye cluster -->
+  <circle cx="128" cy="92" r="4.5" fill="#f0abfc" stroke="#10021f" stroke-width="1"/>
+  <circle cx="140" cy="88" r="5.5" fill="#f0abfc" stroke="#10021f" stroke-width="1"/>
+  <circle cx="152" cy="92" r="4.5" fill="#f0abfc" stroke="#10021f" stroke-width="1"/>
+  <circle cx="133" cy="101" r="3" fill="#f0abfc" stroke="#10021f" stroke-width="1"/>
+  <circle cx="147" cy="101" r="3" fill="#f0abfc" stroke="#10021f" stroke-width="1"/>
+</svg>

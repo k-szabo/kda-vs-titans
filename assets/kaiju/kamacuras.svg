@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="kamaBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a3b18a"/>
+      <stop offset="55%" stop-color="#6b7f4e"/>
+      <stop offset="100%" stop-color="#3a4426"/>
+    </linearGradient>
+    <linearGradient id="kamaBlade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d6e2b8"/>
+      <stop offset="100%" stop-color="#7a8c5a"/>
+    </linearGradient>
+  </defs>
+  <!-- Walking legs -->
+  <path d="M104,128 L64,150 L40,146 M108,140 L72,168 L48,170 M172,128 L212,150 L236,146 M168,140 L204,168 L228,170" stroke="#55663a" stroke-width="4" stroke-linecap="round"/>
+  <!-- Segmented abdomen -->
+  <ellipse cx="140" cy="118" rx="34" ry="40" fill="url(#kamaBody)" stroke="#2c3519" stroke-width="1.5"/>
+  <path d="M112,104 L168,104 M108,120 L172,120 M110,136 L170,136" stroke="#2c3519" stroke-width="1.2" opacity="0.7"/>
+  <!-- Folded raptorial blades -->
+  <path d="M118,96 L58,52 L96,86 L78,96 Z" fill="url(#kamaBlade)" stroke="#e9f2cf" stroke-width="1.4"/>
+  <path d="M162,96 L222,52 L184,86 L202,96 Z" fill="url(#kamaBlade)" stroke="#e9f2cf" stroke-width="1.4"/>
+  <!-- Triangular head with compound eyes -->
+  <polygon points="140,58 112,92 168,92" fill="#6b7f4e" stroke="#2c3519" stroke-width="1.5"/>
+  <circle cx="126" cy="78" r="7" fill="#b91c1c" stroke="#450a0a" stroke-width="1.5"/>
+  <circle cx="154" cy="78" r="7" fill="#b91c1c" stroke="#450a0a" stroke-width="1.5"/>
+  <circle cx="126" cy="78" r="2.2" fill="#fecaca"/>
+  <circle cx="154" cy="78" r="2.2" fill="#fecaca"/>
+  <!-- Antennae -->
+  <path d="M130,60 L106,26 M150,60 L174,26" stroke="#a3b18a" stroke-width="2" stroke-linecap="round"/>
+</svg>

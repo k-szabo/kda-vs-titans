@@ -6,6 +6,7 @@ export function createOptionsUI({
   defaultKeybinds,
   getProfileStats,
   getEncounters,
+  getAllEncounters,
   onSettingsChange,
   isSoundSupported,
   onTestSound,
@@ -27,6 +28,7 @@ export function createOptionsUI({
   function renderCodex() {
     const profileStats = getProfileStats();
     const encounters = getEncounters();
+    const allEncounters = getAllEncounters();
     document.getElementById('optionsHighestWave').textContent =
       `${profileStats.highestWaveCleared} / ${encounters.length}`;
     document.getElementById('optionsFastestWin').textContent = profileStats.fastestWinMs === null
@@ -37,13 +39,13 @@ export function createOptionsUI({
     const unlocked = new Set(profileStats.unlockedKaiju);
     const grid = document.getElementById('optionsCodexGrid');
     grid.replaceChildren();
-    encounters.forEach((encounter, index) => {
+    allEncounters.forEach((encounter) => {
       const cleared = unlocked.has(encounter.id);
       const entry = document.createElement('div');
       entry.className = `rounded-xl border p-3 ${cleared ? 'border-sky-400/35 bg-sky-500/10' : 'border-white/10 bg-black/25'}`;
       const wave = document.createElement('span');
       wave.className = 'block font-display text-[9px] tracking-widest text-slate-400';
-      wave.textContent = `WAVE ${index + 1} // ${cleared ? 'CONTAINED' : 'UNKNOWN'}`;
+      wave.textContent = `WAVE ${encounter.slot ?? '?'} // ${cleared ? 'CONTAINED' : 'UNKNOWN'}`;
       const name = document.createElement('span');
       name.className = `block font-display text-xs font-bold ${cleared ? 'text-sky-200' : 'text-slate-500'}`;
       name.textContent = cleared ? encounter.name : 'UNDISCOVERED KAIJU';

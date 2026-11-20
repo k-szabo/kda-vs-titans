@@ -58,10 +58,13 @@ export async function loadGameData() {
     typeof manifest.keybinds !== 'string' ||
     !manifest.keybinds ||
     !manifest.changelog ||
-    !Array.isArray(manifest.bosses) ||
-    manifest.bosses.length === 0
+    !Array.isArray(manifest.encounterPools) ||
+    manifest.encounterPools.length === 0 ||
+    manifest.encounterPools.some((slot) =>
+      !Array.isArray(slot) || slot.length === 0 || slot.some((bossPath) => typeof bossPath !== 'string')
+    )
   ) {
-    throw new Error('The asset manifest must define portraits, leader art, backdrops, card, relic, keybind, changelog, and boss files.');
+    throw new Error('The asset manifest must define portraits, leader art, backdrops, card, relic, keybind, changelog, mission, and encounter pool files.');
   }
 
   const leaderIds = ['ahri', 'akali', 'evelynn', 'kaisa'];
@@ -91,13 +94,13 @@ export async function loadGameData() {
   const missionDataUrl = new URL(manifest.missions, DATA_MANIFEST_URL);
   const keybindDataUrl = new URL(manifest.keybinds, DATA_MANIFEST_URL);
   const changelogUrl = new URL(manifest.changelog, DATA_MANIFEST_URL);
-  const [cardData, relicData, missionData, keybindData, changelogData, encounters] = await Promise.all([
+  const [cardData, relicData, missionData, keybindData, changelogData, poolEncounters] = await Promise.all([
     loadJson(cardDataUrl, manifest.version),
     loadJson(relicDataUrl, manifest.version),
     loadJson(missionDataUrl, manifest.version),
     loadJson(keybindDataUrl, manifest.version),
-    loadJson(changelogUrl, manifest.version),
-    Promise.all(manifest.bosses.map(async (bossPath) => {
+    loadJson(changelogData, manifest.version),
+    Promise.all(manifest.encounterPools.map(async (slot, slotIndex) => Promise.all(slot.map(async (bossPath) => {
       const bossUrl = new URL(bossPath, DATA_MANIFEST_URL);
       const boss = await loadJson(bossUrl, manifest.version);
       const backdrop = boss.assets && manifest.backdrops[boss.assets.backdrop];
@@ -106,13 +109,21 @@ export async function loadGameData() {
       }
       return {
         ...boss,
+        slot: slotIndex + 1,
         assets: {
           backdrop: new URL(backdrop, DATA_MANIFEST_URL).href,
           illustration: new URL(boss.assets.illustration, DATA_MANIFEST_URL).href
         }
       };
-    }))
+    }))))
   ]);
+  const allEncounters = poolEncounters.flat();
+  const encountersById = Object.fromEntries(allEncounters.map((encounter) => [encounter.id, encounter]));
+  if (Object.keys(encountersById).length !== allEncounters.length) {
+    throw new Error('Duplicate boss id across encounter pools.');
+  }
+  const encounterPools = poolEncounters.map((slot) => slot.map((encounter) => encounter.id));
+  const encounters = allEncounters;
 
   if (!isValidDefaultKeybinds(keybindData)) {
     throw new Error('The keybind file must define one unique printable key for every game action.');
@@ -378,6 +389,8 @@ export async function loadGameData() {
     changelog: changelogData,
     defaultKeybinds: keybindData,
     encounters,
+    encountersById,
+    encounterPools,
     relicDatabase,
     starterDecks,
     missions: missionData.missions,

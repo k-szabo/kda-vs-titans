@@ -286,6 +286,18 @@ overview.
   Encore and daily modifiers; materialized into `state.enemy` so saves need
   no changes.
 
+### Encounter rotation
+
+- Waves draft from `assets/data.json` → `encounterPools` (10 slots, each a
+  list of boss files). At run start one boss per slot is picked: seeded by
+  UTC date per slot for Daily World Tour, `Math.random` otherwise.
+- The picked order is stored as `state.encounterOrder` (10 ids, validated
+  against the pools in `isValidSavedRun`) and rebuilt on continue/reload, so
+  mid-run reloads never re-roll the setlist. `startStage` and victory logic
+  keep using the picked 10-wave list; codex/menu counts use all encounters.
+- `RUN_SAVE_VERSION` is 6 for this shape; old saves reset with a notice while
+  the profile carries over.
+
 ### Tour routing
 
 - After each non-final wave, a seeded backstage event fires first
@@ -628,7 +640,7 @@ modal is open or a rebind is listening.
 
 | Key | Contents |
 | --- | --- |
-| `encore-spire.run` | `{ version: 5, state }` active run |
+| `encore-spire.run` | `{ version: 6, state }` active run |
 | `encore-spire.profile` | `version: 3` profile/settings/codex/art/daily data |
 | `kda-vs-titans:cache-version` | Last manifest version used to clear Cache Storage |
 
@@ -653,7 +665,9 @@ modal is open or a rebind is listening.
   entries; buff instances stay out of the four piles and count as an active
   location for deck coverage. `routeChoices` is a unique subset of
   `TOUR_ROUTES` ids, `rewardMode` is `null` or a valid reward tab,
-  `tourEventId` is `null` or a valid `TOUR_EVENTS` id, `merchTokens` is an
+  `encounterOrder` is 10 ids, each a member of its wave slot's pool, matching
+  the built encounter list; `tourEventId` is `null` or a valid `TOUR_EVENTS` id,
+  `merchTokens` is an
   integer 0–9999, `shop` is `null` or `{ cards: [≤2 valid draftable ids],
   relic: null | valid unowned non-leader relic, removalUsed: bool,
   healUsed: bool }`, and
@@ -777,7 +791,7 @@ card art mappings and tests across these files.
 Run through this before considering a change complete:
 
 1. Serve over HTTP; no console errors and no `#loadError`.
-2. New run: leader selection, Encore tier gating, leader-specific starter deck (10 cards, keyword intro), wave 1.
+2. New run: leader selection, Encore tier gating, leader-specific starter deck (10 cards, keyword intro), wave 1 (boss may be a drafted alternate).
 3. Play cards; verify cost, upgrades, exhaust, retain, status cards, and hand cap.
    Mark a card with the 📌 toggle and confirm it survives one turn and that the
    next hand is 4 + kept card. Use Kai'Sa's ability on a full hand and confirm
@@ -801,10 +815,9 @@ Run through this before considering a change complete:
     open Missions from the menu and header, confirm done/locked states; buy a
     finish in the Card Atelier (with preview), confirm the sheen shows on the
     card everywhere; reload and confirm profile progress persists.
-8. Reload mid-combat and mid-draft; confirm state, piles, logs, and modal.
-9. Win and lose a run; copy the Tour Receipt; verify profile stats, codex,
-   Encore unlock, and Art Studio progress.
-10. Daily World Tour: same date → same leader/relic/modifier; streak updates.
+8. Reload mid-combat and mid-draft; confirm state, piles, logs, boss identity, and modal. Start several runs to see alternates rotate.
+9. Win and lose a run; copy the Tour Receipt; verify profile stats, codex (counts all drafted kaiju), Encore unlock, and Art Studio progress.
+10. Daily World Tour: same date → same leader/relic/modifier/encounters; streak updates.
 11. Options: sound toggle (including muting active tones), rebind/swap/reset,
     How to Play, Codex, changelog.
 12. `#devtools` wave selector; return to game.

@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.14.2_87f59de5",
+  "currentVersion": "v1.15.0_260840f7",
   "releases": [
+    {
+      "version": "v1.15.0_260840f7",
+      "date": "2026-11-20",
+      "changes": [
+        "Encounter rotation: waves 1-2 now draft from 3 bosses each, seeded for Daily tours.",
+        "New kaiju Kamacuras, Ebirah, Kumonga, and Battra with their own intents.",
+        "Run saves reset to v6 for the new encounter order; profiles carry over."
+      ]
+    },
     {
       "version": "v1.14.2_87f59de5",
       "date": "2026-11-20",

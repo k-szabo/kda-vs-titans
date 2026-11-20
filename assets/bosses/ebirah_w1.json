@@ -1,0 +1,35 @@
+{
+  "id": "ebirah_w1",
+  "name": "EBIRAH: REEF TERROR",
+  "subtitle": "WAVE 1 // SNAPPING TIDE",
+  "maxHp": 68,
+  "spriteType": "ebirah",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "attack",
+      "dmg": 9,
+      "pierce": 0.5,
+      "label": "🦞 SNIPER CLAW: 9 DMG"
+    },
+    {
+      "type": "debuff_atk",
+      "dmg": 8,
+      "weak": 1,
+      "label": "🫧 FOAM SPRAY: 8 DMG + WEAK"
+    },
+    {
+      "type": "charge",
+      "block": 10,
+      "label": "🦞 SHELL WALL: +10 BLOCK",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "godzilla",
+    "illustration": "./kaiju/ebirah.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 45%, rgba(251, 146, 60, 0.3), rgba(15, 23, 42, 0.96) 75%)"
+  }
+}

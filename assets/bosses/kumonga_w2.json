@@ -1,0 +1,35 @@
+{
+  "id": "kumonga_w2",
+  "name": "KUMONGA: SILK REAPER",
+  "subtitle": "WAVE 2 // VENOM WEAVER",
+  "maxHp": 72,
+  "spriteType": "kumonga",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "debuff_atk",
+      "dmg": 9,
+      "weak": 1,
+      "label": "🕸️ WEB SNARE: 9 DMG + WEAK"
+    },
+    {
+      "type": "charge",
+      "block": 14,
+      "label": "🕷️ SILK BULWARK: +14 BLOCK",
+      "charged": true
+    },
+    {
+      "type": "atomic",
+      "dmg": 15,
+      "label": "☠️ VENOM GORE: 15 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "mothra",
+    "illustration": "./kaiju/kumonga.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 40%, rgba(168, 85, 247, 0.32), rgba(15, 23, 42, 0.98) 80%)"
+  }
+}

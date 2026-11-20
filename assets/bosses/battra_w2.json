@@ -1,0 +1,35 @@
+{
+  "id": "battra_w2",
+  "name": "BATTRA: DARK SERAPH",
+  "subtitle": "WAVE 2 // UMBRAL HERALD",
+  "maxHp": 78,
+  "spriteType": "battra",
+  "burning": false,
+  "patterns": [
+    {
+      "type": "injectStatus",
+      "cardId": "burn",
+      "count": 1,
+      "label": "🌑 DARK SPORES: +1 BURN"
+    },
+    {
+      "type": "multi",
+      "dmg": 5,
+      "hits": 2,
+      "label": "📯 HORN BARRAGE: 5x2 DMG"
+    },
+    {
+      "type": "atomic",
+      "dmg": 17,
+      "label": "🌒 SHADOW PRISM: 17 DMG",
+      "charged": true
+    }
+  ],
+  "assets": {
+    "backdrop": "mothra",
+    "illustration": "./kaiju/battra.svg"
+  },
+  "visuals": {
+    "background": "radial-gradient(circle at 50% 40%, rgba(239, 68, 68, 0.3), rgba(15, 23, 42, 0.98) 80%)"
+  }
+}

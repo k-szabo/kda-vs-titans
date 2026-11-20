@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 190" width="280" height="190" style="filter: drop-shadow(0 6px 18px rgba(0,0,0,0.95))" fill="none">
+  <defs>
+    <linearGradient id="batWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7f1d1d"/>
+      <stop offset="55%" stop-color="#1f0a1e"/>
+      <stop offset="100%" stop-color="#0a0a12"/>
+    </linearGradient>
+  </defs>
+  <!-- Broad dark wings -->
+  <path d="M134,96 L16,44 L44,84 L22,104 L70,112 L126,116 Z" fill="url(#batWing)" stroke="#ef4444" stroke-width="1.4"/>
+  <path d="M146,96 L264,44 L236,84 L258,104 L210,112 L154,116 Z" fill="url(#batWing)" stroke="#ef4444" stroke-width="1.4"/>
+  <!-- Wing vein scars -->
+  <path d="M126,100 L42,62 M126,108 L50,98 M154,100 L238,62 M154,108 L230,98" stroke="#fca5a5" stroke-width="1.2" opacity="0.7"/>
+  <!-- Armored body -->
+  <path d="M128,78 L152,78 L158,134 L140,166 L122,134 Z" fill="#1f0a1e" stroke="#ef4444" stroke-width="1.3"/>
+  <path d="M128,100 L152,100 M126,118 L154,118 M128,136 L152,136" stroke="#7f1d1d" stroke-width="1.4"/>
+  <!-- Trident horn crown -->
+  <polygon points="140,78 132,34 140,52 148,34" fill="#fbbf24" stroke="#78350f" stroke-width="1.2"/>
+  <polygon points="124,80 108,52 122,72" fill="#f59e0b" stroke="#78350f" stroke-width="1"/>
+  <polygon points="156,80 172,52 158,72" fill="#f59e0b" stroke="#78350f" stroke-width="1"/>
+  <!-- Burning red eyes -->
+  <circle cx="132" cy="88" r="4" fill="#ef4444"/>
+  <circle cx="148" cy="88" r="4" fill="#ef4444"/>
+  <circle cx="132" cy="88" r="1.5" fill="#fecaca"/>
+  <circle cx="148" cy="88" r="1.5" fill="#fecaca"/>
+</svg>

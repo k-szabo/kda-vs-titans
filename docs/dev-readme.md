@@ -67,7 +67,7 @@ The battle log can be collapsed from its header control. It defaults to collapse
 
 ## How to Play and Options
 
-The How to Play modal summarizes the turn flow, boss intents and interrupts, member combos and keywords, the status-effect glossary, and leader/relic progression. Options is available from the main menu and combat header and contains the Codex, career records, and changelog. Sound preference and custom keyboard bindings are stored in the existing profile v3 data; older profiles are normalized without clearing progress. This update resets run saves to v5 (old runs must restart) while leaving profile v3 data — stats, art, and codex — untouched. Default shortcuts are read from `assets/keybinds.json`, referenced by `assets/data.json`, and custom bindings override them in the profile. Sound defaults to on. The shipped defaults are `1`–`5` for hand slots, `E` to end the turn, `Q` for Joint Finale, and `R` for the Leader Ability. Bindings accept one printable key, duplicate bindings swap, Escape cancels a pending capture, and Reset Defaults restores the JSON-defined defaults. The separate Codex/Changelog menu entry has been removed.
+The How to Play modal summarizes the turn flow, boss intents and interrupts, member combos and keywords, the status-effect glossary, and leader/relic progression. Options is available from the main menu and combat header and contains the Codex, career records, and changelog. Sound preference and custom keyboard bindings are stored in the existing profile v3 data; older profiles are normalized without clearing progress. This update resets run saves to v6 (old runs must restart) while leaving profile v3 data — stats, art, and codex — untouched. Default shortcuts are read from `assets/keybinds.json`, referenced by `assets/data.json`, and custom bindings override them in the profile. Sound defaults to on. The shipped defaults are `1`–`5` for hand slots, `E` to end the turn, `Q` for Joint Finale, and `R` for the Leader Ability. Bindings accept one printable key, duplicate bindings swap, Escape cancels a pending capture, and Reset Defaults restores the JSON-defined defaults. The separate Codex/Changelog menu entry has been removed.
 
 The synthesized sound toggle takes effect immediately, including for tones already playing. Enabling sound from Options plays a short confirmation chime.
 
@@ -139,10 +139,10 @@ node -e "const crypto = require('node:crypto'); const release = { date: '2026-11
 
 ## Add a boss
 
-1. Add its backdrop URL to `assets/data.json` under `backdrops`.
+1. Add its backdrop URL to `assets/data.json` under `backdrops` (or reuse a fitting existing key).
 2. Add an SVG illustration under `assets/kaiju/`.
 3. Add a JSON encounter file under `assets/bosses/`, including its stats, intent patterns, backdrop key, illustration path, and fallback background. Set the illustration path relative to `assets/data.json`, such as `./kaiju/new-boss.svg`.
-4. Add the boss JSON path to the `bosses` array in `assets/data.json` at the desired wave position.
+4. Add the boss JSON path to a wave slot in the `encounterPools` array in `assets/data.json` (one array per wave; waves with multiple entries rotate the boss per run, seeded for Daily tours).
 
 See [`AGENTS.md`](../AGENTS.md) for the boss schema, card definitions, save invariants, and gameplay architecture.
 

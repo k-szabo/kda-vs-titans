@@ -63,6 +63,9 @@ import { testMission } from './missions.js';
   let CARD_DB = {};
   let RELIC_DB = {};
   let ENCOUNTERS = [];
+  let ENCOUNTERS_BY_ID = {};
+  let ENCOUNTER_POOLS = [];
+  let ALL_ENCOUNTERS = [];
   let STARTER_DECKS = {};
   let defaultKeybinds = null;
   let profileStats = null;
@@ -86,6 +89,37 @@ import { testMission } from './missions.js';
         );
       }
 
+      function hashDailySeed(text) {
+        let hash = 2166136261;
+        for (let i = 0; i < text.length; i++) {
+          hash ^= text.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+      }
+
+      function rollEncounterOrder(rng) {
+        return ENCOUNTER_POOLS.map((slot) => slot[Math.floor(rng() * slot.length) % slot.length]);
+      }
+
+      function rollDailyEncounterOrder(date) {
+        return ENCOUNTER_POOLS.map((slot, index) =>
+          slot[hashDailySeed(`${date}:${index}`) % slot.length]
+        );
+      }
+
+      function buildEncountersFromOrder(order) {
+        const picked = order.map((id) => {
+          const encounter = ENCOUNTERS_BY_ID[id];
+          if (!encounter) throw new InvalidSavedRunError('The saved run references an unknown encounter.');
+          return encounter;
+        });
+        if (picked.length !== ENCOUNTER_POOLS.length) {
+          throw new InvalidSavedRunError('The saved run has an incomplete encounter order.');
+        }
+        ENCOUNTERS = picked;
+      }
+
       function nextRandom() {
         return state && Number.isInteger(state.rngState)
           ? nextSeededRandom(state)
@@ -101,7 +135,7 @@ import { testMission } from './missions.js';
         return copy;
       }
 
-      function createNewRunState(leader, encoreLevel = 0, dailyChallenge = null) {
+      function createNewRunState(leader, encoreLevel = 0, dailyChallenge = null, encounterOrder = []) {
         let nextCardInstanceId = 1;
         const leaderDeck = STARTER_DECKS[leader];
         if (!Array.isArray(leaderDeck)) {
@@ -161,6 +195,7 @@ import { testMission } from './missions.js';
           routeChoices: [],
           rewardMode: null,
           tourEventId: null,
+          encounterOrder: [...encounterOrder],
           merchTokens: 0,
           shop: null,
           relics: initialRelics,
@@ -1348,7 +1383,11 @@ import { testMission } from './missions.js';
         ui.hideRunModals();
         ui.hideMainMenu();
         mainMenuOpen = false;
-        state = createNewRunState(leader, encoreLevel, dailyChallenge);
+        const order = dailyChallenge
+          ? rollDailyEncounterOrder(dailyChallenge.date)
+          : rollEncounterOrder(Math.random);
+        ENCOUNTERS = order.map((id) => ENCOUNTERS_BY_ID[id]);
+        state = createNewRunState(leader, encoreLevel, dailyChallenge, order);
         startStage(0);
         syncPage();
       }
@@ -1400,6 +1439,7 @@ import { testMission } from './missions.js';
 
       function continueTour() {
         if (!state) return;
+        buildEncountersFromOrder(state.encounterOrder);
         mainMenuOpen = false;
         ui.hideMainMenu();
         renderAll();
@@ -1581,7 +1621,10 @@ import { testMission } from './missions.js';
           ART_ASSETS = gameData.artAssets;
           CARD_DB = gameData.cardDatabase;
           RELIC_DB = gameData.relicDatabase;
-          ENCOUNTERS = gameData.encounters;
+          ENCOUNTERS_BY_ID = gameData.encountersById;
+          ENCOUNTER_POOLS = gameData.encounterPools;
+          ALL_ENCOUNTERS = gameData.encounters;
+          ENCOUNTERS = rollEncounterOrder(Math.random);
           STARTER_DECKS = gameData.starterDecks;
           MISSION_DEFS = gameData.missions;
           defaultKeybinds = gameData.defaultKeybinds;
@@ -1599,6 +1642,7 @@ import { testMission } from './missions.js';
             getRelicDatabase: () => RELIC_DB,
             getProfileStats: () => profileStats,
             getEncounters: () => ENCOUNTERS,
+            getAllEncounters: () => ALL_ENCOUNTERS,
             getCurrentEnemyIntent,
             getMissions: () => MISSION_DEFS,
             onPlayCard: playCardAtIndex,
@@ -1658,6 +1702,7 @@ import { testMission } from './missions.js';
             defaultKeybinds,
             getProfileStats: () => profileStats,
             getEncounters: () => ENCOUNTERS,
+            getAllEncounters: () => ALL_ENCOUNTERS,
             onSettingsChange: updateProfileSettings,
             isSoundSupported,
             onTestSound: () => playSoundEffect(playSettingsTestSfx),
@@ -1673,6 +1718,9 @@ import { testMission } from './missions.js';
               ui.showSaveNotice('This update reset saved progress. Choose a leader to start a new World Tour.');
             }
             if (savedRun !== null) {
+              if (Array.isArray(savedRun.state?.encounterOrder)) {
+                buildEncountersFromOrder(savedRun.state.encounterOrder);
+              }
               savedRun = migrateSavedRun(savedRun, {
                 cardDatabase: CARD_DB,
                 relicDatabase: RELIC_DB,
@@ -1697,7 +1745,8 @@ import { testMission } from './missions.js';
           if (savedRun !== null && !isValidSavedRun(savedRun, {
             cardDatabase: CARD_DB,
             relicDatabase: RELIC_DB,
-            encounters: ENCOUNTERS
+            encounters: ENCOUNTERS,
+            encounterPools: ENCOUNTER_POOLS
           })) {
             ui.showSaveNotice('The previous saved run could not be restored. Choose a leader to start a new run.');
             savedRun = null;

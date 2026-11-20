@@ -20,6 +20,7 @@ export function createProgressionUI({
   getRelicDatabase,
   getProfileStats,
   getEncounters,
+  getAllEncounters,
   getMissions,
   getDailyChallenge,
   onSelectLeaderArt,
@@ -79,7 +80,7 @@ export function createProgressionUI({
     document.getElementById('menuUnlockedArt').textContent =
       `${unlockedArtCount} / ${LEADERS.length * LEADER_ART_STYLES.length}`;
     document.getElementById('menuCodexProgress').textContent =
-      `${profileStats.unlockedKaiju.length} / ${encounters.length}`;
+      `${profileStats.unlockedKaiju.length} / ${getAllEncounters().length}`;
     const fastest = profileStats.fastestWinMs;
     document.getElementById('menuFastestWin').textContent = fastest === null
       ? '—'
