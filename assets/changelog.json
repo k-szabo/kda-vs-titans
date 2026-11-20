@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.10.0_6899670e",
+  "currentVersion": "v1.10.1_6c50f1ae",
   "releases": [
+    {
+      "version": "v1.10.1_6c50f1ae",
+      "date": "2026-11-20",
+      "changes": [
+        "Relic rewards granted by tour events or the merch shop no longer offer the same relic twice.",
+        "Picking an already-owned relic reroutes instead of locking the reward screen."
+      ]
+    },
     {
       "version": "v1.10.0_6899670e",
       "date": "2026-11-20",

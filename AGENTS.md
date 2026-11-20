@@ -285,8 +285,9 @@ overview.
   relic or sold out) and never offers owned relics. Cut (+10 HP) and Rest
   (+25 HP) no longer exist as free rewards — thinning and healing are
   shop-only. Shop purchases update `masterDeck` + `discardPile` together so
-  save coverage stays valid; unaffordable/sold-out options disable, and the
-  route buttons always work so the shop can never lock the run.
+  save coverage stays valid; unaffordable/sold-out options disable, already-owned
+  relic choices are pruned whenever a relic is granted, and the route buttons
+  always work so the shop can never lock the run.
 - `state.routeChoices` holds the offered route IDs and `state.rewardMode` holds
   the chosen reward tab. Both persist with the run, so reloading mid-routing
   reopens the routing screen (`restoreRunModal()`), refreshing stale routes.

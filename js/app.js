@@ -1129,6 +1129,19 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         applyTourEventOption(optionId);
       }
 
+      function pruneStaleRelicChoices() {
+        const owned = new Set(state.relics);
+        const before = state.relicChoices.length;
+        state.relicChoices = state.relicChoices.filter((id) => !owned.has(id));
+        if (state.relicChoices.length !== before) {
+          state.routeChoices = state.routeChoices.filter((id) => {
+            const route = getTourRoute(id);
+            return route && isRewardAvailable(route.rewardMode);
+          });
+          if (state.routeChoices.length === 0) state.routeChoices = getAvailableRouteIds();
+        }
+      }
+
       function applyTourEventOption(optionId, extra = {}) {
         switch (optionId) {
           case 'sign_session': {
@@ -1143,6 +1156,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             const relicId = shuffle(pool)[0];
             state.relics.push(relicId);
             addCurseToDeck('stage_fright');
+            pruneStaleRelicChoices();
             finishTourEvent(`🤝 Backstage deal: gained ${RELIC_DB[relicId].name} and took Stage Fright!`);
             break;
           }
@@ -1184,6 +1198,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
             const relicId = shuffle(pool)[0];
             state.relics.push(relicId);
             addCurseToDeck('micro_oxygen');
+            pruneStaleRelicChoices();
             finishTourEvent(`🎛️ Cursed gear: gained ${RELIC_DB[relicId].name} and took Micro-Oxygen!`);
             break;
           }
@@ -1282,6 +1297,7 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         state.relics.push(state.shop.relic);
         addLog(`🪙 Bought ${relic.name} for ${SHOP_PRICES.relic} Merch Tokens.`, 'text-amber-300');
         state.shop.relic = null;
+        pruneStaleRelicChoices();
         saveRunState();
         refreshRoutingModal();
         renderAll();
@@ -1620,10 +1636,23 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
       }
 
       function chooseRelic(relicId) {
-        if (state.runStatus !== 'draft' || !state.relicChoices.includes(relicId) || state.relics.includes(relicId)) return;
+        if (state.runStatus !== 'draft' || !state.relicChoices.includes(relicId)) return;
         const relic = RELIC_DB[relicId];
+        if (!relic) return;
         if (relic.leaderId) {
           throw new Error(`Leader starter relic ${relicId} cannot be selected as a reward.`);
+        }
+        if (state.relics.includes(relicId)) {
+          pruneStaleRelicChoices();
+          saveRunState();
+          addLog('🎫 Leona rerouted K/DA: that relic was already claimed.', 'text-amber-300');
+          if (state.rewardMode === 'relics' && state.relicChoices.length === 0) {
+            state.rewardMode = null;
+            refreshRoutingModal();
+          } else {
+            ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck, state.rewardMode);
+          }
+          return;
         }
         state.relics.push(relicId);
         const heal = getDraftHealAmount();
