@@ -137,6 +137,7 @@ export function createProgressionUI({
       title.textContent = name;
       const progress = document.createElement('p');
       progress.className = 'text-[11px] text-slate-400';
+      const unlockedStyles = getUnlockedArtStyles(leaderWins);
       const nextLocked = LEADER_ART_STYLES.find((style) =>
         style.winsRequired !== undefined &&
         !unlockedStyles.some(({ id: unlockedId }) => unlockedId === style.id)
@@ -148,7 +149,6 @@ export function createProgressionUI({
 
       const artChoices = document.createElement('div');
       artChoices.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3';
-      const unlockedStyles = getUnlockedArtStyles(leaderWins);
       LEADER_ART_STYLES.forEach((style) => {
         const unlocked = unlockedStyles.some(({ id: unlockedId }) => unlockedId === style.id);
         const selected = profileStats.selectedArts[id] === style.id;

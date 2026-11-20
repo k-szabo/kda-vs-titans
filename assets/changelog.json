@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.13.0_ae7df048",
+  "currentVersion": "v1.13.1_c3ff7ed6",
   "releases": [
+    {
+      "version": "v1.13.1_c3ff7ed6",
+      "date": "2026-11-20",
+      "changes": [
+        "Fixed Art Studio crash when computing the next locked art style."
+      ]
+    },
     {
       "version": "v1.13.0_ae7df048",
       "date": "2026-11-20",
