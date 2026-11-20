@@ -553,8 +553,6 @@ export function createGameUI({
       harmonyEl.appendChild(harmonyPill);
     }
 
-    renderComboReference();
-
     document.getElementById('combatLog').innerHTML = state.logs
       .map((entry) => `<div class="bg-black/35 rounded-lg px-2 py-1 border border-white/5 leading-snug ${entry.colorClass}">
         <span class="text-[9px] font-display text-slate-500 mr-1">[T${entry.turn}]</span>${entry.text}
@@ -1062,6 +1060,11 @@ export function createGameUI({
     setBattleLogCollapsed(!panel.classList.contains('battle-log-collapsed'));
   });
   setBattleLogCollapsed(window.matchMedia('(max-width: 640px)').matches);
+
+  // One-time static guides (member combos, keywords): rendered at UI init so
+  // How to Play is complete even before the first combat render runs. The
+  // per-frame renderAll() path no longer rebuilds them.
+  renderComboReference();
 
   return {
     hideRunModals,

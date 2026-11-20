@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.11.0_a668ab7b",
+  "currentVersion": "v1.11.1_2b36bbb2",
   "releases": [
+    {
+      "version": "v1.11.1_2b36bbb2",
+      "date": "2026-11-20",
+      "changes": [
+        "How to Play combo, keyword, and status guides render once at startup instead of waiting on combat.",
+        "Added a status effects and buffs glossary to How to Play."
+      ]
+    },
     {
       "version": "v1.11.0_a668ab7b",
       "date": "2026-11-20",
