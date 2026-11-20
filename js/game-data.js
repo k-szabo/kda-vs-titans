@@ -258,6 +258,7 @@ export async function loadGameData() {
   const supportedRelicEffects = [
     { trigger: 'stageStart', type: 'startingEnergy' },
     { trigger: 'stageStart', type: 'startingBlock' },
+    { trigger: 'waveClear', type: 'maxHp' },
     { trigger: 'stageStart', type: 'heal' },
     { trigger: 'waveClear', type: 'heal' },
     { trigger: 'attackPlayed', type: 'gainBlock' },

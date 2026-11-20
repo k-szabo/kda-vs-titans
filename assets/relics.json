@@ -94,10 +94,10 @@
     },
     {
       "id": "backstage_medic",
-      "name": "Backstage Medic",
-      "description": "Restore 6 HP at the start of each wave.",
+      "name": "Tour Conditioning",
+      "description": "Gain +2 Max HP whenever you clear a wave.",
       "effects": [
-        { "trigger": "stageStart", "type": "heal", "amount": 6 }
+        { "trigger": "waveClear", "type": "maxHp", "amount": 2 }
       ]
     },
     {

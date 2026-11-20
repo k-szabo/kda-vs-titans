@@ -538,6 +538,7 @@ Supported pairs (enforced in `js/game-data.js`):
 | `stageStart` | `startingBlock` |
 | `stageStart` | `heal` |
 | `waveClear` | `heal` |
+| `waveClear` | `maxHp` |
 | `attackPlayed` | `gainBlock` |
 | `attackPlayed` | `zeroCostAttackDamage` |
 | `cardPlayed` | `cheerGainPercent` |

@@ -1498,6 +1498,12 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
                 addLog(`✦ ${relic.name}: restored +${healed} HP.`, 'text-emerald-300');
                 break;
               }
+              case 'maxHp': {
+                state.player.maxHp += effect.amount;
+                state.player.hp = Math.min(state.player.maxHp, state.player.hp + effect.amount);
+                addLog(`✦ ${relic.name}: +${effect.amount} Max HP.`, 'text-emerald-300');
+                break;
+              }
               case 'gainBlock':
                 state.player.block += effect.amount;
                 ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');

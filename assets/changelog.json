@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.13.1_c3ff7ed6",
+  "currentVersion": "v1.13.2_911cf0d9",
   "releases": [
+    {
+      "version": "v1.13.2_911cf0d9",
+      "date": "2026-11-20",
+      "changes": [
+        "Reworked the Medic relic into Tour Conditioning: +2 Max HP on every wave clear instead of overlapping wave-start healing."
+      ]
+    },
     {
       "version": "v1.13.1_c3ff7ed6",
       "date": "2026-11-20",
