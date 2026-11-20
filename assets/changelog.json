@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.8.0_593d59f6",
+  "currentVersion": "v1.8.1_b662648b",
   "releases": [
+    {
+      "version": "v1.8.1_b662648b",
+      "date": "2026-11-20",
+      "changes": [
+        "Tour routing no longer offers relic stops when no relics remain and falls back instead of locking.",
+        "Stale tour routes are refreshed on reload and sold-out picks reroute."
+      ]
+    },
     {
       "version": "v1.8.0_593d59f6",
       "date": "2026-11-19",

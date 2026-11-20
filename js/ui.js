@@ -646,17 +646,18 @@ export function createGameUI({
       ['upgrades', upgradeableCards.length > 0],
       ['cuts', masterDeck.length > 1]
     ];
-    tabs.forEach(([mode, available]) => {
-      const visible = rewardMode ? mode === rewardMode : available;
-      document.querySelector(`[data-reward-tab="${mode}"]`).classList.toggle('hidden', !visible);
-    });
     const routedTab = rewardMode && tabs.some(([mode, available]) => mode === rewardMode && available)
       ? rewardMode
       : null;
-    const defaultTab = routedTab || tabs.find(([, available]) => available)?.[0];
+    const effectiveMode = routedTab || null;
+    tabs.forEach(([mode, available]) => {
+      const visible = effectiveMode ? mode === effectiveMode : available;
+      document.querySelector(`[data-reward-tab="${mode}"]`).classList.toggle('hidden', !visible);
+    });
+    const defaultTab = effectiveMode || tabs.find(([, available]) => available)?.[0];
     if (!defaultTab) throw new Error('No post-battle rewards are available.');
     setRewardTab(defaultTab);
-    document.getElementById('btnSkipDraft').classList.toggle('hidden', Boolean(rewardMode));
+    document.getElementById('btnSkipDraft').classList.toggle('hidden', Boolean(effectiveMode));
     modal.classList.remove('hidden');
   }
 

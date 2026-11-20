@@ -258,14 +258,17 @@ overview.
 
 ### Tour routing
 
-- After each non-final wave, Leona offers 3 of 4 stops
+- After each non-final wave, Leona offers up to 3 stops
   (`js/tour-routes.js` → `TOUR_ROUTES`): Backstage Pass (upgrade), Merch Stand
-  (relic), Fan Meet (card), Soundcheck (rest +25 HP).
+  (relic), Fan Meet (card), Soundcheck (rest +25 HP). Only stops with a real
+  reward are offered (`getAvailableRouteIds()` / `isRewardAvailable()`).
 - `state.routeChoices` holds the offered route IDs and `state.rewardMode` holds
   the chosen reward tab. Both persist with the run, so reloading mid-routing
-  reopens the routing screen (`restoreRunModal()`).
+  reopens the routing screen (`restoreRunModal()`), refreshing stale routes.
 - Picking a stop opens the existing draft modal restricted to one reward type;
-  the Skip button is hidden while a route is active.
+  the Skip button is hidden while a route is active. Sold-out picks reroute
+  instead of locking, and an invalid `rewardMode` falls back to all available
+  tabs (`ui.js` → `openDraftModal()`).
 - `leaveRewardPhase()` clears `routeChoices`/`rewardMode` and starts the next
   wave, so every reward path (card, relic, upgrade, cut, rest) ends the same way.
 

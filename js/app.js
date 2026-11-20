@@ -941,12 +941,32 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           !ownedRelics.has(relicId) && !RELIC_DB[relicId].leaderId
         )).slice(0, 3);
         state.rewardMode = null;
-        state.routeChoices = shuffle(TOUR_ROUTES).slice(0, 3).map((route) => route.id);
+        state.routeChoices = getAvailableRouteIds();
         saveRunState();
         ui.openTourRoutingModal(
           state.routeChoices.map((routeId) => getTourRoute(routeId)),
           getDraftHealAmount()
         );
+      }
+
+      function isRewardAvailable(rewardMode) {
+        if (rewardMode === 'rest') return true;
+        if (rewardMode === 'cards') return state.draftChoices.length > 0;
+        if (rewardMode === 'relics') return state.relicChoices.length > 0;
+        if (rewardMode === 'cuts') return state.masterDeck.length > 1;
+        if (rewardMode === 'upgrades') {
+          return state.masterDeck.some(
+            (instance) => instance.upgradeLevel === 0 && CARD_DB[instance.cardId]?.upgrade
+          );
+        }
+        return false;
+      }
+
+      function getAvailableRouteIds() {
+        const available = TOUR_ROUTES.filter((route) => isRewardAvailable(route.rewardMode));
+        const ids = shuffle(available).slice(0, 3).map((route) => route.id);
+        if (ids.length === 0) return ['soundcheck'];
+        return ids;
       }
 
       function getDraftHealAmount() {
@@ -958,6 +978,17 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
         if (!state.routeChoices.includes(routeId)) return;
         const route = getTourRoute(routeId);
         if (!route) return;
+        if (!isRewardAvailable(route.rewardMode)) {
+          state.routeChoices = getAvailableRouteIds();
+          state.rewardMode = null;
+          saveRunState();
+          ui.openTourRoutingModal(
+            state.routeChoices.map((id) => getTourRoute(id)),
+            getDraftHealAmount()
+          );
+          addLog('🎫 Leona rerouted K/DA: that stop sold out.', 'text-amber-300');
+          return;
+        }
         ui.closeTourRoutingModal();
         if (route.rewardMode === 'rest') {
           state.player.hp = Math.min(state.player.maxHp, state.player.hp + 25);
@@ -1379,6 +1410,12 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
           if (state.rewardMode) {
             ui.openDraftModal(state.draftChoices, state.relicChoices, state.masterDeck, state.rewardMode);
           } else if (Array.isArray(state.routeChoices) && state.routeChoices.length > 0) {
+            const freshIds = state.routeChoices.filter((id) => {
+              const route = getTourRoute(id);
+              return route && isRewardAvailable(route.rewardMode);
+            });
+            state.routeChoices = freshIds.length > 0 ? freshIds : getAvailableRouteIds();
+            saveRunState();
             ui.openTourRoutingModal(
               state.routeChoices.map((routeId) => getTourRoute(routeId)),
               getDraftHealAmount()
