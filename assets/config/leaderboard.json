@@ -1,0 +1,5 @@
+{
+  "url": "https://gemcijefpryqfhgqrbak.supabase.co",
+  "keyFile": "assets/config/leaderboard-public.json",
+  "function": "daily-leaderboard"
+}

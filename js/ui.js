@@ -40,7 +40,10 @@ export function createGameUI({
   onContinueTour,
   onCopyReceipt,
   onUpgradeCardFinish,
-  onPreviewCard
+  onPreviewCard,
+  onConsentShare,
+  onConsentSkip,
+  onConsentOptOut
 }) {
   const progressionUI = createProgressionUI({
     getArtAssets,
@@ -1003,6 +1006,18 @@ export function createGameUI({
     el.classList.remove('hidden');
   }
 
+  function openConsentModal(suggestedName) {
+    const modal = document.getElementById('consentModal');
+    const input = document.getElementById('consentNameInput');
+    if (!modal) return;
+    if (input && !input.value) input.value = suggestedName;
+    modal.classList.remove('hidden');
+  }
+
+  function closeConsentModal() {
+    document.getElementById('consentModal')?.classList.add('hidden');
+  }
+
   function showReceiptCopyStatus(message) {
     document.getElementById('receiptCopyStatus').textContent = message;
   }
@@ -1036,6 +1051,8 @@ export function createGameUI({
     document.getElementById('draftModal').classList.add('hidden');
     document.getElementById('tourRoutingModal')?.classList.add('hidden');
     document.getElementById('tourEventModal')?.classList.add('hidden');
+    document.getElementById('leaderboardModal')?.classList.add('hidden');
+    document.getElementById('consentModal')?.classList.add('hidden');
     document.getElementById('missionsModal')?.classList.add('hidden');
     document.getElementById('leaderSelectionModal').classList.add('hidden');
     document.getElementById('artStudioModal').classList.add('hidden');
@@ -1064,6 +1081,14 @@ export function createGameUI({
   document.getElementById('btnCloseMissions')?.addEventListener('click', progressionUI.hideMissions);
   document.getElementById('btnMissions')?.addEventListener('click', progressionUI.showMissions);
   document.getElementById('btnMenuMissions')?.addEventListener('click', progressionUI.showMissions);
+  document.getElementById('btnLeaderboard')?.addEventListener('click', progressionUI.showLeaderboard);
+  document.getElementById('btnMenuLeaderboard')?.addEventListener('click', progressionUI.showLeaderboard);
+  document.getElementById('btnCloseLeaderboard')?.addEventListener('click', progressionUI.hideLeaderboard);
+  document.getElementById('btnConsentShare')?.addEventListener('click', () => {
+    onConsentShare(document.getElementById('consentNameInput')?.value || '');
+  });
+  document.getElementById('btnConsentSkip')?.addEventListener('click', () => onConsentSkip());
+  document.getElementById('btnConsentOptOut')?.addEventListener('click', () => onConsentOptOut());
   document.getElementById('btnArtStudio').addEventListener('click', progressionUI.showArtStudio);
   document.getElementById('btnMenuArtStudio').addEventListener('click', progressionUI.showArtStudio);
   document.getElementById('btnCopyReceipt').addEventListener('click', onCopyReceipt);
@@ -1096,6 +1121,10 @@ export function createGameUI({
     showMainMenu: progressionUI.showMainMenu,
     hideMainMenu: progressionUI.hideMainMenu,
     openLeaderSelection: progressionUI.openLeaderSelection,
+    openConsentModal,
+    closeConsentModal,
+    showLeaderboard: progressionUI.showLeaderboard,
+    hideLeaderboard: progressionUI.hideLeaderboard,
     openDraftModal,
     openTourRoutingModal,
     closeTourRoutingModal,

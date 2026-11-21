@@ -54,6 +54,7 @@ import { createGameUI } from './ui.js';
 import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 import { testMission } from './missions.js';
+import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderboardScore } from './leaderboard.js';
 
 (function () {
   'use strict';
@@ -62,6 +63,7 @@ import { testMission } from './missions.js';
   let MISSION_DEFS = [];
   let CARD_DB = {};
   let RELIC_DB = {};
+  let GAME_VERSION = '';
   let ENCOUNTERS = [];
   let ENCOUNTERS_BY_ID = {};
   let ENCOUNTER_POOLS = [];
@@ -944,6 +946,7 @@ import { testMission } from './missions.js';
         evaluateMissions();
         renderAll();
         ui.showRunEndModal(false);
+        handleDailyRunEnd();
         return true;
       }
 
@@ -1001,6 +1004,7 @@ import { testMission } from './missions.js';
           evaluateMissions();
           saveRunState();
           ui.showRunEndModal(true);
+          handleDailyRunEnd();
           return;
         }
 
@@ -1195,10 +1199,8 @@ import { testMission } from './missions.js';
       }
 
       function getRunReceiptText() {
-        const mostPlayed = Object.entries(state.cardPlayCounts)
-          .filter(([, count]) => count > 0)
-          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
-        const cardName = mostPlayed ? CARD_DB[mostPlayed[0]]?.name || mostPlayed[0] : '—';
+        const mostPlayed = getMostPlayedCard(state.cardPlayCounts, CARD_DB);
+        const cardName = mostPlayed ? mostPlayed.name : '—';
         const dailyDescription = state.dailyChallenge
           ? `Daily Tour ${state.dailyChallenge.date} // ${state.dailyChallenge.modifier.replaceAll('_', ' ')}`
           : 'Standard Tour';
@@ -1207,7 +1209,7 @@ import { testMission } from './missions.js';
           `Mode: ${dailyDescription}`,
           `Leader: ${LEADERS.find(({ id }) => id === state.leader).name}`,
           `Waves Cleared: ${state.wavesCleared} / ${ENCOUNTERS.length}`,
-          `Most-Played Card: ${cardName}${mostPlayed ? ` (${mostPlayed[1]} plays)` : ''}`,
+          `Most-Played Card: ${cardName}${mostPlayed ? ` (${mostPlayed.count} plays)` : ''}`,
           `Peak Single-Turn Damage: ${state.peakSingleTurnDamage}`,
           `Merch Tokens: ${state.merchTokens ?? 0}`
         ];
@@ -1236,6 +1238,58 @@ import { testMission } from './missions.js';
           console.error('Unable to copy the tour receipt.', error);
           ui.showReceiptCopyStatus('Copy failed. Clipboard access is unavailable.');
         }
+      }
+
+      function suggestDancerName() {
+        return `Dancer${1000 + Math.floor(Math.random() * 9000)}`;
+      }
+
+      async function submitDailyScore() {
+        try {
+          const payload = {
+            day: state.dailyChallenge.date,
+            name: profileStats.playerName,
+            ...buildScorePayload(state, CARD_DB, GAME_VERSION)
+          };
+          const result = await submitLeaderboardScore(payload);
+          if (result?.ok) {
+            addLog(result.improved
+              ? '🏆 Daily score shared! New personal best on the leaderboard!'
+              : '🏆 Daily score shared on the leaderboard.', 'text-amber-300 font-bold');
+            renderAll();
+          }
+        } catch {
+          /* offline or unconfigured: stay silent, the board shows unavailable */
+        }
+      }
+
+      function handleDailyRunEnd() {
+        if (!state.dailyChallenge) return;
+        if (profileStats.settings.shareScores === false) return;
+        if (!profileStats.playerName) {
+          ui.openConsentModal(suggestDancerName());
+          return;
+        }
+        void submitDailyScore();
+      }
+
+      function confirmConsentShare(name) {
+        const clean = typeof name === 'string' ? name.trim().slice(0, 16) : '';
+        profileStats.playerName = clean || suggestDancerName();
+        persistProfileStats();
+        ui.closeConsentModal();
+        void submitDailyScore();
+      }
+
+      function skipConsentShare() {
+        ui.closeConsentModal();
+      }
+
+      function optOutConsentShare() {
+        updateProfileSettings({ ...profileStats.settings, shareScores: false });
+        ui.closeConsentModal();
+        addLog('🔕 Daily leaderboard sharing is off. Re-enable anytime in Options → Share Daily Scores.', 'text-slate-400');
+        renderAll();
       }
 
       function persistProfileStats() {
@@ -1662,11 +1716,15 @@ import { testMission } from './missions.js';
             onSelectLeaderArt: selectLeaderArt,
             onUpgradeCardFinish: upgradeCardFinish,
             onPreviewCard: previewCardFinish,
+            onConsentShare: confirmConsentShare,
+            onConsentSkip: skipConsentShare,
+            onConsentOptOut: optOutConsentShare,
             onContinueTour: continueTour,
             getDailyChallenge: getTodayDailyChallenge,
             onCopyReceipt: copyRunReceipt
           });
           ui.setChangelog(gameData.changelog);
+          GAME_VERSION = gameData.changelog.currentVersion;
           wireEvents();
 
           try {

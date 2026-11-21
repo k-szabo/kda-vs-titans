@@ -7,6 +7,7 @@ const PROFILE_KEY = 'encore-spire.profile';
 export function createDefaultSettings(defaultKeybinds) {
   return {
     soundEnabled: true,
+    shareScores: true,
     keybinds: normalizeKeybinds(defaultKeybinds, defaultKeybinds)
   };
 }
@@ -14,6 +15,7 @@ export function createDefaultSettings(defaultKeybinds) {
 function normalizeSettings(settings, defaultKeybinds) {
   return {
     soundEnabled: typeof settings?.soundEnabled === 'boolean' ? settings.soundEnabled : true,
+    shareScores: typeof settings?.shareScores === 'boolean' ? settings.shareScores : true,
     keybinds: normalizeKeybinds(settings?.keybinds, defaultKeybinds)
   };
 }
@@ -61,7 +63,8 @@ export function createDefaultProfileStats(defaultKeybinds) {
     artWaveClears,
     finishTokens: 0,
     cardFinishes: {},
-    completedMissions: []
+    completedMissions: [],
+    playerName: null
   };
 }
 
@@ -135,7 +138,8 @@ export function loadProfileStats(defaultKeybinds) {
     !hasLeaderProgress ||
     (profile.finishTokens !== undefined && !isNonNegativeInteger(profile.finishTokens)) ||
     !hasCardFinishes ||
-    !hasMissions
+    !hasMissions ||
+    (profile.playerName !== undefined && profile.playerName !== null && typeof profile.playerName !== 'string')
   ) {
     throw new InvalidProfileStatsError('Saved profile stats have an unsupported shape.');
   }
@@ -163,7 +167,8 @@ export function loadProfileStats(defaultKeybinds) {
     ])),
     finishTokens: profile.finishTokens ?? 0,
     cardFinishes: { ...(profile.cardFinishes ?? {}) },
-    completedMissions: [...(profile.completedMissions ?? [])]
+    completedMissions: [...(profile.completedMissions ?? [])],
+    playerName: typeof profile.playerName === 'string' ? profile.playerName : null
   };
 }
 

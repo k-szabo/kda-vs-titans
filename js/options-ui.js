@@ -65,6 +65,11 @@ export function createOptionsUI({
       : '🔇 SOUND UNAVAILABLE';
     soundButton.classList.toggle('opacity-50', !supported);
     soundButton.classList.toggle('cursor-not-allowed', !supported);
+    const shareButton = document.getElementById('btnToggleShare');
+    if (shareButton) {
+      shareButton.setAttribute('aria-pressed', String(settings.shareScores !== false));
+      shareButton.textContent = `${settings.shareScores !== false ? '🏆 SHARE ON' : '🚫 SHARE OFF'}`;
+    }
     document.getElementById('keybindHint').textContent =
       `Cards ${settings.keybinds.card1}/${settings.keybinds.card2}/${settings.keybinds.card3}/${settings.keybinds.card4}/${settings.keybinds.card5}` +
       ` • ${displayKey(settings.keybinds.endTurn)} End Turn` +
@@ -168,6 +173,10 @@ export function createOptionsUI({
     const soundEnabled = !settings.soundEnabled;
     onSettingsChange({ ...settings, soundEnabled });
     if (soundEnabled) onTestSound();
+  });
+  document.getElementById('btnToggleShare')?.addEventListener('click', () => {
+    const settings = getSettings();
+    onSettingsChange({ ...settings, shareScores: settings.shareScores === false });
   });
   document.getElementById('btnResetKeybinds').addEventListener('click', () => {
     onSettingsChange({

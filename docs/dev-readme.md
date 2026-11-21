@@ -59,7 +59,7 @@ Playing cards from all four K/DA members in one player turn triggers Quartet Har
 
 Boss encounters may define an optional `stageEffect` field. Supported hazards are `overcharge_grid` (3 direct HP damage per unspent Energy at turn end), `thermonuclear_heat` (3 direct HP damage at turn end if Shield is 0), and `luminous_spores` (+3% Crowd Cheer for each Skill played). Overcharge Grid is used by King Ghidorah and Mechagodzilla; Thermonuclear Heat by Rodan and Burning Godzilla; Luminous Spores by Mothra. The active hazard is shown in the boss panel.
 
-Daily World Tour uses the UTC date as a deterministic seed for its assigned leader, Relic, rule modifier, deck shuffles, encounter drafts, and rewards. Each wave drafts its boss from a rotating pool (29 kaiju across the 10 waves); standard runs roll randomly while Daily runs roll the same setlist all day. Acoustic Set starts with 4 max Energy and no starter Relic; Encore Pressure gives bosses +15% HP and a random starter Relic; Crowd Surf grants +15% Crowd Cheer at each wave start and a random starter Relic. Daily wins update current and best consecutive-day streaks in the existing profile.
+Daily World Tour uses the UTC date as a deterministic seed for its assigned leader, Relic, rule modifier, deck shuffles, encounter drafts, and rewards. Daily runs can auto-submit their score to the community leaderboard (opt out in Options); the board needs a configured Supabase backend — see “Leaderboard backend” below. Each wave drafts its boss from a rotating pool (29 kaiju across the 10 waves); standard runs roll randomly while Daily runs roll the same setlist all day. Acoustic Set starts with 4 max Energy and no starter Relic; Encore Pressure gives bosses +15% HP and a random starter Relic; Crowd Surf grants +15% Crowd Cheer at each wave start and a random starter Relic. Daily wins update current and best consecutive-day streaks in the existing profile.
 
 Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. These run metrics are stored with the v6 run state.
 
@@ -70,6 +70,12 @@ The battle log can be collapsed from its header control. It defaults to collapse
 The How to Play modal summarizes the turn flow, boss intents and interrupts, member combos and keywords, the status-effect glossary, and leader/relic progression. Options is available from the main menu and combat header and contains the Codex, career records, and changelog. Sound preference and custom keyboard bindings are stored in the existing profile v3 data; older profiles are normalized without clearing progress. This update resets run saves to v6 (old runs must restart) while leaving profile v3 data — stats, art, and codex — untouched. Default shortcuts are read from `assets/keybinds.json`, referenced by `assets/data.json`, and custom bindings override them in the profile. Sound defaults to on. The shipped defaults are `1`–`5` for hand slots, `E` to end the turn, `Q` for Joint Finale, and `R` for the Leader Ability. Bindings accept one printable key, duplicate bindings swap, Escape cancels a pending capture, and Reset Defaults restores the JSON-defined defaults. The separate Codex/Changelog menu entry has been removed.
 
 The synthesized sound toggle takes effect immediately, including for tones already playing. Enabling sound from Options plays a short confirmation chime.
+
+## Leaderboard backend
+
+Daily scores live in Supabase (dedicated project). The game calls the `daily-leaderboard` Edge Function through `assets/config/leaderboard-public.json`, which the Pages workflow writes from the `SUPABASE_PUBLISHABLE_KEY` Actions variable at deploy time — the key is never committed (see `.gitignore`). Local runs create the same file with `node scripts/write-leaderboard-config.mjs` after exporting the variable; without it the board shows "unavailable" and everything else works.
+
+Full setup (project, migration, function, verification) lives in `supabase/README.md`. Switching branches deploy to the Actions workflow in `.github/workflows/pages.yml` is required for the variable injection to reach production.
 
 ## Deploy to GitHub Pages
 

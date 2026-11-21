@@ -1,6 +1,7 @@
 import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
 import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
+import { fetchBoard } from './leaderboard.js';
 
 const MEMBER_ORDER = ['ahri', 'akali', 'evelynn', 'kaisa', 'squad'];
 
@@ -29,6 +30,83 @@ export function createProgressionUI({
 }) {
   let selectedLeader = LEADERS[0].id;
   let selectedEncoreLevel = 0;
+  let selectedBoardPeriod = 'daily';
+
+  function formatBoardTime(totalSeconds) {
+    const s = Math.max(0, Math.floor(totalSeconds || 0));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  function showLeaderboard(period = selectedBoardPeriod) {
+    selectedBoardPeriod = ['daily', 'weekly', 'monthly'].includes(period) ? period : 'daily';
+    document.querySelectorAll('[data-board-tab]').forEach((tab) => {
+      const active = tab.dataset.boardTab === selectedBoardPeriod;
+      tab.classList.toggle('border-amber-300/50', active);
+      tab.classList.toggle('bg-amber-400/15', active);
+      tab.classList.toggle('text-amber-200', active);
+      tab.classList.toggle('border-white/15', !active);
+      tab.classList.toggle('bg-white/5', !active);
+      tab.classList.toggle('text-slate-300', !active);
+      tab.onclick = () => {
+        selectedBoardPeriod = tab.dataset.boardTab;
+        showLeaderboard(selectedBoardPeriod);
+      };
+    });
+    document.getElementById('leaderboardModal').classList.remove('hidden');
+    renderLeaderboardBoard();
+  }
+
+  function hideLeaderboard() {
+    document.getElementById('leaderboardModal').classList.add('hidden');
+  }
+
+  async function renderLeaderboardBoard() {
+    const grid = document.getElementById('leaderboardGrid');
+    const status = document.getElementById('leaderboardStatus');
+    if (!grid) return;
+    const date = getDailyChallenge().date;
+    grid.replaceChildren();
+    if (status) status.textContent = 'Loading board…';
+    const data = await fetchBoard(selectedBoardPeriod, date);
+    grid.replaceChildren();
+    if (!data || data.error || !Array.isArray(data.scores)) {
+      if (status) {
+        status.textContent = data?.error === 'offline'
+          ? 'Leaderboard is offline. Check your connection — the tour plays on.'
+          : 'Leaderboard is unavailable (not configured yet). The tour plays on.';
+      }
+      return;
+    }
+    if (status) {
+      status.textContent = selectedBoardPeriod === 'daily'
+        ? `Daily board — ${date} UTC`
+        : `${selectedBoardPeriod === 'weekly' ? 'Weekly' : 'Monthly'} board — cumulative daily scores`;
+    }
+    if (data.scores.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'text-xs italic text-slate-500';
+      empty.textContent = 'No scores yet. Be the first legend of the board!';
+      grid.appendChild(empty);
+      return;
+    }
+    data.scores.forEach((row) => {
+      const entry = document.createElement('div');
+      entry.className = 'flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/25 px-3 py-2';
+      const left = document.createElement('span');
+      left.className = 'min-w-0 flex-1 truncate text-xs text-slate-200';
+      const score = selectedBoardPeriod === 'daily' ? row.score : row.total;
+      left.textContent = `#${row.rank} ${row.display_name} — ${score} pts`;
+      const right = document.createElement('span');
+      right.className = 'shrink-0 text-right text-[10px] leading-snug text-slate-400';
+      if (selectedBoardPeriod === 'daily') {
+        right.textContent = `${formatBoardTime(row.seconds)} • ${row.most_played || '—'}${row.most_played_count ? ` (${row.most_played_count})` : ''} • W${row.waves}${row.victory ? ' ★' : ''} • ${row.leader || ''}`;
+      } else {
+        right.textContent = `${row.games} runs • ${row.wins} wins`;
+      }
+      entry.append(left, right);
+      grid.appendChild(entry);
+    });
+  }
 
   function renderMainMenu(savedRun, dailyChallenge) {
     const profileStats = getProfileStats();
@@ -396,6 +474,8 @@ export function createProgressionUI({
     showArtStudio,
     showMissions,
     hideMissions,
+    showLeaderboard,
+    hideLeaderboard,
     openLeaderSelection,
     getSelectedLeader: () => selectedLeader,
     getSelectedEncoreLevel: () => selectedEncoreLevel

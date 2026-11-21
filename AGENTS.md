@@ -99,6 +99,7 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/combat-rules.js` | Pure-ish combat helpers: damage/shield/Cheer resolution, enemy Strength, interrupts, Encore scaling, member-chain tracking, hand cap, death-log slicing. |
 | `js/card-effects.js` | Interprets ordered card effect actions, upgrade deltas, conditions, and log templates. Supports `pierce` on damage and `stealBlock` (Drain). |
 | `js/keywords.js` | Single source of truth for member keyword identities (Charm/Pierce/Drain/Encore). |
+| `js/leaderboard.js` | Supabase leaderboard client (boards fetch, anon auth, score submit, scoring). |
 | `js/missions.js` | Mission condition-DSL interpreter (requiresAll/requiresAny over run/profile stats). |
 | `assets/missions.json` | Mission definitions (id, reward, requires clauses); validated in `js/game-data.js`. |
 | `js/voice-lines.js` | Cosmetic voice-line pools and picker for combos, finales, and run endings. |
@@ -106,8 +107,11 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/tour-routes.js` | Leona tour-route definitions (upgrade/relic/card) mapping onto reward tabs. |
 | `js/shop.js` | Merch shop prices and purchase flow (`createShop`); single source for shop pricing. |
 | `js/deck.js` | Shared deck-instance helpers (add/remove) keeping pile coverage valid. |
-| `js/run-storage.js` | Versioned run save/load in `localStorage` (`RUN_SAVE_VERSION = 5`). |
-| `js/run-state.js` | Migrates legacy v1 saves and strictly validates v5 run state. |
+| `supabase/` | Daily-leaderboard backend: SQL migration, Edge Function, setup notes. |
+| `scripts/write-leaderboard-config.mjs` | Writes the gitignored browser leaderboard config from `SUPABASE_PUBLISHABLE_KEY`. |
+| `.github/workflows/pages.yml` | GitHub Pages artifact deploy with leaderboard config injection. |
+| `js/run-storage.js` | Versioned run save/load in `localStorage` (`RUN_SAVE_VERSION = 6`). |
+| `js/run-state.js` | Migrates legacy v1 saves and strictly validates v6 run state. |
 | `js/profile-storage.js` | Persistent profile, settings, codex, art progress, daily streaks (`PROFILE_VERSION = 3`). |
 | `js/leader-data.js` | Leader definitions, art styles, rank tiers, unlock helpers. |
 | `js/card-finishes.js` | Permanent card finish track (shiny/platinum/holo) and costs. |
@@ -670,8 +674,8 @@ modal is open or a rebind is listening.
   `merchTokens` is an
   integer 0–9999, `shop` is `null` or `{ cards: [≤2 valid draftable ids],
   relic: null | valid unowned non-leader relic, removalUsed: bool,
-  healUsed: bool }`, and
-  `energyPenalty` is an integer 0–3 applied when the next turn refills Hype
+  healUsed: bool }`, `playerName` is `null` or a string, `shareScores` defaults
+  true, and `energyPenalty` is an integer 0–3 applied when the next turn refills Hype
   Energy, then reset to 0. Bumping `RUN_SAVE_VERSION` without bumping
   `PROFILE_VERSION` resets the active run but preserves profile stats, art,
   and codex.
@@ -680,7 +684,8 @@ Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
 `lastDailyWinDate`, `unlockedKaiju`, `leaderWins`, `selectedArts`,
 `artWaveClears`, `finishTokens`, `cardFinishes` (card id → 0–3),
-`completedMissions` (unique mission ids).
+`completedMissions` (unique mission ids), `playerName` (null or string),
+`shareScores` (default true).
 
 ### Release versioning
 
@@ -817,7 +822,7 @@ Run through this before considering a change complete:
     card everywhere; reload and confirm profile progress persists.
 8. Reload mid-combat and mid-draft; confirm state, piles, logs, boss identity, and modal. Start several runs to see alternates rotate.
 9. Win and lose a run; copy the Tour Receipt; verify profile stats, codex (counts all drafted kaiju), Encore unlock, and Art Studio progress.
-10. Daily World Tour: same date → same leader/relic/modifier/encounters; streak updates.
+10. Daily World Tour: same date → same leader/relic/modifier/encounters; streak updates. With sharing on, run end submits the score (or asks for a name first); opt out in Options and confirm no submit happens.
 11. Options: sound toggle (including muting active tones), rebind/swap/reset,
     How to Play, Codex, changelog.
 12. `#devtools` wave selector; return to game.

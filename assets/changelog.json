@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.17.2_f616d10c",
+  "currentVersion": "v1.18.0_a4fcfae4",
   "releases": [
+    {
+      "version": "v1.18.0_a4fcfae4",
+      "date": "2026-11-21",
+      "changes": [
+        "Daily leaderboard with community boards, auto-submit, and opt-out (needs Supabase config).",
+        "Leaderboard backend: migration, Edge Function, and Actions deploy wiring included."
+      ]
+    },
     {
       "version": "v1.17.2_f616d10c",
       "date": "2026-11-20",
