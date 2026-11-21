@@ -68,6 +68,20 @@ export async function handle(request: Request) {
   try {
     if (request.method === 'GET') {
       const url = new URL(request.url);
+      if (url.searchParams.get('crowns') === '1') {
+        const bearer = /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/.exec(request.headers.get('authorization') || '');
+        if (!bearer) return response(request,401,{error:'unauthorized'});
+        const userResponse = await api('/auth/v1/user', bearer[1]);
+        if (!userResponse.ok) return response(request,userResponse.status >= 500 ? 503 : 401,{error:userResponse.status >= 500 ? 'unavailable' : 'unauthorized'});
+        const user = await userResponse.json();
+        if (typeof user.id !== 'string' || !/^[a-f0-9-]{36}$/i.test(user.id) || user.role !== 'authenticated') return response(request,401,{error:'unauthorized'});
+        const result = await api('/rest/v1/rpc/check_crowns', bearer[1], {});
+        if (!result.ok) return response(request,503,{error:'unavailable'});
+        const outcome = await result.json();
+        if (outcome?.error || outcome?.ok !== true) return response(request,400,{error:outcome?.error || 'unavailable'});
+        return response(request,200,{weekly: outcome.weekly ?? null, monthly: outcome.monthly ?? null});
+      }
+      const url = new URL(request.url);
       const range = periodRange(url.searchParams.get('period') || 'daily', url.searchParams.get('date') || '');
       if (!range) return response(request,400,{error:'invalid_score'});
       const path = range[0] === range[1]

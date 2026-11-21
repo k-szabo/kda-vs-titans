@@ -43,7 +43,8 @@ export function createGameUI({
   onPreviewCard,
   onConsentShare,
   onConsentSkip,
-  onConsentOptOut
+  onConsentOptOut,
+  onCheckCrowns
 }) {
   const progressionUI = createProgressionUI({
     getArtAssets,
@@ -57,7 +58,8 @@ export function createGameUI({
     getDailyChallenge,
     onSelectLeaderArt,
     onUpgradeCardFinish,
-    onPreviewCard
+    onPreviewCard,
+    onCheckCrowns
   });
 
   function triggerScreenShake() {
@@ -1095,6 +1097,7 @@ export function createGameUI({
   });
   document.getElementById('btnConsentSkip')?.addEventListener('click', () => onConsentSkip());
   document.getElementById('btnConsentOptOut')?.addEventListener('click', () => onConsentOptOut());
+  document.getElementById('btnCheckCrowns')?.addEventListener('click', () => onCheckCrowns());
   document.getElementById('btnArtStudio').addEventListener('click', progressionUI.showArtStudio);
   document.getElementById('btnMenuArtStudio').addEventListener('click', progressionUI.showArtStudio);
   document.getElementById('btnCopyReceipt').addEventListener('click', onCopyReceipt);

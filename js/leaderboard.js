@@ -123,6 +123,12 @@ export async function submitDailyScore(payload) {
   return gateway('', token, payload);
 }
 
+export async function checkCrowns() {
+  const token = await ensurePlayerToken();
+  if (!token) return { error: 'offline' };
+  return gateway('?crowns=1', token);
+}
+
 export function getMostPlayedCard(cardPlayCounts, cardDatabase) {
   const entries = Object.entries(cardPlayCounts || {}).filter(([, count]) => count > 0);
   if (entries.length === 0) return null;

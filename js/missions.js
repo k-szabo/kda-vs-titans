@@ -7,12 +7,18 @@ const RUN_STATS = Object.freeze({
   deckSize: (state) => state?.masterDeck?.length ?? 0,
   relicCount: (state) => state?.relics?.length ?? 0,
   isVictory: (state) => (state?.runStatus === 'victory' ? 1 : 0),
-  encoreLevel: (state) => state?.encoreLevel ?? 0
+  encoreLevel: (state) => state?.encoreLevel ?? 0,
+  runSeconds: (state) => state?.startedAt ? Math.max(0, (Date.now() - state.startedAt) / 1000) : 0
 });
 
 const PROFILE_STATS = Object.freeze({
   bestWave: (profile) => profile?.highestWaveCleared ?? 0,
   maxEncore: (profile) => profile?.maxEncoreLevel ?? 0,
+  maxEncoreAhri: (profile) => profile?.maxEncoreWins?.ahri ?? 0,
+  maxEncoreAkali: (profile) => profile?.maxEncoreWins?.akali ?? 0,
+  maxEncoreEvelynn: (profile) => profile?.maxEncoreWins?.evelynn ?? 0,
+  maxEncoreKaisa: (profile) => profile?.maxEncoreWins?.kaisa ?? 0,
+  streakBest: (profile) => profile?.dailyBestWinStreak ?? 0,
   totalWins: (profile) => Object.values(profile?.leaderWins ?? {}).reduce((sum, wins) => sum + (wins || 0), 0),
   winsAhri: (profile) => profile?.leaderWins?.ahri ?? 0,
   winsAkali: (profile) => profile?.leaderWins?.akali ?? 0,

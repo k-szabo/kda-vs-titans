@@ -54,7 +54,7 @@ import { createGameUI } from './ui.js';
 import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 import { testMission } from './missions.js';
-import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderboardScore } from './leaderboard.js';
+import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as submitLeaderboardScore } from './leaderboard.js';
 
 (function () {
   'use strict';
@@ -1158,6 +1158,10 @@ import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderb
               5,
               Math.max(profileStats.maxEncoreLevel, state.encoreLevel + 1)
             );
+            profileStats.maxEncoreWins[state.leader] = Math.max(
+              profileStats.maxEncoreWins[state.leader] ?? 0,
+              state.encoreLevel
+            );
           }
           const duration = Math.max(0, Date.now() - state.startedAt);
           if (profileStats.fastestWinMs === null || duration < profileStats.fastestWinMs) {
@@ -1298,11 +1302,48 @@ import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderb
         ui.showShareStatus('Score not shared.');
       }
 
-      function optOutConsentShare() {
+        function optOutConsentShare() {
         updateProfileSettings({ ...profileStats.settings, shareScores: false });
         ui.closeConsentModal();
-        addLog('🔕 Daily leaderboard sharing is off. Re-enable anytime in Options → Share Daily Scores.', 'text-slate-400');
+        addLog('🔕 Daily leaderboard sharing is off. Re-enable anytime in Options.', 'text-slate-400');
         renderAll();
+      }
+
+      function formatCrownPeriod(kind, start) {
+        return kind === 'weekly' ? `week of ${start}` : start.slice(0, 7);
+      }
+
+      async function checkBoardCrowns(silent = true) {
+        try {
+          if (profileStats.settings.shareScores === false) return false;
+          const today = getUtcDateString();
+          if (silent && profileStats.lastCrownCheck === today) return false;
+          const result = await checkCrowns();
+          if (!result || result.error) return false;
+          let crowned = false;
+          for (const [kind, missionId] of [['weekly', 'crown_weekly'], ['monthly', 'crown_monthly']]) {
+            const claim = result[kind];
+            if (claim && claim.won && !(profileStats.completedMissions ?? []).includes(missionId)) {
+              const mission = MISSION_DEFS.find((entry) => entry.id === missionId);
+              const reward = mission?.reward ?? 10;
+              profileStats.completedMissions = [...(profileStats.completedMissions ?? []), missionId];
+              profileStats.finishTokens = (Number.isInteger(profileStats.finishTokens) ? profileStats.finishTokens : 0) + reward;
+              addLog(`🏆 ${kind === 'weekly' ? 'Weekly' : 'Monthly'} Champion! +${reward} Spotlight Shards for ruling ${formatCrownPeriod(kind, claim.start)}.`, 'text-amber-300 font-bold');
+              crowned = true;
+            }
+          }
+          profileStats.lastCrownCheck = today;
+          persistProfileStats();
+          return crowned;
+        } catch {
+          return false;
+        }
+      }
+
+      async function maybeCheckCrownsManual() {
+        const crowned = await checkBoardCrowns(false);
+        if (crowned) renderAll();
+        ui.showMissions();
       }
 
       function persistProfileStats() {
@@ -1732,6 +1773,7 @@ import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderb
             onConsentShare: confirmConsentShare,
             onConsentSkip: skipConsentShare,
             onConsentOptOut: optOutConsentShare,
+            onCheckCrowns: maybeCheckCrownsManual,
             onContinueTour: continueTour,
             getDailyChallenge: getTodayDailyChallenge,
             onCopyReceipt: copyRunReceipt
@@ -1768,6 +1810,7 @@ import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderb
             }
           }
           setSoundEnabled(profileStats.settings.soundEnabled);
+          void checkBoardCrowns(true);
           optionsUI = createOptionsUI({
             getSettings: () => profileStats.settings,
             defaultKeybinds,

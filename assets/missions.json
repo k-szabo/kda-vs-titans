@@ -6,8 +6,18 @@
       "description": "Clear Wave 1.",
       "reward": 2,
       "requiresAny": [
-        { "scope": "run", "stat": "wavesCleared", "op": "gte", "value": 1 },
-        { "scope": "profile", "stat": "bestWave", "op": "gte", "value": 1 }
+        {
+          "scope": "run",
+          "stat": "wavesCleared",
+          "op": "gte",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "bestWave",
+          "op": "gte",
+          "value": 1
+        }
       ]
     },
     {
@@ -16,8 +26,18 @@
       "description": "Clear Wave 5.",
       "reward": 3,
       "requiresAny": [
-        { "scope": "run", "stat": "wavesCleared", "op": "gte", "value": 5 },
-        { "scope": "profile", "stat": "bestWave", "op": "gte", "value": 5 }
+        {
+          "scope": "run",
+          "stat": "wavesCleared",
+          "op": "gte",
+          "value": 5
+        },
+        {
+          "scope": "profile",
+          "stat": "bestWave",
+          "op": "gte",
+          "value": 5
+        }
       ]
     },
     {
@@ -26,8 +46,18 @@
       "description": "Complete all 10 waves.",
       "reward": 5,
       "requiresAny": [
-        { "scope": "run", "stat": "isVictory", "op": "eq", "value": 1 },
-        { "scope": "profile", "stat": "totalWins", "op": "gte", "value": 1 }
+        {
+          "scope": "run",
+          "stat": "isVictory",
+          "op": "eq",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "totalWins",
+          "op": "gte",
+          "value": 1
+        }
       ]
     },
     {
@@ -36,7 +66,12 @@
       "description": "Reach Encore tier 1.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "profile", "stat": "maxEncore", "op": "gte", "value": 1 }
+        {
+          "scope": "profile",
+          "stat": "maxEncore",
+          "op": "gte",
+          "value": 1
+        }
       ]
     },
     {
@@ -45,7 +80,12 @@
       "description": "Complete a full tour with Ahri.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "profile", "stat": "winsAhri", "op": "gte", "value": 1 }
+        {
+          "scope": "profile",
+          "stat": "winsAhri",
+          "op": "gte",
+          "value": 1
+        }
       ]
     },
     {
@@ -54,7 +94,12 @@
       "description": "Complete a full tour with Akali.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "profile", "stat": "winsAkali", "op": "gte", "value": 1 }
+        {
+          "scope": "profile",
+          "stat": "winsAkali",
+          "op": "gte",
+          "value": 1
+        }
       ]
     },
     {
@@ -63,7 +108,12 @@
       "description": "Complete a full tour with Evelynn.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "profile", "stat": "winsEvelynn", "op": "gte", "value": 1 }
+        {
+          "scope": "profile",
+          "stat": "winsEvelynn",
+          "op": "gte",
+          "value": 1
+        }
       ]
     },
     {
@@ -72,7 +122,12 @@
       "description": "Complete a full tour with Kai'Sa.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "profile", "stat": "winsKaisa", "op": "gte", "value": 1 }
+        {
+          "scope": "profile",
+          "stat": "winsKaisa",
+          "op": "gte",
+          "value": 1
+        }
       ]
     },
     {
@@ -81,7 +136,12 @@
       "description": "Deal 50+ damage in a single turn.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "run", "stat": "peakDamage", "op": "gte", "value": 50 }
+        {
+          "scope": "run",
+          "stat": "peakDamage",
+          "op": "gte",
+          "value": 50
+        }
       ]
     },
     {
@@ -90,8 +150,18 @@
       "description": "Win a tour with 12 or fewer cards in your deck.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "run", "stat": "isVictory", "op": "eq", "value": 1 },
-        { "scope": "run", "stat": "deckSize", "op": "lte", "value": 12 }
+        {
+          "scope": "run",
+          "stat": "isVictory",
+          "op": "eq",
+          "value": 1
+        },
+        {
+          "scope": "run",
+          "stat": "deckSize",
+          "op": "lte",
+          "value": 12
+        }
       ]
     },
     {
@@ -100,8 +170,575 @@
       "description": "Hold 6 or more relics at once.",
       "reward": 4,
       "requiresAll": [
-        { "scope": "run", "stat": "relicCount", "op": "gte", "value": 6 }
+        {
+          "scope": "run",
+          "stat": "relicCount",
+          "op": "gte",
+          "value": 6
+        }
       ]
+    },
+    {
+      "id": "ahri_encore1",
+      "name": "Ahri: Encore 1",
+      "description": "Clear Encore 1 or higher with Ahri.",
+      "reward": 4,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ahri_encore2",
+      "name": "Ahri: Encore 2",
+      "description": "Clear Encore 2 or higher with Ahri.",
+      "reward": 5,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "ahri_encore3",
+      "name": "Ahri: Encore 3",
+      "description": "Clear Encore 3 or higher with Ahri.",
+      "reward": 6,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "ahri_encore4",
+      "name": "Ahri: Encore 4",
+      "description": "Clear Encore 4 or higher with Ahri.",
+      "reward": 7,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "ahri_encore5",
+      "name": "Ahri: Encore 5",
+      "description": "Clear Encore 5 or higher with Ahri.",
+      "reward": 8,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "akali_encore1",
+      "name": "Akali: Encore 1",
+      "description": "Clear Encore 1 or higher with Akali.",
+      "reward": 4,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "akali_encore2",
+      "name": "Akali: Encore 2",
+      "description": "Clear Encore 2 or higher with Akali.",
+      "reward": 5,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "akali_encore3",
+      "name": "Akali: Encore 3",
+      "description": "Clear Encore 3 or higher with Akali.",
+      "reward": 6,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "akali_encore4",
+      "name": "Akali: Encore 4",
+      "description": "Clear Encore 4 or higher with Akali.",
+      "reward": 7,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "akali_encore5",
+      "name": "Akali: Encore 5",
+      "description": "Clear Encore 5 or higher with Akali.",
+      "reward": 8,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "evelynn_encore1",
+      "name": "Evelynn: Encore 1",
+      "description": "Clear Encore 1 or higher with Evelynn.",
+      "reward": 4,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "evelynn_encore2",
+      "name": "Evelynn: Encore 2",
+      "description": "Clear Encore 2 or higher with Evelynn.",
+      "reward": 5,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "evelynn_encore3",
+      "name": "Evelynn: Encore 3",
+      "description": "Clear Encore 3 or higher with Evelynn.",
+      "reward": 6,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "evelynn_encore4",
+      "name": "Evelynn: Encore 4",
+      "description": "Clear Encore 4 or higher with Evelynn.",
+      "reward": 7,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "evelynn_encore5",
+      "name": "Evelynn: Encore 5",
+      "description": "Clear Encore 5 or higher with Evelynn.",
+      "reward": 8,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "kaisa_encore1",
+      "name": "Kai'Sa: Encore 1",
+      "description": "Clear Encore 1 or higher with Kai'Sa.",
+      "reward": 4,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "kaisa_encore2",
+      "name": "Kai'Sa: Encore 2",
+      "description": "Clear Encore 2 or higher with Kai'Sa.",
+      "reward": 5,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "kaisa_encore3",
+      "name": "Kai'Sa: Encore 3",
+      "description": "Clear Encore 3 or higher with Kai'Sa.",
+      "reward": 6,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "kaisa_encore4",
+      "name": "Kai'Sa: Encore 4",
+      "description": "Clear Encore 4 or higher with Kai'Sa.",
+      "reward": 7,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "kaisa_encore5",
+      "name": "Kai'Sa: Encore 5",
+      "description": "Clear Encore 5 or higher with Kai'Sa.",
+      "reward": 8,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "quartet_encore0",
+      "name": "Fantastic Four",
+      "description": "Complete a full tour with all four leaders.",
+      "reward": 4,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "winsAhri",
+          "op": "gte",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "winsAkali",
+          "op": "gte",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "winsEvelynn",
+          "op": "gte",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "winsKaisa",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "quartet_encore1",
+      "name": "Encore 1 Quartet",
+      "description": "Clear Encore 1 or higher with all four leaders.",
+      "reward": 6,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 1
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "quartet_encore2",
+      "name": "Encore 2 Quartet",
+      "description": "Clear Encore 2 or higher with all four leaders.",
+      "reward": 8,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 2
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 2
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 2
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "quartet_encore3",
+      "name": "Encore 3 Quartet",
+      "description": "Clear Encore 3 or higher with all four leaders.",
+      "reward": 10,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 3
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 3
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 3
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "quartet_encore4",
+      "name": "Encore 4 Quartet",
+      "description": "Clear Encore 4 or higher with all four leaders.",
+      "reward": 12,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 4
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 4
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 4
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "quartet_encore5",
+      "name": "Encore 5 Quartet",
+      "description": "Clear Encore 5 or higher with all four leaders.",
+      "reward": 14,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAhri",
+          "op": "gte",
+          "value": 5
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreAkali",
+          "op": "gte",
+          "value": 5
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreEvelynn",
+          "op": "gte",
+          "value": 5
+        },
+        {
+          "scope": "profile",
+          "stat": "maxEncoreKaisa",
+          "op": "gte",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "speedrunner",
+      "name": "Speedrunner",
+      "description": "Win a tour in under 5 minutes.",
+      "reward": 6,
+      "requiresAll": [
+        {
+          "scope": "run",
+          "stat": "isVictory",
+          "op": "eq",
+          "value": 1
+        },
+        {
+          "scope": "run",
+          "stat": "runSeconds",
+          "op": "lte",
+          "value": 300
+        }
+      ]
+    },
+    {
+      "id": "hoarder",
+      "name": "Hoarder",
+      "description": "Hold 10 or more relics at once.",
+      "reward": 5,
+      "requiresAll": [
+        {
+          "scope": "run",
+          "stat": "relicCount",
+          "op": "gte",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "devotee",
+      "name": "Devotee",
+      "description": "Reach a 3-day daily win streak.",
+      "reward": 4,
+      "requiresAll": [
+        {
+          "scope": "profile",
+          "stat": "streakBest",
+          "op": "gte",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "acappella",
+      "name": "A Cappella",
+      "description": "Clear Encore 5 holding no relics but your starter.",
+      "reward": 10,
+      "requiresAll": [
+        {
+          "scope": "run",
+          "stat": "isVictory",
+          "op": "eq",
+          "value": 1
+        },
+        {
+          "scope": "run",
+          "stat": "encoreLevel",
+          "op": "gte",
+          "value": 5
+        },
+        {
+          "scope": "run",
+          "stat": "relicCount",
+          "op": "lte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "crown_weekly",
+      "name": "Weekly Champion",
+      "description": "Finish #1 on a weekly board.",
+      "reward": 10,
+      "serverAwarded": true,
+      "requiresAll": []
+    },
+    {
+      "id": "crown_monthly",
+      "name": "Monthly Legend",
+      "description": "Finish #1 on a monthly board.",
+      "reward": 10,
+      "serverAwarded": true,
+      "requiresAll": []
     }
   ]
 }

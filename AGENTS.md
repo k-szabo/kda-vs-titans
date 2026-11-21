@@ -386,17 +386,22 @@ Clearing wave 10 sets `runStatus = 'victory'`. Player death sets `'defeat'`.
 
 ### Missions
 
-- Achievements in `assets/missions.json` (11 total: wave milestones, full clear,
-  Encore unlock, one per leader, 50+ single-turn damage, ≤12-card victory,
-  6+ relics) pay Spotlight Shards into the profile. Conditions are a small
-  `requiresAll`/`requiresAny` DSL over run/profile stats, interpreted by
-  `js/missions.js` (`testMission`) and validated in `js/game-data.js`, so
-  adding a mission is a data edit.
+- Achievements in `assets/missions.json` (43 total: wave milestones, full clear,
+  Encore unlock, one per leader, per-leader Encore tiers 1–5, full-house Encore
+  quartets, speedrun, hoarder, devotee, purist, weekly/monthly board crowns)
+  pay Spotlight Shards into the profile. Conditions are a small
+  `requiresAll`/`requiresAny` DSL over run/profile stats (including per-leader
+  max Encore tiers, streaks, run duration), interpreted by `js/missions.js`
+  (`testMission`) and validated in `js/game-data.js`, so adding a mission is
+  a data edit. Crown missions are `serverAwarded` and never auto-complete.
 - `evaluateMissions()` runs at every wave clear, victory, and defeat; tests
   are pure functions over existing run/profile stats, completion persists in
   `profile.completedMissions` (validated, defaults to empty), and each mission
-  pays once. No run-save or profile-version changes. Missions render in their
-  own modal (`missionsModal`), opened from the main menu or combat header.
+  pays once. Crown checks (`check_crowns` RPC via the Edge Function, verified
+  winner of the last *completed* week/month) run on boot rollover and from a
+  manual Check button, then grant through the same completion path.
+- No run-save or profile-version changes. Missions render in their own modal
+  (`missionsModal`), opened from the main menu or combat header.
 
 ## 6. Boss intents, passives, and hazards
 
@@ -683,8 +688,9 @@ modal is open or a rebind is listening.
 Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `maxEncoreLevel`, `fastestWinMs`, `dailyWinStreak`, `dailyBestWinStreak`,
 `lastDailyWinDate`, `unlockedKaiju`, `leaderWins`, `selectedArts`,
-`artWaveClears`, `finishTokens`, `cardFinishes` (card id → 0–3),
-`completedMissions` (unique mission ids), `playerName` (null or string),
+`artWaveClears`, `maxEncoreWins` (leader id → 0–5), `finishTokens`,
+`cardFinishes` (card id → 0–3), `completedMissions` (unique mission ids),
+`playerName` (null or string), `lastCrownCheck` (null or date),
 `shareScores` (default true).
 
 ### Release versioning

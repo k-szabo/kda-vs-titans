@@ -43,6 +43,7 @@ export class OutdatedProfileStatsError extends Error {
 
 export function createDefaultProfileStats(defaultKeybinds) {
   const leaderWins = Object.fromEntries(LEADERS.map(({ id }) => [id, 0]));
+  const maxEncoreWins = Object.fromEntries(LEADERS.map(({ id }) => [id, 0]));
   const selectedArts = Object.fromEntries(LEADERS.map(({ id }) => [id, 'popstars']));
   const artWaveClears = Object.fromEntries(LEADERS.map(({ id }) => [
     id,
@@ -59,12 +60,14 @@ export function createDefaultProfileStats(defaultKeybinds) {
     lastDailyWinDate: null,
     unlockedKaiju: [],
     leaderWins,
+    maxEncoreWins,
     selectedArts,
     artWaveClears,
     finishTokens: 0,
     cardFinishes: {},
     completedMissions: [],
-    playerName: null
+    playerName: null,
+    lastCrownCheck: null
   };
 }
 
@@ -103,6 +106,14 @@ export function loadProfileStats(defaultKeybinds) {
       typeof cardId === 'string' && Number.isInteger(level) && level >= 0 && level <= 3
     )
   );
+  const encoreWins = profile.maxEncoreWins;
+  const hasEncoreWins = encoreWins === undefined || encoreWins === null || (
+    typeof encoreWins === 'object' && !Array.isArray(encoreWins) &&
+    LEADERS.every(({ id }) =>
+      encoreWins[id] === undefined ||
+      (Number.isInteger(encoreWins[id]) && encoreWins[id] >= 0 && encoreWins[id] <= 5)
+    )
+  );
   const completed = profile.completedMissions;
   const hasMissions = completed === undefined || completed === null || (
     Array.isArray(completed) &&
@@ -138,8 +149,11 @@ export function loadProfileStats(defaultKeybinds) {
     !hasLeaderProgress ||
     (profile.finishTokens !== undefined && !isNonNegativeInteger(profile.finishTokens)) ||
     !hasCardFinishes ||
+    !hasEncoreWins ||
     !hasMissions ||
-    (profile.playerName !== undefined && profile.playerName !== null && typeof profile.playerName !== 'string')
+    (profile.playerName !== undefined && profile.playerName !== null && typeof profile.playerName !== 'string') ||
+    (profile.lastCrownCheck !== undefined && profile.lastCrownCheck !== null &&
+      (typeof profile.lastCrownCheck !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(profile.lastCrownCheck)))
   ) {
     throw new InvalidProfileStatsError('Saved profile stats have an unsupported shape.');
   }
@@ -157,6 +171,7 @@ export function loadProfileStats(defaultKeybinds) {
     lastDailyWinDate: profile.lastDailyWinDate ?? null,
     unlockedKaiju: [...new Set(profile.unlockedKaiju)],
     leaderWins: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.leaderWins[id]])),
+    maxEncoreWins: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.maxEncoreWins?.[id] ?? 0])),
     selectedArts: Object.fromEntries(LEADERS.map(({ id }) => [id, profile.selectedArts[id]])),
     artWaveClears: Object.fromEntries(LEADERS.map(({ id }) => [
       id,
@@ -168,7 +183,10 @@ export function loadProfileStats(defaultKeybinds) {
     finishTokens: profile.finishTokens ?? 0,
     cardFinishes: { ...(profile.cardFinishes ?? {}) },
     completedMissions: [...(profile.completedMissions ?? [])],
-    playerName: typeof profile.playerName === 'string' ? profile.playerName : null
+    playerName: typeof profile.playerName === 'string' ? profile.playerName : null,
+    lastCrownCheck: typeof profile.lastCrownCheck === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(profile.lastCrownCheck)
+      ? profile.lastCrownCheck
+      : null
   };
 }
 

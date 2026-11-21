@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.18.2_f8732be3",
+  "currentVersion": "v1.19.0_beaf9678",
   "releases": [
+    {
+      "version": "v1.19.0_beaf9678",
+      "date": "2026-11-21",
+      "changes": [
+        "Encore mission pack: per-leader tiers, full-house quartets, speedrun, hoarder, devotee, and purist runs.",
+        "Board champion crowns: server-verified weekly/monthly #1 finishes pay out automatically."
+      ]
+    },
     {
       "version": "v1.18.2_f8732be3",
       "date": "2026-11-21",

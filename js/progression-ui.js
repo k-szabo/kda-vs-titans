@@ -26,7 +26,8 @@ export function createProgressionUI({
   getDailyChallenge,
   onSelectLeaderArt,
   onUpgradeCardFinish,
-  onPreviewCard
+  onPreviewCard,
+  onCheckCrowns
 }) {
   let selectedLeader = LEADERS[0].id;
   let selectedEncoreLevel = 0;

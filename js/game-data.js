@@ -305,8 +305,8 @@ export async function loadGameData() {
   }
 
   const missionStats = Object.freeze({
-    run: Object.freeze(['wavesCleared', 'peakDamage', 'deckSize', 'relicCount', 'isVictory', 'encoreLevel']),
-    profile: Object.freeze(['bestWave', 'maxEncore', 'totalWins', 'winsAhri', 'winsAkali', 'winsEvelynn', 'winsKaisa'])
+    run: Object.freeze(['wavesCleared', 'peakDamage', 'deckSize', 'relicCount', 'isVictory', 'encoreLevel', 'runSeconds']),
+    profile: Object.freeze(['bestWave', 'maxEncore', 'maxEncoreAhri', 'maxEncoreAkali', 'maxEncoreEvelynn', 'maxEncoreKaisa', 'streakBest', 'totalWins', 'winsAhri', 'winsAkali', 'winsEvelynn', 'winsKaisa'])
   });
   const isMissionClause = (clause) =>
     isRecord(clause) &&
@@ -326,8 +326,8 @@ export async function loadGameData() {
       typeof mission.reward !== 'number' ||
       !Number.isInteger(mission.reward) ||
       mission.reward <= 0 ||
-      (!Array.isArray(mission.requiresAll) && !Array.isArray(mission.requiresAny)) ||
-      ((mission.requiresAll?.length ?? 0) === 0 && (mission.requiresAny?.length ?? 0) === 0) ||
+      (mission.serverAwarded !== undefined && typeof mission.serverAwarded !== 'boolean') ||
+      (!mission.serverAwarded && (mission.requiresAll?.length ?? 0) === 0 && (mission.requiresAny?.length ?? 0) === 0) ||
       !(mission.requiresAll ?? []).every(isMissionClause) ||
       !(mission.requiresAny ?? []).every(isMissionClause)
     )
