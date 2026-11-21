@@ -89,7 +89,7 @@ begin
     or p_seconds is null or p_seconds < 1 or p_seconds > 86400
     or p_most_played is null or char_length(p_most_played) < 1 or char_length(p_most_played) > 64
     or p_most_played_count is null or p_most_played_count < 0
-    or p_version is null or p_version !~ '^v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(_[a-f0-9]{8})?$' then
+    or p_version is null or p_version !~ '^v?[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(_[a-f0-9]{8})?$' then
     return jsonb_build_object('error', 'invalid_score');
   end if;
 

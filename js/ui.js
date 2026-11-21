@@ -956,6 +956,7 @@ export function createGameUI({
       dailyDetails.classList.add('hidden');
     }
     document.getElementById('receiptCopyStatus').textContent = '';
+    document.getElementById('shareStatus').textContent = '';
     const deathSection = document.getElementById('deathLogSection');
     const deathList = document.getElementById('deathLogList');
     if (!isVictory && deathSection && deathList) {
@@ -1020,6 +1021,11 @@ export function createGameUI({
 
   function showReceiptCopyStatus(message) {
     document.getElementById('receiptCopyStatus').textContent = message;
+  }
+
+  function showShareStatus(message) {
+    const el = document.getElementById('shareStatus');
+    if (el) el.textContent = message;
   }
 
   function openPileModal(title, cardInstances) {
@@ -1140,6 +1146,7 @@ export function createGameUI({
     hideMissions: progressionUI.hideMissions,
     showRunEndModal,
     showReceiptCopyStatus,
+    showShareStatus,
     showSaveNotice,
     showVoiceLine,
     showRunEndVoice,

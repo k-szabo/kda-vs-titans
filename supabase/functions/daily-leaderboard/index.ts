@@ -93,7 +93,7 @@ export async function handle(request: Request) {
       || !integer(body.encore,0,5) || !integer(body.seconds,1,86400)
       || typeof body.mostPlayed !== 'string' || body.mostPlayed.length < 1 || body.mostPlayed.length > 64
       || !integer(body.mostPlayedCount,0,100000) || typeof body.version !== 'string'
-      || !/^\d{1,3}\.\d{1,3}\.\d{1,3}(?:_[a-f0-9]{8})?$/.test(body.version)) return response(request,400,{error:'invalid_score'});
+      || !/^v?\d{1,3}\.\d{1,3}\.\d{1,3}(?:_[a-f0-9]{8})?$/.test(body.version)) return response(request,400,{error:'invalid_score'});
     // getUser validates the signature and user existence through Supabase Auth.
     // We never decode a JWT and trust its unverified sub claim.
     const userResponse = await api('/auth/v1/user',bearer[1]);

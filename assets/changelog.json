@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.18.1_b886bbce",
+  "currentVersion": "v1.18.2_f8732be3",
   "releases": [
+    {
+      "version": "v1.18.2_f8732be3",
+      "date": "2026-11-21",
+      "changes": [
+        "Run-end modal now shows the leaderboard share status instead of failing silently."
+      ]
+    },
     {
       "version": "v1.18.1_b886bbce",
       "date": "2026-11-21",

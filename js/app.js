@@ -1245,21 +1245,33 @@ import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderb
       }
 
       async function submitDailyScore() {
+        const messages = {
+          offline: 'Leaderboard offline — score kept locally. Check your connection.',
+          unavailable: 'Leaderboard is unavailable right now.',
+          unauthorized: 'Leaderboard sign-in failed.',
+          invalid_score: 'Leaderboard rejected the score.',
+          invalid_name: 'That display name is not allowed (3–16 characters).',
+          rate_limited: 'Leaderboard rate limit — try the next run.'
+        };
         try {
           const payload = {
             day: state.dailyChallenge.date,
             name: profileStats.playerName,
             ...buildScorePayload(state, CARD_DB, GAME_VERSION)
           };
+          ui.showShareStatus('Sharing score…');
           const result = await submitLeaderboardScore(payload);
           if (result?.ok) {
-            addLog(result.improved
-              ? '🏆 Daily score shared! New personal best on the leaderboard!'
-              : '🏆 Daily score shared on the leaderboard.', 'text-amber-300 font-bold');
-            renderAll();
+            const line = result.improved
+              ? '🏆 Daily score shared! New personal best.'
+              : '🏆 Daily score shared (best kept).';
+            addLog(line, 'text-amber-300 font-bold');
+            ui.showShareStatus(line);
+          } else {
+            ui.showShareStatus(messages[result?.error] || 'Leaderboard share failed.');
           }
         } catch {
-          /* offline or unconfigured: stay silent, the board shows unavailable */
+          ui.showShareStatus('Leaderboard offline — score kept locally. Check your connection.');
         }
       }
 
@@ -1283,6 +1295,7 @@ import { buildScorePayload, getMostPlayedCard, submitDailyScore as submitLeaderb
 
       function skipConsentShare() {
         ui.closeConsentModal();
+        ui.showShareStatus('Score not shared.');
       }
 
       function optOutConsentShare() {
