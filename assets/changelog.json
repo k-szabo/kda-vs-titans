@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.18.0_a4fcfae4",
+  "currentVersion": "v1.18.1_b886bbce",
   "releases": [
+    {
+      "version": "v1.18.1_b886bbce",
+      "date": "2026-11-21",
+      "changes": [
+        "Locked page scroll behind the main menu overlay so it feels like its own page."
+      ]
+    },
     {
       "version": "v1.18.0_a4fcfae4",
       "date": "2026-11-21",

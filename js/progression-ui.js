@@ -202,10 +202,12 @@ export function createProgressionUI({
   function showMainMenu(savedRun) {
     renderMainMenu(savedRun, getDailyChallenge());
     document.getElementById('mainMenuOverlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   }
 
   function hideMainMenu() {
     document.getElementById('mainMenuOverlay').classList.add('hidden');
+    document.body.style.overflow = '';
   }
 
   function showArtStudio() {

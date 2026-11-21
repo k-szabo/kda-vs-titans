@@ -280,6 +280,10 @@
       animation: dorsalPulse 1.3s ease-in-out infinite;
     }
 
+    #mainMenuOverlay {
+      overscroll-behavior: contain;
+    }
+
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
     ::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.35); border-radius: 999px; }
