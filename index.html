@@ -57,8 +57,8 @@
         </div>
       </div>
 
-      <div class="mx-auto grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">
-        <button id="btnContinueTour" type="button" class="hidden rounded-xl border border-emerald-300/50 bg-emerald-400/10 px-4 py-4 text-left transition hover:bg-emerald-400/20">
+      <div class="mx-auto grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
+        <button id="btnContinueTour" type="button" class="hidden rounded-xl border border-emerald-300/50 bg-emerald-400/10 px-4 py-4 text-left transition hover:bg-emerald-400/20 sm:col-span-3">
           <span class="block font-display text-sm font-black text-emerald-100">▶ CONTINUE TOUR</span>
           <span id="menuContinueDetails" class="mt-1 block text-xs text-emerald-200/80"></span>
         </button>
@@ -66,9 +66,26 @@
           <span class="block font-display text-sm font-black text-white">✦ NEW WORLD TOUR</span>
           <span class="mt-1 block text-xs text-slate-300">Choose a leader and Encore tier.</span>
         </button>
+        <button id="btnDailyTour" type="button" class="rounded-xl border border-orange-300/40 bg-orange-400/10 px-4 py-4 text-left transition hover:bg-orange-400/20 hover:brightness-110">
+          <span class="block font-display text-sm font-black text-orange-100">📅 DAILY WORLD TOUR</span>
+          <span id="menuDailyDetails" class="mt-1 block text-xs text-orange-200/75"></span>
+          <span id="menuDailyRule" class="mt-1 block text-[10px] text-slate-400"></span>
+        </button>
+        <button id="btnPvpDuel" type="button" class="rounded-xl border border-rose-300/40 bg-rose-400/10 px-4 py-4 text-left transition hover:bg-rose-400/20 hover:brightness-110">
+          <span class="block font-display text-sm font-black text-rose-100">⚔ PVP DUEL</span>
+          <span class="mt-1 block text-xs text-rose-200/75">Duel a rival live. Best of 3.</span>
+        </button>
+        <button id="btnMenuLeaderboard" type="button" class="rounded-xl border border-amber-300/40 bg-amber-400/10 px-4 py-4 text-left transition hover:bg-amber-400/20 hover:brightness-110">
+          <span class="block font-display text-sm font-black text-amber-100">🏆 LEADERBOARD</span>
+          <span class="mt-1 block text-xs text-amber-200/75">Daily, weekly, and monthly community boards.</span>
+        </button>
         <button id="btnMenuArtStudio" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-cyan-300/50 hover:bg-white/10">
           <span class="block font-display text-sm font-black text-cyan-100">🎨 ART STUDIO</span>
           <span class="mt-1 block text-xs text-slate-400">Equip unlocked looks and track ranks.</span>
+        </button>
+        <button id="btnMenuMissions" type="button" class="rounded-xl border border-amber-300/40 bg-amber-400/10 px-4 py-4 text-left transition hover:bg-amber-400/20 hover:brightness-110">
+          <span class="block font-display text-sm font-black text-amber-100">🏆 MISSIONS</span>
+          <span id="menuMissionsDetails" class="mt-1 block text-xs text-amber-200/75"></span>
         </button>
         <button id="btnMenuHowToPlay" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-4 text-left transition hover:border-cyan-300/50 hover:bg-white/10">
           <span class="block font-display text-sm font-black text-cyan-100">❔ HOW TO PLAY</span>
@@ -82,19 +99,6 @@
           <span class="block font-display text-sm font-black text-rose-100">🐞 REPORT ISSUE</span>
           <span class="mt-1 block text-xs text-slate-400">Opens a form with your version and run context prefilled. No sign-in.</span>
         </a>
-        <button id="btnMenuMissions" type="button" class="rounded-xl border border-amber-300/40 bg-amber-400/10 px-4 py-4 text-left transition hover:bg-amber-400/20">
-          <span class="block font-display text-sm font-black text-amber-100">🏆 MISSIONS</span>
-          <span id="menuMissionsDetails" class="mt-1 block text-xs text-amber-200/75"></span>
-        </button>
-        <button id="btnMenuLeaderboard" type="button" class="rounded-xl border border-amber-300/40 bg-amber-400/10 px-4 py-4 text-left transition hover:bg-amber-400/20">
-          <span class="block font-display text-sm font-black text-amber-100">🏆 LEADERBOARD</span>
-          <span class="mt-1 block text-xs text-amber-200/75">Daily, weekly, and monthly community boards.</span>
-        </button>
-        <button id="btnDailyTour" type="button" class="rounded-xl border border-orange-300/40 bg-orange-400/10 px-4 py-4 text-left transition hover:bg-orange-400/20">
-          <span class="block font-display text-sm font-black text-orange-100">📅 DAILY WORLD TOUR</span>
-          <span id="menuDailyDetails" class="mt-1 block text-xs text-orange-200/75"></span>
-          <span id="menuDailyRule" class="mt-1 block text-[10px] text-slate-400"></span>
-        </button>
         <button id="btnPvpDuel" type="button" class="rounded-xl border border-rose-300/40 bg-rose-400/10 px-4 py-4 text-left transition hover:bg-rose-400/20">
           <span class="block font-display text-sm font-black text-rose-100">⚔ PVP DUEL</span>
           <span class="mt-1 block text-xs text-rose-200/75">Duel a rival live. Best of 3.</span>
