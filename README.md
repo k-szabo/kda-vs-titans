@@ -16,6 +16,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Between-wave tour events, Leona tour routing, and a Merch Token shop (cards, relics, removal, healing, no free Cut/Rest)
 - Missions and achievements paying Spotlight Shards; Card Atelier with permanent shiny/platinum/holo card finishes
 - Encore Ascension tiers 1–5 with cumulative boss modifiers, plus per-wave boss scaling
+- Optional custom run modifiers (Chaos Draft, No Cuts, Double Hazard)
 - Unlockable POP/STARS, MORE, FIRESTARTER, and PRESTIGE leader art with ranked portrait borders
 - Collapsible battle log, compact by default on smaller screens
 - Death log on defeat, copyable Tour Receipt, persistent run records / Kaiju codex

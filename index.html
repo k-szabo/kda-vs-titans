@@ -353,6 +353,7 @@
         <div>
           <span class="font-display text-[10px] tracking-widest text-cyan-300">QUICK REFERENCE</span>
           <h2 id="howToPlayHeading" class="font-display text-xl font-black holo-text">HOW TO PLAY</h2>
+          <p class="mt-1 text-[11px] leading-relaxed text-slate-300">Survive all <strong class="text-white">10 waves</strong> of the kaiju setlist. Each wave is a turn-based fight; between waves you draft rewards and spend Merch Tokens. Losing all 80 HP ends the run — winning unlocks the next Encore tier.</p>
         </div>
         <button id="btnCloseHowToPlay" type="button" class="rounded-lg bg-white/10 px-3 py-1.5 font-display text-xs font-bold text-white hover:bg-white/20">CLOSE ✕</button>
       </div>
@@ -360,9 +361,10 @@
         <article class="rounded-2xl border border-pink-300/25 bg-pink-400/5 p-4">
           <h3 class="mb-2 font-display text-xs font-black text-pink-200">1. YOUR TURN</h3>
           <ul class="space-y-2 text-xs leading-relaxed text-slate-300">
-            <li>Start with 3 Energy and draw up to 5 cards. Spend Energy to play cards; unspent Energy is lost at turn end.</li>
-            <li>Shield absorbs incoming damage before HP. End your turn when ready; the boss resolves its shown intent.</li>
-            <li>Build Crowd Cheer to 100% to unleash Joint Finale. Card costs, status effects, and bonuses are shown on the cards and squad panel.</li>
+            <li><strong class="text-white">Draw &amp; play.</strong> Draw up to 5 cards (keys <strong class="text-white">1–5</strong>) and spend Hype Energy (3 per turn) to play them. Unspent Energy is lost when the turn ends.</li>
+            <li><strong class="text-white">Pin one card.</strong> The 📌 toggle keeps a card in hand for next turn, but your next draw stops at 5 cards total — so keeping draws one fewer.</li>
+            <li><strong class="text-white">End the turn (E).</strong> The boss then resolves its shown intent. Shield absorbs damage before HP; leftover Shield carries into your next turn.</li>
+            <li><strong class="text-white">Charge Cheer.</strong> Playing cards builds Crowd Cheer to 100% to unleash the free Joint Finale (<strong class="text-white">Q</strong>). Your once-per-run Leader Ability is <strong class="text-white">R</strong>.</li>
             <li>Buff cards take one of three stage slots. Timed buffs count down and expire when the wave ends; one-shot buffs stay armed until they fire.</li>
           </ul>
         </article>
@@ -370,7 +372,7 @@
           <h3 class="mb-2 font-display text-xs font-black text-amber-200">2. BOSS INTENTS</h3>
           <ul class="space-y-2 text-xs leading-relaxed text-slate-300">
             <li>Read the intent above the boss before ending your turn. Shield protects you; piercing damage bypasses it.</li>
-            <li>Some charged attacks can be interrupted by dealing enough damage in one turn. A successful Dorsal Interrupt cancels that intent.</li>
+            <li>Some charged attacks show a STUN threshold: deal that much HP damage in one turn to cancel the intent. Miss it and the hit lands <em>harder</em> than shown.</li>
             <li>Charm weakens enemy attacks; Marked makes the boss take extra damage. Curses and hazard rules can add special run challenges.</li>
           </ul>
         </article>
@@ -378,9 +380,8 @@
           <h3 class="mb-2 font-display text-xs font-black text-cyan-200">3. LEADERS &amp; PROGRESSION</h3>
           <ul class="space-y-2 text-xs leading-relaxed text-slate-300">
             <li>Choose Ahri, Akali, Evelynn, or Kai'Sa. Each has a once-per-run Leader Ability, a signature starter relic, and a 10-card starter deck leaning into their keyword.</li>
-            <li>Relics grant passive or triggered bonuses. Draft rewards shape your deck between waves; waves also pay Merch Tokens for the merch shop (cards, relics, removal, healing).</li>
-            <li>Custom modifiers (optional, standard tours only): Chaos Draft mixes starters and rival relics into drafts, No Cuts seals all deck removal, and Double Hazard adds a second stage hazard every wave.</li>
-            <li>Clear all 10 waves to unlock the next Encore tier. Art Studio unlocks alternate looks and tracks each leader's rank.</li>
+            <li>Relics grant passive or triggered bonuses. Draft rewards shape your deck between waves; waves also pay Merch Tokens for the merch shop (cards, relics, removal, healing). Optional custom modifiers (Chaos Draft, No Cuts, Double Hazard) twist standard tours; Daily Tours always run clean.</li>
+            <li>Clear all 10 waves to unlock the next Encore tier. Art Studio unlocks MORE, FIRESTARTER, PRESTIGE, and animated ETERNAL looks; the Card Atelier spends Spotlight Shards on permanent card finishes; Missions pay Shards for feats; Daily runs can post to the community leaderboard.</li>
           </ul>
         </article>
         <article class="rounded-2xl border border-amber-300/25 bg-amber-400/5 p-4 md:col-span-3">
@@ -404,6 +405,14 @@
             <li><span class="font-bold text-white">Crowd Cheer</span>: charge to 100% to unleash the Joint Finale; falls when you take HP damage.</li>
             <li><span class="font-bold text-white">Retain / Ethereal / Exhaust</span>: retained cards stay in hand; ethereal hazards burn you if still held at turn end, then exhaust; exhausted cards leave the fight.</li>
             <li><span class="font-bold text-white">Charged intents</span>: deal the listed STUN damage in one turn to cancel them, or brace for a boosted hit.</li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-emerald-300/25 bg-emerald-400/5 p-4 md:col-span-3">
+          <h3 class="mb-2 font-display text-xs font-black text-emerald-200">7. BETWEEN WAVES</h3>
+          <ul class="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-300">
+            <li><span class="font-bold text-white">Backstage event first.</span> Leona (or a stranger) offers a favour with a tradeoff — read both sides before picking; some options are hidden when impossible.</li>
+            <li><span class="font-bold text-white">Pick a tour stop.</span> Backstage Pass upgrades a card, Fan Meet drafts you a card, Merch Stand grants a relic. Card and relic rewards heal you; upgrading does not.</li>
+            <li><span class="font-bold text-white">Spend Merch Tokens.</span> The shop alongside the routing sells extra cards, a relic, deck removal, and healing. There is no free Cut or Rest — thinning and recovery cost tokens.</li>
           </ul>
         </article>
       </div>
