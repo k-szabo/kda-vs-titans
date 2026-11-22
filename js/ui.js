@@ -816,7 +816,7 @@ export function createGameUI({
     const relicGrid = document.getElementById('relicChoicesGrid');
     const upgradeGrid = document.getElementById('upgradeChoicesGrid');
     document.getElementById('draftHealText').textContent =
-      `+${(getState()?.encoreLevel ?? 0) >= 2 ? 12 : 18} HP`;
+      `+${(getState()?.encoreLevel ?? 0) >= 2 ? 10 : 14} HP`;
     const cardDatabase = getCardDatabase();
     const relicDatabase = getRelicDatabase();
     cardGrid.innerHTML = '';

@@ -207,8 +207,9 @@ overview.
   `base + player.encore`, then `×0.75` (floor) if player Weak, then `×1.5`
   (ceil) if enemy Marked, minimum 0. Multi-hit cards calculate per hit.
 - Unused energy is lost when the next turn refills energy.
-- Player shield carries between turns and is only spent by incoming damage; it
-  resets when a new wave starts.
+- Unused Holo Shield decays by half (rounded down) at each turn boundary, with
+  a battle-log line when anything decayed; it resets to 0 when a new wave
+  starts. Shield is otherwise only spent by incoming damage.
 
 ### Crowd Cheer / Joint Finale
 
@@ -285,8 +286,9 @@ overview.
   reweighted toward the leader's member plus one keyword intro card
   (Ahri Heartseeker, Akali Shadow Dagger, Evelynn Siphon Hunger, Kai'Sa
   Second Skin). Applies to new runs only; no save migration.
-- Difficulty scales by wave in `startStage()`: boss HP ×(1 + 2% per wave
-  index, W10 ≈ +18%) and +1 boss Strength from wave 6 on. Multiplies with
+- Difficulty scales by wave in `startStage()`: boss HP ×(1 + 3% per wave
+  index, W10 ≈ +27%) and +1 boss Strength from wave 5, +2 from wave 8.
+  Multiplies with
   Encore and daily modifiers; materialized into `state.enemy` so saves need
   no changes.
 
@@ -380,8 +382,8 @@ overview.
 
 After each non-final wave, `state.runStatus = 'draft'` and the player chooses:
 
-- **Card**: one of 3 non-starter, draftable cards; heals 18 HP (12 at Encore 2+).
-- **Relic**: one of 3 unowned, non-leader relics; heals 18 HP (12 at Encore 2+).
+- **Card**: one of 3 non-starter, draftable cards; heals 14 HP (10 at Encore 2+).
+- **Relic**: one of 3 unowned, non-leader relics; heals 14 HP (10 at Encore 2+).
 - **Upgrade**: upgrade one unupgraded card instance (no heal).
 - **Shop** (alongside routing): Merch Tokens buy cards (12), relics (18),
   deck removal (8, no heal), and +15 HP patch-ups (6). Cut and Rest have no
@@ -592,6 +594,10 @@ Supported pairs (enforced in `js/game-data.js`):
 
 Adding a new pair requires both validation in `game-data.js` and handling in
 `applyRelicEffects()` in `app.js`.
+
+`attackPlayed`/`skillPlayed` relics fire at most once per turn each, tracked
+in `state.relicTriggersThisTurn` (reset every turn and wave, normalized in
+`run-state.js` migration). Descriptions carry a "(once per turn)" note.
 
 ### Bosses (`assets/bosses/*.json`)
 

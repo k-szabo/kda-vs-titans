@@ -170,6 +170,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           damageDealtThisTurn: 0,
           peakSingleTurnDamage: 0,
           skillsPlayedThisTurn: 0,
+          relicTriggersThisTurn: {},
           handLimit: MAX_HAND_SIZE,
           keptCardInstanceId: null,
           energyPenalty: 0,
@@ -235,7 +236,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         const enc = ENCOUNTERS[stageIdx];
         if (!enc) return;
         const encoreMaxHp = getEncoreBossMaxHp(enc.maxHp, state.encoreLevel);
-        const waveMaxHp = Math.ceil(encoreMaxHp * (1 + 0.02 * stageIdx));
+        const waveMaxHp = Math.ceil(encoreMaxHp * (1 + 0.03 * stageIdx));
         const bossMaxHp = state.dailyChallenge?.modifier === 'encore_pressure'
           ? Math.ceil(waveMaxHp * 1.15)
           : waveMaxHp;
@@ -244,6 +245,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.turn = 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        state.relicTriggersThisTurn = {};
         state.handLimit = MAX_HAND_SIZE;
         state.keptCardInstanceId = null;
         state.energyPenalty = 0;
@@ -279,7 +281,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           hp: bossMaxHp,
           maxHp: bossMaxHp,
           block: 0,
-          strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0) + (stageIdx >= 5 ? 1 : 0),
+          strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0) + (stageIdx >= 4 ? 1 : 0) + (stageIdx >= 7 ? 1 : 0),
           stageEffect: enc.stageEffect,
           enrageTriggered: false,
           patternStep: 0,
@@ -839,10 +841,17 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
 
         if (state.player.hp <= 0 && finishPlayerDefeat()) return;
 
-        // Carry remaining Holo Shield forward into the next player turn.
+        // Unused Holo Shield decays by half (rounded down) instead of
+        // carrying over in full, so surplus block cannot snowball all wave.
+        const decayed = Math.floor(state.player.block / 2);
+        if (decayed < state.player.block) {
+          addLog(`🛡️ Unused Holo Shield decayed ${state.player.block} → ${decayed}.`, 'text-cyan-300');
+        }
+        state.player.block = decayed;
         state.turn += 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        state.relicTriggersThisTurn = {};
         state.handLimit = MAX_HAND_SIZE;
         state.enemy.reflectUsedThisTurn = false;
         Object.assign(state, createTurnMemberState());
@@ -1078,7 +1087,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       function getDraftHealAmount() {
-        return state.encoreLevel >= 2 ? 12 : 18;
+        return state.encoreLevel >= 2 ? 10 : 14;
       }
 
       function chooseTourRoute(routeId) {
@@ -1387,9 +1396,17 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       function applyRelicEffects(trigger, playedCard = null, effectiveCardCost = null) {
+        // attackPlayed/skillPlayed relics fire at most once per turn each.
+        // The per-relic record resets whenever a new player turn begins.
+        if (trigger === 'attackPlayed' || trigger === 'skillPlayed') {
+          if (state.relicTriggersThisTurn === null || typeof state.relicTriggersThisTurn !== 'object') state.relicTriggersThisTurn = {};
+        }
         state.relics.forEach((relicId) => {
           const relic = RELIC_DB[relicId];
           if (!relic) throw new Error(`Unknown owned relic: ${relicId}`);
+          const capped = trigger === 'attackPlayed' || trigger === 'skillPlayed';
+          if (capped && state.relicTriggersThisTurn[relicId]) return;
+          let fired = false;
           relic.effects.filter((effect) => effect.trigger === trigger).forEach((effect) => {
             if (trigger === 'attackPlayed' && playedCard?.type !== 'ATTACK') return;
             switch (effect.type) {
@@ -1421,6 +1438,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
                 state.player.block += effect.amount;
                 ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
                 addLog(`✦ ${relic.name}: gained +${effect.amount} Holo Shield.`, 'text-cyan-300');
+                fired = true;
                 break;
               case 'cheerGainPercent':
                 if (trigger !== 'cardPlayed' || effectiveCardCost === null) break;
@@ -1433,24 +1451,28 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
                 if (trigger !== 'attackPlayed' || playedCard?.type !== 'ATTACK' || effectiveCardCost !== 0 || !state.enemy) break;
                 dealDamageToEnemy(effect.amount);
                 addLog(`✦ ${relic.name}: +${effect.amount} damage to 0-cost Attack.`, 'text-fuchsia-300');
+                fired = true;
                 break;
               case 'skillGainBlock':
                 if (trigger !== 'skillPlayed' || playedCard?.type !== 'SKILL') break;
                 state.player.block += effect.amount;
                 ui.spawnPopup('playerArenaCard', `+${effect.amount} 🛡️`, 'text-cyan-300 font-display font-black text-lg');
                 addLog(`✦ ${relic.name}: +${effect.amount} Holo Shield for playing a Skill.`, 'text-cyan-300');
+                fired = true;
                 break;
               case 'charmDuration':
                 if (trigger !== 'skillPlayed' || playedCard?.type !== 'SKILL') break;
                 if ((state.enemy.statuses.charm || 0) > 0) {
                   state.enemy.statuses.charm += effect.amount;
                   addLog(`✦ ${relic.name}: +${effect.amount} Charm duration.`, 'text-purple-300');
+                  fired = true;
                 }
                 break;
               default:
                 throw new Error(`Unsupported relic effect type: ${effect.type}`);
             }
           });
+          if (capped && fired) state.relicTriggersThisTurn[relicId] = true;
         });
       }
 

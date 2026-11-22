@@ -28,15 +28,15 @@ Leader art uses official League of Legends Data Dragon splash assets configured 
 
 ## Encore Ascension
 
-Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is stored in the persistent profile and ranges from `0` (Normal) through `5`. Later releases keep `PROFILE_VERSION` at 3 (profile stats, art, and codex carry over) while run saves reset with each `RUN_SAVE_VERSION` bump (currently 5), intentionally resetting active runs so all players begin a fresh tour.
+Completing a 10-wave run unlocks the next Encore tier. `maxEncoreLevel` is stored in the persistent profile and ranges from `0` (Normal) through `5`. Later releases keep `PROFILE_VERSION` at 3 (profile stats, art, and codex carry over) while run saves reset with each `RUN_SAVE_VERSION` bump (currently 6), intentionally resetting active runs so all players begin a fresh tour.
 
 - **Encore 1:** +15% boss maximum HP.
-- **Encore 2:** Card and relic rewards heal 12 HP instead of 18 HP.
+- **Encore 2:** Card and relic rewards heal 10 HP instead of 14 HP.
 - **Encore 3:** Bosses start with +1 Strength.
 - **Encore 4:** New runs include one non-draftable Stage Fright Status card in the starter deck.
 - **Encore 5:** Charged-interrupt thresholds increase by 4 damage and boss Phase 2 triggers at 60% HP instead of 50%.
 
-Bosses also scale by wave independent of Encore: +2% maximum HP per wave index and +1 Strength from wave 6 on.
+Bosses also scale by wave independent of Encore: +3% maximum HP per wave index and +1 Strength from wave 5 (+2 from wave 8).
 
 Each new standard run also receives the selected leader's signature starter Relic and flavored 10-card starter deck: Ahri gets Nine-Tail Mic, Akali gets Neon Kunai, Evelynn gets Velvet Shades, and Kai'Sa gets Void Core. Signature Relics are leader-bound and never appear in random Relic rewards; Daily Tours draw only from the general Relic pool.
 

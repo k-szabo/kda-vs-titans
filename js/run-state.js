@@ -298,6 +298,9 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
           ? state.skillsPlayedThisTurn
           : 0,
+        relicTriggersThisTurn: isRecord(state.relicTriggersThisTurn)
+          ? Object.fromEntries(Object.entries(state.relicTriggersThisTurn).filter(([, used]) => used === true))
+          : {},
         energyPenalty: Number.isInteger(state.energyPenalty) && state.energyPenalty >= 0 && state.energyPenalty <= 3
           ? state.energyPenalty
           : 0,
@@ -552,6 +555,9 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.damageDealtThisTurn < 0 ||
     !Number.isInteger(saved.skillsPlayedThisTurn) ||
     saved.skillsPlayedThisTurn < 0 ||
+    !(saved.relicTriggersThisTurn === undefined ||
+      (isRecord(saved.relicTriggersThisTurn) &&
+        Object.values(saved.relicTriggersThisTurn).every((used) => used === true))) ||
     !Number.isInteger(saved.energyPenalty) ||
     saved.energyPenalty < 0 ||
     saved.energyPenalty > 3 ||

@@ -20,7 +20,7 @@
     {
       "id": "neon_kunai",
       "name": "Neon Kunai",
-      "description": "0-cost Attack cards deal 3 additional damage.",
+      "description": "0-cost Attack cards deal 3 additional damage (once per turn).",
       "leaderId": "akali",
       "effects": [
         { "trigger": "attackPlayed", "type": "zeroCostAttackDamage", "amount": 3 }
@@ -29,7 +29,7 @@
     {
       "id": "velvet_shades",
       "name": "Velvet Shades",
-      "description": "Skills grant Charm for 1 additional turn.",
+      "description": "Skills grant Charm for 1 additional turn (once per turn).",
       "leaderId": "evelynn",
       "effects": [
         { "trigger": "skillPlayed", "type": "charmDuration", "amount": 1 }
@@ -38,7 +38,7 @@
     {
       "id": "void_core",
       "name": "Void Core",
-      "description": "Gain 2 Holo Shield whenever you play a Skill.",
+      "description": "Gain 2 Holo Shield whenever you play a Skill (once per turn).",
       "leaderId": "kaisa",
       "effects": [
         { "trigger": "skillPlayed", "type": "skillGainBlock", "amount": 2 }
@@ -47,7 +47,7 @@
     {
       "id": "monarch_subwoofer",
       "name": "Monarch Sub-Woofer",
-      "description": "Gain +2 Holo Shield whenever you play an Attack.",
+      "description": "Gain +2 Holo Shield whenever you play an Attack (once per turn).",
       "effects": [
         { "trigger": "attackPlayed", "type": "gainBlock", "amount": 2 }
       ]
@@ -63,7 +63,7 @@
     {
       "id": "pyro_rig",
       "name": "Pyro Rig",
-      "description": "Gain +3 Holo Shield whenever you play an Attack.",
+      "description": "Gain +3 Holo Shield whenever you play an Attack (once per turn).",
       "effects": [
         { "trigger": "attackPlayed", "type": "gainBlock", "amount": 3 }
       ]
@@ -71,7 +71,7 @@
     {
       "id": "encore_pedal",
       "name": "Encore Pedal",
-      "description": "Gain 4 Holo Shield whenever you play a Skill.",
+      "description": "Gain 4 Holo Shield whenever you play a Skill (once per turn).",
       "effects": [
         { "trigger": "skillPlayed", "type": "skillGainBlock", "amount": 4 }
       ]
@@ -79,7 +79,7 @@
     {
       "id": "sirens_contract",
       "name": "Siren's Contract",
-      "description": "Skills grant Charm for 2 additional turns.",
+      "description": "Skills grant Charm for 2 additional turns (once per turn).",
       "effects": [
         { "trigger": "skillPlayed", "type": "charmDuration", "amount": 2 }
       ]
@@ -87,7 +87,7 @@
     {
       "id": "street_blade",
       "name": "Street Blade",
-      "description": "0-cost Attack cards deal 5 additional damage.",
+      "description": "0-cost Attack cards deal 5 additional damage (once per turn).",
       "effects": [
         { "trigger": "attackPlayed", "type": "zeroCostAttackDamage", "amount": 5 }
       ]
@@ -111,26 +111,26 @@
     {
       "id": "victory_lap",
       "name": "Victory Lap",
-      "description": "Restore 10 HP whenever you clear a wave.",
+      "description": "Restore 6 HP whenever you clear a wave.",
       "effects": [
-        { "trigger": "waveClear", "type": "heal", "amount": 10 }
+        { "trigger": "waveClear", "type": "heal", "amount": 6 }
       ]
     },
     {
       "id": "green_room",
       "name": "Green Room",
-      "description": "Restore 8 HP at the start of each wave.",
+      "description": "Restore 5 HP at the start of each wave.",
       "effects": [
-        { "trigger": "stageStart", "type": "heal", "amount": 8 }
+        { "trigger": "stageStart", "type": "heal", "amount": 5 }
       ]
     },
     {
       "id": "all_access",
       "name": "All Access Pass",
-      "description": "Start each wave with +1 Hype Energy and restore 4 HP whenever you clear a wave.",
+      "description": "Start each wave with +1 Hype Energy and restore 2 HP whenever you clear a wave.",
       "effects": [
         { "trigger": "stageStart", "type": "startingEnergy", "amount": 1 },
-        { "trigger": "waveClear", "type": "heal", "amount": 4 }
+        { "trigger": "waveClear", "type": "heal", "amount": 2 }
       ]
     }
   ]
