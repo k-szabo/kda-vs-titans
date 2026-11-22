@@ -93,7 +93,7 @@ export function nextPvpAction(log, type, payload = {}) {
   return action;
 }
 
-const PVP_ACTION_TYPES = new Set(['cardPlayed', 'turnEnded', 'roundReady', 'snapshotRequest', 'snapshotState']);
+const PVP_ACTION_TYPES = new Set(['cardPlayed', 'turnEnded', 'roundEnd', 'snapshotRequest', 'snapshotState']);
 
 export function isValidPvpAction(action) {
   return Boolean(action) && typeof action === 'object' &&

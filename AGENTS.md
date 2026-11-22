@@ -209,8 +209,9 @@ overview.
   - records member synergy,
   - handles a mid-turn kill.
 - Damage calculation for card hits (`computeCardAttackDamage`):
-  `base + player.encore`, then `×0.75` (floor) if player Weak, then `×1.5`
-  (ceil) if enemy Marked, minimum 0. Multi-hit cards calculate per hit.
+  `base + player.encore`, then `×0.75` (floor) if player Weak, then `×0.75`
+  (floor) if the attacker is Charmed (PvP only — never set in PvE), then
+  `×1.5` (ceil) if enemy Marked, minimum 0. Multi-hit cards calculate per hit.
 - Unused energy is lost when the next turn refills energy.
 - Unused Holo Shield decays by half (rounded down) at each turn boundary, with
   a battle-log line when anything decayed; it resets to 0 when a new wave

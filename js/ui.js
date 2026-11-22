@@ -321,16 +321,29 @@ export function createGameUI({
     const tokenDisplay = document.getElementById('merchTokenDisplay');
     if (tokenDisplay) tokenDisplay.textContent = `${state.merchTokens ?? 0} 🪙`;
     const setlistEl = document.getElementById('setlistTracker');
-    setlistEl.innerHTML = encounters.map((enc, idx) => {
-      const active = idx === state.stageIndex;
-      const cleared = idx < state.stageIndex;
-      const cls = active
-        ? 'bg-pink-500 text-white border-amber-300 shadow-[0_0_10px_rgba(255,42,133,0.6)]'
-        : cleared
-        ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
-        : 'bg-white/5 text-slate-400 border-white/10';
-      return `<span${active ? ' aria-current="step"' : ''} title="${enc.name}" class="px-2 py-0.5 rounded-lg border font-display text-[10px] font-black ${cls}">W${idx + 1}</span>`;
-    }).join('');
+    if (state.runStatus === 'pvp') {
+      setlistEl.innerHTML = [0, 1, 2].map((idx) => {
+        const active = idx === state.stageIndex;
+        const decided = idx < state.stageIndex;
+        const cls = active
+          ? 'bg-rose-500 text-white border-amber-300 shadow-[0_0_10px_rgba(255,42,133,0.6)]'
+          : decided
+          ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
+          : 'bg-white/5 text-slate-400 border-white/10';
+        return `<span${active ? ' aria-current="step"' : ''} title="Duel round ${idx + 1}" class="px-2 py-0.5 rounded-lg border font-display text-[10px] font-black ${cls}">R${idx + 1}</span>`;
+      }).join('');
+    } else {
+      setlistEl.innerHTML = encounters.map((enc, idx) => {
+        const active = idx === state.stageIndex;
+        const cleared = idx < state.stageIndex;
+        const cls = active
+          ? 'bg-pink-500 text-white border-amber-300 shadow-[0_0_10px_rgba(255,42,133,0.6)]'
+          : cleared
+          ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
+          : 'bg-white/5 text-slate-400 border-white/10';
+        return `<span${active ? ' aria-current="step"' : ''} title="${enc.name}" class="px-2 py-0.5 rounded-lg border font-display text-[10px] font-black ${cls}">W${idx + 1}</span>`;
+      }).join('');
+    }
 
     const devtoolsWaveSelector = document.getElementById('devtoolsWaveSelector');
     devtoolsWaveSelector.replaceChildren();
