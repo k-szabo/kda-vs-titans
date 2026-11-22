@@ -5,7 +5,7 @@ import { LEADERS } from './leader-data.js';
 
 const SCREENS = ['choice', 'lobby', 'relics', 'result'];
 
-export function createPvpUI({ onHost, onJoin, onPickLeader, onReady, onLeave, onToggleRelic, onConfirmRelics, onRematch }) {
+export function createPvpUI({ onHost, onJoin, onPickLeader, onReady, onLeave, onToggleRelic, onConfirmRelics, onRematch, onCopyCode }) {
   const modal = () => document.getElementById('pvpModal');
   const body = () => document.getElementById('pvpModalBody');
   const status = () => document.getElementById('pvpModalStatus');
@@ -84,7 +84,9 @@ export function createPvpUI({ onHost, onJoin, onPickLeader, onReady, onLeave, on
         <div class="grid gap-3">
           <div class="rounded-xl border border-white/10 bg-black/30 p-3 text-center">
             <div class="text-[10px] font-display tracking-widest text-slate-400">ROOM CODE</div>
-            <div class="font-display text-3xl font-black tracking-[0.3em] text-amber-200">${model.roomCode}</div>
+            <div class="font-display text-3xl font-black tracking-[0.3em] text-amber-200 select-text">${model.roomCode}</div>
+            <button type="button" data-pvp-action="copy-code"
+              class="mt-2 rounded-lg border border-amber-300/40 bg-amber-400/10 px-3 py-1.5 font-display text-[10px] font-bold text-amber-100 hover:bg-amber-400/20">📋 COPY CODE</button>
             <div class="mt-1 text-[11px] text-slate-400">${peerLine}</div>
           </div>
           <div>
@@ -117,6 +119,7 @@ export function createPvpUI({ onHost, onJoin, onPickLeader, onReady, onLeave, on
     });
     root.querySelector('[data-pvp-action="ready"]')?.addEventListener('click', () => onReady());
     root.querySelector('[data-pvp-action="leave"]')?.addEventListener('click', () => onLeave());
+    root.querySelector('[data-pvp-action="copy-code"]')?.addEventListener('click', () => onCopyCode());
     root.querySelectorAll('[data-pvp-relic]').forEach((btn) => {
       btn.addEventListener('click', () => onToggleRelic(btn.dataset.pvpRelic));
     });

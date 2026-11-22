@@ -1717,7 +1717,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           iReady: false, flip: null, roundIndex: 0, pendingEvents: [],
           relicPicks: [], relicIds: null, myWins: 0, peerWins: 0,
           rivalId: null, timerId: null, roundDecided: false, matchOver: false,
-          abilityUsed: false, actionLog: createPvpActionLog(), isMyTurn: false
+          abilityUsed: false, actionLog: createPvpActionLog(), isMyTurn: false,
+          relicsOpen: false
         };
         session.room = createPvpRoom({
           roomCode, playerId, bus,
@@ -1735,8 +1736,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           session.peerLeader = peer?.leader || null;
           session.peerReady = peer?.ready === true;
           if (peer) session.rivalId = peer.playerId;
-          if (session.peerPresent && !session.flip) checkPvpStart(session);
-          if (!session.flip) {
+          if (session.peerPresent && !session.flip && !session.relicsOpen) checkPvpStart(session);
+          if (!session.flip && !session.relicsOpen) {
             pvpUI?.setState(pvpViewModel(session.peerPresent ? '' : 'Waiting for rival to join…'));
           }
         } else if (event.type === 'opponentLeft') {
@@ -1770,11 +1771,13 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       function checkPvpStart(session) {
-        if (session.flip || !session.iReady || !session.peerReady) return;
-        if (!session.myLeader || !session.peerLeader) return;
+        if (session.flip || !session.iReady || !session.peerReady) return false;
+        if (!session.myLeader || !session.peerLeader) return false;
         const options = pickPvpRelicOptions(session.roomCode, session.roundIndex, session.myLeader, RELIC_DB)
           .map((id) => ({ id, name: RELIC_DB[id]?.name || id, description: RELIC_DB[id]?.description || '' }));
+        session.relicsOpen = true;
         pvpUI?.setState({ screen: 'relics', relicOptions: options, pickedRelics: [...session.relicPicks], hint: 'Both ready! Pick your relics.' });
+        return true;
       }
 
       function togglePvpRelic(relicId) {
@@ -1807,6 +1810,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         pvp.relicIds = null;
         pvp.flip = null;
         pvp.pendingEvents = [];
+        pvp.relicsOpen = true;
         const options = pickPvpRelicOptions(pvp.roomCode, pvp.roundIndex, pvp.myLeader, RELIC_DB)
           .map((id) => ({ id, name: RELIC_DB[id]?.name || id, description: RELIC_DB[id]?.description || '' }));
         pvpUI?.show('');
@@ -1857,8 +1861,32 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         try {
           pvp.room.setReady(true, pvp.myLeader);
         } catch { /* presence update is best-effort */ }
-        checkPvpStart(pvp);
-        pvpUI?.setState(pvpViewModel(pvp.flip ? '' : 'Waiting for rival to ready up…'));
+        if (!checkPvpStart(pvp)) {
+          pvpUI?.setState(pvpViewModel('Waiting for rival to ready up…'));
+        }
+      }
+
+      function copyPvpCode() {
+        if (!pvp) return;
+        const code = pvp.roomCode;
+        const show = () => {
+          if (pvp) pvpUI?.setState(pvpViewModel('Code copied — send it to your rival!'));
+        };
+        const fallback = () => {
+          try {
+            const ta = document.createElement('textarea');
+            ta.value = code;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            show();
+          } catch {
+            pvpUI?.setError(`Copy failed — the code is ${code}`);
+          }
+        };
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(code).then(show, fallback);
+        else fallback();
       }
 
       function leavePvpDuel() {
@@ -1881,7 +1909,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
             onLeave: leavePvpDuel,
             onToggleRelic: togglePvpRelic,
             onConfirmRelics: confirmPvpRelics,
-            onRematch: rematchPvp
+            onRematch: rematchPvp,
+            onCopyCode: copyPvpCode
           });
         }
         if (pvp) {
