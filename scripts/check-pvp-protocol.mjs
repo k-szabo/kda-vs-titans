@@ -73,6 +73,7 @@ assert.ok(isValidPvpAction(a1) && isValidPvpAction(a2));
 assert.ok(!isValidPvpAction({ seq: 0, type: 'cardPlayed', payload: {} }));
 assert.ok(!isValidPvpAction({ seq: 1, type: 'nope', payload: {} }));
 assert.ok(isValidPvpAction({ seq: 1, type: 'roundEnd', payload: { winner: 'x' } }));
+assert.ok(isValidPvpAction({ seq: 2, type: 'rematch', payload: {} }));
 assert.ok(!isValidPvpAction(null));
 
 console.log('PASS: room codes, deterministic flip/PRNG, synced decks/relics, action envelopes.');

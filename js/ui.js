@@ -322,15 +322,22 @@ export function createGameUI({
     if (tokenDisplay) tokenDisplay.textContent = `${state.merchTokens ?? 0} 🪙`;
     const setlistEl = document.getElementById('setlistTracker');
     if (state.runStatus === 'pvp') {
+      const winners = state.pvpRoundWinners || [];
       setlistEl.innerHTML = [0, 1, 2].map((idx) => {
         const active = idx === state.stageIndex;
         const decided = idx < state.stageIndex;
+        const winner = winners[idx];
         const cls = active
           ? 'bg-rose-500 text-white border-amber-300 shadow-[0_0_10px_rgba(255,42,133,0.6)]'
           : decided
-          ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
+          ? winner === 'me'
+            ? 'bg-emerald-500/30 text-emerald-200 border-emerald-400/60'
+            : winner === 'rival'
+            ? 'bg-rose-500/30 text-rose-200 border-rose-400/60'
+            : 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
           : 'bg-white/5 text-slate-400 border-white/10';
-        return `<span${active ? ' aria-current="step"' : ''} title="Duel round ${idx + 1}" class="px-2 py-0.5 rounded-lg border font-display text-[10px] font-black ${cls}">R${idx + 1}</span>`;
+        const title = `Duel round ${idx + 1}` + (winner ? (winner === 'me' ? ' — you won' : ' — rival won') : '');
+        return `<span${active ? ' aria-current="step"' : ''} title="${title}" class="px-2 py-0.5 rounded-lg border font-display text-[10px] font-black ${cls}">R${idx + 1}</span>`;
       }).join('');
     } else {
       setlistEl.innerHTML = encounters.map((enc, idx) => {
@@ -436,6 +443,12 @@ export function createGameUI({
     }
     if (p.statuses.weak > 0) {
       pStatusEl.innerHTML += `<span class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/50 text-rose-200 font-display text-[10px] font-bold">💫 WEAK (${p.statuses.weak})</span>`;
+    }
+    if ((p.statuses.charm || 0) > 0) {
+      pStatusEl.innerHTML += `<span class="px-2 py-0.5 rounded-full bg-pink-500/25 border border-pink-400/50 text-pink-200 font-display text-[10px] font-bold">💕 CHARMED (${p.statuses.charm})</span>`;
+    }
+    if ((p.statuses.marked || 0) > 0) {
+      pStatusEl.innerHTML += `<span class="px-2 py-0.5 rounded-full bg-rose-500/25 border border-rose-400/50 text-rose-200 font-display text-[10px] font-bold">🎯 MARKED (${p.statuses.marked})</span>`;
     }
 
     renderBuffs(state, cardDatabase);

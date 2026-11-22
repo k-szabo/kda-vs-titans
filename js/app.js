@@ -1696,9 +1696,17 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           peerReady: pvp.peerReady,
           iReady: pvp.iReady,
           flip: pvp.flip,
+          relicOptions: pvpRelicOptions(),
+          pickedRelics: [...(pvp.relicPicks || [])],
           hint,
           error
         };
+      }
+
+      function pvpRelicOptions() {
+        if (!pvp || !pvp.myLeader) return [];
+        return pickPvpRelicOptions(pvp.roomCode, pvp.roundIndex, pvp.myLeader, RELIC_DB)
+          .map((id) => ({ id, name: RELIC_DB[id]?.name || id, description: RELIC_DB[id]?.description || '' }));
       }
 
       async function createPvpSession(role, roomCode) {
@@ -1718,7 +1726,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           relicPicks: [], relicIds: null, myWins: 0, peerWins: 0,
           rivalId: null, timerId: null, roundDecided: false, matchOver: false,
           abilityUsed: false, actionLog: createPvpActionLog(), isMyTurn: false,
-          relicsOpen: false
+          duelStarted: false, duelTimer: null, roundTimer: null,
+          rematchMe: false, rematchPeer: false
         };
         session.room = createPvpRoom({
           roomCode, playerId, bus,
@@ -1736,8 +1745,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           session.peerLeader = peer?.leader || null;
           session.peerReady = peer?.ready === true;
           if (peer) session.rivalId = peer.playerId;
-          if (session.peerPresent && !session.flip && !session.relicsOpen) checkPvpStart(session);
-          if (!session.flip && !session.relicsOpen) {
+          if (session.peerPresent && !session.flip) checkPvpStart(session);
+          if (!session.flip) {
             pvpUI?.setState(pvpViewModel(session.peerPresent ? '' : 'Waiting for rival to join…'));
           }
         } else if (event.type === 'opponentLeft') {
@@ -1752,19 +1761,28 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
             pvpUI?.setState(pvpViewModel('Rival left. Share the code again or leave.'));
           }
         } else if (event.type === 'action') {
-          if (session.matchOver || session.roundDecided) return;
+          if (session.matchOver) return;
           const action = event.action;
-          if (!action || action.payload?.round !== session.roundIndex) return; // stale round
+          if (!action) return;
+          pvpAdoptScore(action.payload?.score);
+          if (session.roundDecided || action.payload?.round !== session.roundIndex) return;
           if (action.type === 'cardPlayed') applyRemoteCardPlayed(action.payload);
           else if (action.type === 'turnEnded') pvpOnTurnEnded(action.payload);
           else if (action.type === 'roundEnd') pvpOnRoundEnd(action.payload);
+          else if (action.type === 'rematch') pvpOnRematch();
         } else if (event.type === 'snapshot') {
           if (session.matchOver || session.roundDecided) return;
+          pvpAdoptScore(event.snapshot?.score);
+          if (event.snapshot?.round !== session.roundIndex) return;
           pvpAdoptSnapshot(event.snapshot);
           renderAll();
         } else if (event.type === 'snapshotRequested') {
           if (session.matchOver || session.roundDecided) return;
-          session.room.sendSnapshot(pvpFullSnapshot(), session.actionLog.nextSeq);
+          session.room.sendSnapshot({
+            ...pvpFullSnapshot(),
+            round: session.roundIndex,
+            score: { me: session.myWins, rival: session.peerWins }
+          }, session.actionLog.nextSeq);
         } else if (event.type === 'resync') {
           addLog('🔄 Sync gap — requesting full state…', 'text-slate-400');
         }
@@ -1773,33 +1791,73 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       function checkPvpStart(session) {
         if (session.flip || !session.iReady || !session.peerReady) return false;
         if (!session.myLeader || !session.peerLeader) return false;
-        const options = pickPvpRelicOptions(session.roomCode, session.roundIndex, session.myLeader, RELIC_DB)
-          .map((id) => ({ id, name: RELIC_DB[id]?.name || id, description: RELIC_DB[id]?.description || '' }));
-        session.relicsOpen = true;
-        pvpUI?.setState({ screen: 'relics', relicOptions: options, pickedRelics: [...session.relicPicks], hint: 'Both ready! Pick your relics.' });
+        if ((session.relicPicks || []).length !== 2) return false;
+        session.flip = pvpCoinFlip(session.roomCode, session.roundIndex);
+        session.relicIds = [...session.relicPicks];
+        session.room.start();
+        session.duelStarted = false;
+        const first = session.flip === session.role ? 'me' : 'rival';
+        pvpUI?.show('');
+        pvpUI?.setState({ screen: 'flip', first, round: session.roundIndex + 1 });
+        addLog(`🪙 Coin flip: ${session.flip} — ${first === 'me' ? 'you' : 'rival'} take${first === 'me' ? '' : 's'} the first turn!`, 'text-amber-300 font-bold');
+        clearTimeout(session.duelTimer);
+        session.duelTimer = setTimeout(() => startPvpDuel(), 3000);
         return true;
+      }
+
+      function startPvpDuel() {
+        if (!pvp || pvp.duelStarted) return;
+        pvp.duelStarted = true;
+        clearTimeout(pvp.duelTimer);
+        startPvpRound();
+      }
+
+      function continuePvpRound() {
+        if (!pvp || pvp.matchOver) return;
+        clearTimeout(pvp.roundTimer);
+        pvp.roundIndex += 1;
+        pvp.roundDecided = false;
+        pvp.duelStarted = false;
+        pvp.flip = pvpCoinFlip(pvp.roomCode, pvp.roundIndex);
+        const first = pvp.flip === pvp.role ? 'me' : 'rival';
+        pvpUI?.show('');
+        pvpUI?.setState({ screen: 'flip', first, round: pvp.roundIndex + 1 });
+        addLog(`🪙 Round ${pvp.roundIndex + 1} coin: ${first === 'me' ? 'you' : 'rival'} start${first === 'me' ? '' : 's'}!`, 'text-amber-300 font-bold');
+        clearTimeout(pvp.duelTimer);
+        pvp.duelTimer = setTimeout(() => startPvpDuel(), 3000);
       }
 
       function togglePvpRelic(relicId) {
         if (!pvp || !RELIC_DB[relicId]) return;
         pvp.relicPicks = (pvp.relicPicks || []).filter((id) => id !== relicId);
         if (pvp.relicPicks.length < 2 && !pvp.relicPicks.includes(relicId)) pvp.relicPicks.push(relicId);
-        const options = pickPvpRelicOptions(pvp.roomCode, pvp.roundIndex, pvp.myLeader, RELIC_DB)
-          .map((id) => ({ id, name: RELIC_DB[id]?.name || id, description: RELIC_DB[id]?.description || '' }));
-        pvpUI?.setState({ screen: 'relics', relicOptions: options, pickedRelics: [...pvp.relicPicks], hint: '' });
-      }
-
-      function confirmPvpRelics() {
-        if (!pvp || (pvp.relicPicks || []).length !== 2) return;
-        pvp.relicIds = [...pvp.relicPicks];
-        pvp.flip = pvpCoinFlip(pvp.roomCode, pvp.roundIndex);
-        pvp.room.start();
-        pvpUI?.setState(pvpViewModel(`🪙 Coin: ${pvp.flip === pvp.role ? 'you start!' : 'rival starts.'}`));
-        startPvpRound();
+        pvpUI?.setState(pvpViewModel(''));
       }
 
       function rematchPvp() {
-        if (!pvp) return;
+        if (!pvp || !pvp.matchOver || pvp.rematchMe) return;
+        pvp.rematchMe = true;
+        pvpSend('rematch', {});
+        if (pvp.rematchPeer) {
+          doRematchReset();
+        } else {
+          pvpUI?.show('');
+          pvpUI?.setState(pvpViewModel('Rematch sent — waiting for rival…'));
+        }
+      }
+
+      function pvpOnRematch() {
+        if (!pvp || !pvp.matchOver) return;
+        if (pvp.rematchMe) {
+          doRematchReset();
+        } else {
+          pvp.rematchPeer = true;
+          pvpUI?.show('');
+          pvpUI?.setState({ screen: 'result', won: pvp.myWins >= 2, myWins: pvp.myWins, peerWins: pvp.peerWins, hint: 'Rival wants a rematch — hit REMATCH to accept!' });
+        }
+      }
+
+      function doRematchReset() {
         pvp.myWins = 0;
         pvp.peerWins = 0;
         pvp.roundIndex = 0;
@@ -1809,12 +1867,15 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         pvp.relicPicks = [];
         pvp.relicIds = null;
         pvp.flip = null;
-        pvp.pendingEvents = [];
-        pvp.relicsOpen = true;
-        const options = pickPvpRelicOptions(pvp.roomCode, pvp.roundIndex, pvp.myLeader, RELIC_DB)
-          .map((id) => ({ id, name: RELIC_DB[id]?.name || id, description: RELIC_DB[id]?.description || '' }));
+        pvp.duelStarted = false;
+        pvp.rematchMe = false;
+        pvp.rematchPeer = false;
+        pvp.iReady = false;
+        try {
+          pvp.room.setReady(false, pvp.myLeader);
+        } catch { /* presence update is best-effort */ }
         pvpUI?.show('');
-        pvpUI?.setState({ screen: 'relics', relicOptions: options, pickedRelics: [], hint: 'Rematch! Pick fresh relics.' });
+        pvpUI?.setState(pvpViewModel('Rematch! Pick relics and ready up.'));
       }
 
       async function hostPvpDuel() {
@@ -1857,6 +1918,10 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
 
       function readyPvpDuel() {
         if (!pvp || !pvp.myLeader || !pvp.peerPresent || pvp.iReady) return;
+        if ((pvp.relicPicks || []).length !== 2) {
+          pvpUI?.setState(pvpViewModel('Pick 2 relics first!'));
+          return;
+        }
         pvp.iReady = true;
         try {
           pvp.room.setReady(true, pvp.myLeader);
@@ -1891,11 +1956,16 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
 
       function leavePvpDuel() {
         pvpClearTimer();
+        if (pvp) {
+          clearTimeout(pvp.roundTimer);
+          clearTimeout(pvp.duelTimer);
+        }
         try {
           pvp?.room.close();
         } catch { /* already closed */ }
         if (state && state.runStatus === 'pvp') state = null;
         pvp = null;
+        pvpSyncButtons();
         pvpUI?.hide();
       }
 
@@ -1908,7 +1978,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
             onReady: readyPvpDuel,
             onLeave: leavePvpDuel,
             onToggleRelic: togglePvpRelic,
-            onConfirmRelics: confirmPvpRelics,
+            onStartDuel: startPvpDuel,
+            onContinueRound: continuePvpRound,
             onRematch: rematchPvp,
             onCopyCode: copyPvpCode
           });
@@ -1939,7 +2010,27 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
 
       function pvpSend(type, payload = {}) {
         if (!pvp || !pvp.room || !pvp.actionLog) return;
-        pvp.room.sendAction(nextPvpAction(pvp.actionLog, type, { ...payload, round: pvp.roundIndex }));
+        pvp.room.sendAction(nextPvpAction(pvp.actionLog, type, {
+          ...payload,
+          round: pvp.roundIndex,
+          score: { me: pvp.myWins, rival: pvp.peerWins }
+        }));
+      }
+
+      function pvpAdoptScore(score) {
+        if (!pvp || !score) return;
+        let changed = false;
+        if (Number.isInteger(score.me) && score.me > pvp.peerWins) {
+          pvp.peerWins = score.me;
+          changed = true;
+        }
+        if (Number.isInteger(score.rival) && score.rival > pvp.myWins) {
+          pvp.myWins = score.rival;
+          changed = true;
+        }
+        if (changed) {
+          addLog(`🔄 Score synced with rival (you ${pvp.myWins} — rival ${pvp.peerWins}).`, 'text-slate-400');
+        }
       }
 
       function pvpRefreshIntent() {
@@ -1949,6 +2040,13 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           label: pvp && pvp.isMyTurn ? '⚔ Your move — rival awaits.' : '⏳ Rival is thinking…'
         }];
         state.enemy.patternStep = 0;
+      }
+
+      function pvpSyncButtons() {
+        const btn = document.getElementById('btnEndTurn');
+        if (!btn) return;
+        if (state && state.runStatus === 'pvp') btn.disabled = !(pvp && pvp.isMyTurn && !pvp.matchOver);
+        else btn.disabled = false;
       }
 
       function pvpClearTimer() {
@@ -2075,16 +2173,18 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         ui.hideMainMenu();
         pvpUI.hide();
         applyRelicEffects('stageStart');
+        if (pvp.roundIndex === 0) state.pvpRoundWinners = [];
         pvp.roundDecided = false;
         pvp.pendingEvents = [];
         addLog(`⚔ ROUND ${pvp.roundIndex + 1} — ${pvp.myWins} : ${pvp.peerWins}. Rival: ${peerName} (${pvp.peerLeader.toUpperCase()}).`, 'text-amber-300 font-bold');
         const first = pvpCoinFlip(pvp.roomCode, pvp.roundIndex) === pvp.role;
+        addLog(`🪙 Coin: ${first ? 'you' : 'rival'} take${first ? '' : 's'} the first turn.`, 'text-sky-300');
         if (first) {
           beginPvpTurn();
         } else {
           pvp.isMyTurn = false;
           state.isPlayerTurn = false;
-          addLog('🪙 Rival takes the first turn…', 'text-sky-300');
+          pvpSyncButtons();
           pvpRefreshIntent();
           renderAll();
         }
@@ -2118,6 +2218,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         tickBuffsAtTurnStart();
         state.isPlayerTurn = true;
         pvp.isMyTurn = true;
+        pvpSyncButtons();
         pvpRefreshIntent();
         drawCards(5);
         pvpStartTimer();
@@ -2142,6 +2243,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         pvpSend('turnEnded', { snapshot: pvpPublicSnapshot() });
         addLog('⏳ Turn ended — rival is thinking…', 'text-sky-300');
         pvpRefreshIntent();
+        pvpSyncButtons();
         renderAll();
       }
 
@@ -2162,6 +2264,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
 
       function applyRemoteCardPlayed(payload) {
         if (!state || state.runStatus !== 'pvp' || !pvp || pvp.roundDecided || pvp.matchOver) return;
+        if (payload.round !== pvp.roundIndex) return; // stale round
         const remote = payload.snapshot || {};
         const leader = payload.leader;
         if (payload.cardId === '__finale') {
@@ -2245,21 +2348,30 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           pvpSend('roundEnd', { winner: pvp.rivalId });
         }
         pvp.abilityUsed = state.leaderAbilityUsed;
+        if (state.pvpRoundWinners) state.pvpRoundWinners[pvp.roundIndex] = won ? 'me' : 'rival';
         addLog(won ? `🏆 ROUND ${pvp.roundIndex + 1} YOURS! (${pvp.myWins} : ${pvp.peerWins})` : `💀 ROUND ${pvp.roundIndex + 1} LOST. (${pvp.myWins} : ${pvp.peerWins})`, 'text-amber-300 font-bold');
         if (pvp.myWins >= 2 || pvp.peerWins >= 2) {
           pvpEndMatch(pvp.myWins >= 2);
           return;
         }
-        pvp.roundIndex += 1;
+        pvpUI?.show('');
+        pvpUI?.setState({ screen: 'roundresult', round: pvp.roundIndex + 1, won, myWins: pvp.myWins, peerWins: pvp.peerWins });
         state.isPlayerTurn = false;
+        pvp.isMyTurn = false;
+        pvpSyncButtons();
         renderAll();
-        startPvpRound();
+        clearTimeout(pvp.roundTimer);
+        pvp.roundTimer = setTimeout(() => continuePvpRound(), 4000);
       }
 
       function pvpEndMatch(won) {
         pvp.matchOver = true;
         pvpClearTimer();
+        clearTimeout(pvp.roundTimer);
+        clearTimeout(pvp.duelTimer);
+        pvp.isMyTurn = false;
         state.isPlayerTurn = false;
+        pvpSyncButtons();
         renderAll();
         pvpUI.show('');
         pvpUI.setState({ screen: 'result', won, myWins: pvp.myWins, peerWins: pvp.peerWins });
