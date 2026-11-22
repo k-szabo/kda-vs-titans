@@ -67,7 +67,12 @@ checklist in §11.
 ### Issue tracker
 
 Player-reported bugs and feature requests live on GitHub at
-`k-szabo/kda-vs-titans`. The committed `opencode.jsonc` connects OpenCode to
+`k-szabo/kda-vs-titans`. Players file them from the in-game REPORT ISSUE
+links (main menu + Options modal), which open a public Tally form with the
+version, leader, wave, Encore tier, browser, viewport, and pixel ratio
+prefilled (`js/bug-report.js`; no sign-in, saves never sent). A Make scenario
+watches the form and opens a GitHub issue (`bug` + `needs-repro` labels) from
+each response. The committed `opencode.jsonc` connects OpenCode to
 GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 `context`, `repos`, `issues`, and `labels` toolsets.
 

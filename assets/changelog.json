@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.23.0_60bc9b94",
+  "currentVersion": "v1.24.0_06ac89ef",
   "releases": [
+    {
+      "version": "v1.24.0_06ac89ef",
+      "date": "2026-11-22",
+      "changes": [
+        "In-game REPORT ISSUE links (main menu + Options) open a prefilled Tally form; responses auto-file as GitHub issues via Make.",
+        "Bug-report privacy harness: exact hidden-field contract, no save or session export."
+      ]
+    },
     {
       "version": "v1.23.0_60bc9b94",
       "date": "2026-11-22",

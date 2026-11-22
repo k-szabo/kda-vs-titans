@@ -18,6 +18,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Encore Ascension tiers 1–5 with cumulative boss modifiers, plus per-wave boss scaling
 - Optional custom run modifiers (Chaos Draft, No Cuts, Double Hazard)
 - Unlockable POP/STARS, MORE, FIRESTARTER, and PRESTIGE leader art with ranked portrait borders
+- In-game bug reporting: REPORT ISSUE links (main menu + Options) open a prefilled form — no sign-in, auto-filed to the issue tracker
 - Collapsible battle log, compact by default on smaller screens
 - Death log on defeat, copyable Tour Receipt, persistent run records / Kaiju codex
 - Synthesized sound effects and persistent profile statistics

@@ -54,6 +54,7 @@ import { createGameUI } from './ui.js';
 import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 import { testMission } from './missions.js';
+import { initBugReportLinks } from './bug-report.js';
 import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as submitLeaderboardScore } from './leaderboard.js';
 
 (function () {
@@ -1820,6 +1821,19 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           });
           ui.setChangelog(gameData.changelog);
           GAME_VERSION = gameData.changelog.currentVersion;
+          initBugReportLinks(() => {
+            const inRun = Boolean(state) &&
+              (state.runStatus === 'playing' || state.runStatus === 'draft') &&
+              Boolean(state.leader);
+            return {
+              version: GAME_VERSION,
+              leader: inRun ? state.leader : null,
+              waveIndex: inRun ? state.stageIndex : null,
+              encoreLevel: inRun ? state.encoreLevel : 0,
+              userAgent: navigator.userAgent,
+              view: window
+            };
+          });
           wireEvents();
 
           try {
