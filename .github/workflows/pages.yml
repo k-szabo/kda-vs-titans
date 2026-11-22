@@ -46,6 +46,11 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: node scripts/write-leaderboard-config.mjs _site/assets/config/leaderboard-public.json
 
+      - name: Verify static site
+        run: |
+          ls -R _site | head -30
+          test -f _site/index.html || (echo "_site/index.html missing" && exit 1)
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
