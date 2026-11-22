@@ -61,6 +61,19 @@ const TOUR_ROUTE_IDS = new Set(TOUR_ROUTES.map((route) => route.id));
 const TOUR_EVENT_IDS = new Set(TOUR_EVENTS.map((event) => event.id));
 const REWARD_MODES = new Set(['cards', 'relics', 'upgrades', 'cuts', 'rest']);
 
+export const STAGE_HAZARDS = Object.freeze(['overcharge_grid', 'thermonuclear_heat', 'luminous_spores']);
+const MODIFIER_IDS = Object.freeze(['chaosDraft', 'limitedRemovals', 'doubleHazards']);
+
+function normalizeModifiers(state) {
+  const raw = isRecord(state.modifiers) ? state.modifiers : {};
+  return {
+    modifiers: Object.fromEntries(MODIFIER_IDS.map((id) => [id, raw[id] === true])),
+    secondHazard: typeof state.secondHazard === 'string' && STAGE_HAZARDS.includes(state.secondHazard)
+      ? state.secondHazard
+      : null
+  };
+}
+
 function normalizeTourRouting(state) {
   return {
     routeChoices: Array.isArray(state.routeChoices)
@@ -277,6 +290,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         ...normalizeRunTracking(state, cardDatabase, encounters.length, relicDatabase),
         ...normalizeTourRouting(state),
         ...normalizeShop(state, cardDatabase, relicDatabase),
+        ...normalizeModifiers(state),
         encoreLevel,
         damageDealtThisTurn: isFiniteNumber(state.damageDealtThisTurn) ? state.damageDealtThisTurn : 0,
         handLimit,
@@ -431,17 +445,20 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
       saved.shop.cards.every((id) =>
         typeof id === 'string' &&
         Object.hasOwn(cardDatabase, id) &&
-        !cardDatabase[id].starter &&
+        (saved.modifiers?.chaosDraft === true || !cardDatabase[id].starter) &&
         cardDatabase[id].draftable !== false) &&
       new Set(saved.shop.cards).size === saved.shop.cards.length &&
       (saved.shop.relic === null ||
         (typeof saved.shop.relic === 'string' &&
           Object.hasOwn(relicDatabase, saved.shop.relic) &&
-          !relicDatabase[saved.shop.relic].leaderId &&
+          (saved.modifiers?.chaosDraft === true || !relicDatabase[saved.shop.relic].leaderId) &&
           !saved.relics.includes(saved.shop.relic))) &&
       typeof saved.shop.removalUsed === 'boolean' &&
       typeof saved.shop.healUsed === 'boolean'
     )) ||
+    !isRecord(saved.modifiers) ||
+    !MODIFIER_IDS.every((id) => saved.modifiers[id] === true || saved.modifiers[id] === false) ||
+    !(saved.secondHazard === null || (typeof saved.secondHazard === 'string' && STAGE_HAZARDS.includes(saved.secondHazard))) ||
     saved.hand.length > (Number.isInteger(saved.handLimit) ? saved.handLimit : MAX_HAND_SIZE) ||
     !saved.masterDeck.every(isCardInstance) ||
     !allInstances.every(isCardInstance) ||
@@ -457,17 +474,17 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     masterIds.size !== saved.masterDeck.length ||
     activeIds.size !== allInstances.length ||
     [...masterIds].some((id) => !activeIds.has(id)) ||
-    !saved.draftChoices.every((id) => typeof id === 'string' && Object.hasOwn(cardDatabase, id) && !cardDatabase[id].starter && cardDatabase[id].draftable !== false) ||
+    !saved.draftChoices.every((id) => typeof id === 'string' && Object.hasOwn(cardDatabase, id) && (saved.modifiers?.chaosDraft === true || !cardDatabase[id].starter) && cardDatabase[id].draftable !== false) ||
     !saved.relics.every((id) =>
       typeof id === 'string' &&
       Object.hasOwn(relicDatabase, id) &&
-      (!relicDatabase[id].leaderId || relicDatabase[id].leaderId === saved.leader)
+      (saved.modifiers?.chaosDraft === true || !relicDatabase[id].leaderId || relicDatabase[id].leaderId === saved.leader)
     ) ||
     new Set(saved.relics).size !== saved.relics.length ||
     !saved.relicChoices.every((id) =>
       typeof id === 'string' &&
       Object.hasOwn(relicDatabase, id) &&
-      !relicDatabase[id].leaderId &&
+      (saved.modifiers?.chaosDraft === true || !relicDatabase[id].leaderId) &&
       !saved.relics.includes(id)
     ) ||
     new Set(saved.relicChoices).size !== saved.relicChoices.length ||

@@ -31,6 +31,13 @@ export function createProgressionUI({
 }) {
   let selectedLeader = LEADERS[0].id;
   let selectedEncoreLevel = 0;
+  const selectedModifiers = { chaosDraft: false, limitedRemovals: false, doubleHazards: false };
+
+  const MODIFIER_DEFS = [
+    { id: 'chaosDraft', name: 'CHAOS DRAFT', description: 'Draft pools go wild: starter cards and rival leaders\u2019 relics can appear.' },
+    { id: 'limitedRemovals', name: 'NO CUTS', description: 'Deck thinning is sealed: no removals in shop or events.' },
+    { id: 'doubleHazards', name: 'DOUBLE HAZARD', description: 'Every wave gains a second stage hazard alongside the first.' }
+  ];
   let selectedBoardPeriod = 'daily';
 
   function formatBoardTime(totalSeconds) {
@@ -389,6 +396,34 @@ export function createProgressionUI({
     document.getElementById('missionsModal').classList.add('hidden');
   }
 
+  function renderModifierChoices() {
+    const grid = document.getElementById('modifierChoices');
+    if (!grid) return;
+    grid.replaceChildren();
+    MODIFIER_DEFS.forEach((modifier) => {
+      const on = selectedModifiers[modifier.id] === true;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('aria-pressed', String(on));
+      button.title = modifier.description;
+      button.className = `rounded-xl border px-2 py-2 text-center transition ${on
+        ? 'border-fuchsia-300 bg-fuchsia-500/20 text-fuchsia-100 ring-2 ring-fuchsia-300/25'
+        : 'border-white/15 bg-black/25 text-slate-300 hover:border-fuchsia-300/60'}`;
+      const name = document.createElement('span');
+      name.className = 'block font-display text-[10px] font-black';
+      name.textContent = `${on ? '✓ ' : ''}${modifier.name}`;
+      const desc = document.createElement('span');
+      desc.className = 'mt-0.5 block text-[9px] leading-snug opacity-80';
+      desc.textContent = modifier.description;
+      button.append(name, desc);
+      button.addEventListener('click', () => {
+        selectedModifiers[modifier.id] = !selectedModifiers[modifier.id];
+        renderModifierChoices();
+      });
+      grid.appendChild(button);
+    });
+  }
+
   function renderEncoreChoices() {
     const maxLevel = getProfileStats().maxEncoreLevel ?? 0;
     if (selectedEncoreLevel > maxLevel) selectedEncoreLevel = 0;
@@ -465,6 +500,7 @@ export function createProgressionUI({
   function openLeaderSelection(canCancel, currentLeader, allowCancel = canCancel) {
     selectedLeader = LEADERS.some(({ id }) => id === currentLeader) ? currentLeader : LEADERS[0].id;
     renderEncoreChoices();
+    renderModifierChoices();
     document.getElementById('btnCancelLeaderSelection').classList.toggle('hidden', !allowCancel);
     document.getElementById('leaderSelectionWarning').classList.toggle('hidden', !canCancel);
     renderLeaderChoices();
@@ -481,6 +517,7 @@ export function createProgressionUI({
     hideLeaderboard,
     openLeaderSelection,
     getSelectedLeader: () => selectedLeader,
-    getSelectedEncoreLevel: () => selectedEncoreLevel
+    getSelectedEncoreLevel: () => selectedEncoreLevel,
+    getSelectedModifiers: () => ({ ...selectedModifiers }),
   };
 }

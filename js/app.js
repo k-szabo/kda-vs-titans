@@ -49,7 +49,7 @@ import {
   RunStorageError,
   saveRun
 } from './run-storage.js';
-import { isValidSavedRun, migrateSavedRun } from './run-state.js';
+import { isValidSavedRun, migrateSavedRun, STAGE_HAZARDS } from './run-state.js';
 import { createGameUI } from './ui.js';
 import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
@@ -137,7 +137,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         return copy;
       }
 
-      function createNewRunState(leader, encoreLevel = 0, dailyChallenge = null, encounterOrder = []) {
+      function createNewRunState(leader, encoreLevel = 0, dailyChallenge = null, encounterOrder = [], modifiers = null) {
         let nextCardInstanceId = 1;
         const leaderDeck = STARTER_DECKS[leader];
         if (!Array.isArray(leaderDeck)) {
@@ -198,6 +198,12 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           rewardMode: null,
           tourEventId: null,
           encounterOrder: [...encounterOrder],
+          modifiers: {
+            chaosDraft: modifiers?.chaosDraft === true,
+            limitedRemovals: modifiers?.limitedRemovals === true,
+            doubleHazards: modifiers?.doubleHazards === true
+          },
+          secondHazard: null,
           merchTokens: 0,
           shop: null,
           relics: initialRelics,
@@ -249,6 +255,11 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.rewardMode = null;
         state.tourEventId = null;
         state.shop = null;
+        state.secondHazard = null;
+        if (state.modifiers?.doubleHazards) {
+          const others = shuffle(STAGE_HAZARDS.filter((hazard) => hazard !== enc.stageEffect));
+          state.secondHazard = others.length > 0 ? others[0] : null;
+        }
         state.isPlayerTurn = true;
         expireTimedBuffsAtWaveEnd();
         const activeBuffIds = new Set(state.buffs.map((buff) => buff.instanceId));
@@ -481,7 +492,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           state.skillsPlayedThisTurn += 1;
           triggerEnemyPassives('onSkillPlayed');
           applyRelicEffects('skillPlayed', card, cost);
-          if (state.enemy.stageEffect === 'luminous_spores') {
+          if (state.enemy.stageEffect === 'luminous_spores' || state.secondHazard === 'luminous_spores') {
             state.player.cheer = Math.min(100, state.player.cheer + 3);
             addLog('✨ Luminous Spores: Skills gained +3% extra Crowd Cheer.', 'text-amber-300');
           }
@@ -746,16 +757,22 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.hand.push(...retainedCards);
         state.keptCardInstanceId = null;
 
-        if (state.enemy.stageEffect === 'overcharge_grid' && state.player.energy > 0) {
+      function applyStageHazard(hazard, isSecond = false) {
+        const tag = isSecond ? ' (second hazard)' : '';
+        if (hazard === 'overcharge_grid' && state.player.energy > 0) {
           const hazardDamage = state.player.energy * 3;
           applyDamageToPlayer(hazardDamage, 1);
-          addLog(`⚡ Overcharge Grid: ${state.player.energy} unspent Energy dealt ${hazardDamage} direct HP damage!`, 'text-rose-300');
-        } else if (state.enemy.stageEffect === 'thermonuclear_heat' && state.player.block === 0) {
+          addLog(`⚡ Overcharge Grid${tag}: ${state.player.energy} unspent Energy dealt ${hazardDamage} direct HP damage!`, 'text-rose-300');
+        } else if (hazard === 'thermonuclear_heat' && state.player.block === 0) {
           applyDamageToPlayer(3, 1);
-          addLog('🔥 Thermonuclear Heat: ending the turn with no Shield dealt 3 direct HP damage!', 'text-rose-300');
+          addLog(`🔥 Thermonuclear Heat${tag}: ending the turn with no Shield dealt 3 direct HP damage!`, 'text-rose-300');
         }
+      }
 
-        if (state.player.hp <= 0 && finishPlayerDefeat()) return;
+      applyStageHazard(state.enemy.stageEffect);
+      if (state.secondHazard) applyStageHazard(state.secondHazard, true);
+
+      if (state.player.hp <= 0 && finishPlayerDefeat()) return;
 
         const e = state.enemy;
         e.block = 0; // Enemy block resets at start of its turn
@@ -1008,12 +1025,13 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           return;
         }
 
-        const draftPool = Object.values(CARD_DB).filter((c) => !c.starter && c.draftable !== false);
+        const chaos = state.modifiers?.chaosDraft === true;
+        const draftPool = Object.values(CARD_DB).filter((c) => (chaos || !c.starter) && c.draftable !== false);
         state.runStatus = 'draft';
         state.draftChoices = shuffle(draftPool).slice(0, 3).map((card) => card.id);
         const ownedRelics = new Set(state.relics);
         state.relicChoices = shuffle(Object.keys(RELIC_DB).filter((relicId) =>
-          !ownedRelics.has(relicId) && !RELIC_DB[relicId].leaderId
+          !ownedRelics.has(relicId) && (chaos || !RELIC_DB[relicId].leaderId)
         )).slice(0, 3);
         state.rewardMode = null;
         state.routeChoices = getAvailableRouteIds();
@@ -1477,7 +1495,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       // =========================================================================
       // Run flow and event wiring
       // =========================================================================
-      function startNewRun(leader, encoreLevel = 0, dailyChallenge = null) {
+      function startNewRun(leader, encoreLevel = 0, dailyChallenge = null, modifiers = null) {
         if (!LEADERS.some(({ id }) => id === leader)) {
           throw new Error(`Unknown run leader: ${leader}`);
         }
@@ -1495,7 +1513,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           ? rollDailyEncounterOrder(dailyChallenge.date)
           : rollEncounterOrder(Math.random);
         ENCOUNTERS = order.map((id) => ENCOUNTERS_BY_ID[id]);
-        state = createNewRunState(leader, encoreLevel, dailyChallenge, order);
+        state = createNewRunState(leader, encoreLevel, dailyChallenge, order, modifiers);
         startStage(0);
         syncPage();
       }
@@ -1587,11 +1605,11 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         if (state.runStatus !== 'draft' || !state.relicChoices.includes(relicId)) return;
         const relic = RELIC_DB[relicId];
         if (!relic) return;
-        if (relic.leaderId) {
+        if (relic.leaderId && !state.modifiers?.chaosDraft) {
           throw new Error(`Leader starter relic ${relicId} cannot be selected as a reward.`);
         }
         if (state.relics.includes(relicId)) {
-          pruneStaleRelicChoices();
+          tourEvents.pruneStaleRelicChoices();
           saveRunState();
           addLog('🎫 Leona rerouted K/DA: that relic was already claimed.', 'text-amber-300');
           if (state.rewardMode === 'relics' && state.relicChoices.length === 0) {
@@ -1638,7 +1656,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         document.getElementById('btnMainMenu').addEventListener('click', showMainMenu);
         document.getElementById('btnRestartRunEnd').addEventListener('click', openNewRunSelection);
         document.getElementById('btnStartNewRun').addEventListener('click', () => {
-          startNewRun(ui.getSelectedLeader(), ui.getSelectedEncoreLevel());
+          startNewRun(ui.getSelectedLeader(), ui.getSelectedEncoreLevel(), null, ui.getSelectedModifiers());
         });
         document.getElementById('btnOptions').addEventListener('click', () => optionsUI.showOptions());
         document.getElementById('btnMenuOptions').addEventListener('click', () => optionsUI.showOptions());

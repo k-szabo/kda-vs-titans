@@ -173,11 +173,11 @@ export function createTourEvents(deps) {
     getTourRoute
   } = deps;
 
-  function getUnownedRelicIds() {
+  function getUnownedRelicIds(allowLeader = false) {
     const state = getState();
     const owned = new Set(state.relics);
     return Object.keys(getRelicDatabase()).filter((id) =>
-      !owned.has(id) && !getRelicDatabase()[id].leaderId
+      !owned.has(id) && (allowLeader || !getRelicDatabase()[id].leaderId)
     );
   }
 
@@ -195,8 +195,8 @@ export function createTourEvents(deps) {
   function isEventOptionAvailable(option) {
     const state = getState();
     if (!option || !option.requires) return true;
-    if (option.requires === 'canCut') return state.masterDeck.length > 1;
-    if (option.requires === 'hasRelicAvailable') return getUnownedRelicIds().length > 0;
+    if (option.requires === 'canCut') return !state.modifiers?.limitedRemovals && state.masterDeck.length > 1;
+    if (option.requires === 'hasRelicAvailable') return getUnownedRelicIds(state.modifiers?.chaosDraft === true).length > 0;
     if (option.requires === 'canUpgrade') return getUpgradeableInstances().length > 0;
     if (option.requires === 'canBleed') return state.player.hp > 10;
     if (option.requires === 'canTune') {
@@ -297,7 +297,7 @@ export function createTourEvents(deps) {
         break;
       }
       case 'backstage_deal': {
-        const pool = getUnownedRelicIds();
+        const pool = getUnownedRelicIds(state.modifiers?.chaosDraft === true);
         if (pool.length === 0) return;
         const relicId = shuffle(pool)[0];
         state.relics.push(relicId);
@@ -339,7 +339,7 @@ export function createTourEvents(deps) {
         break;
       }
       case 'cursed_gear': {
-        const pool = getUnownedRelicIds();
+        const pool = getUnownedRelicIds(state.modifiers?.chaosDraft === true);
         if (pool.length === 0) return;
         const relicId = shuffle(pool)[0];
         state.relics.push(relicId);
@@ -386,6 +386,7 @@ export function createTourEvents(deps) {
   function removeEventCard(instanceId) {
     const state = getState();
     if (state.runStatus !== 'draft' || !state.tourEventId) return;
+    if (state.modifiers?.limitedRemovals) return;
     if (state.masterDeck.length <= 1) return;
     const removedCardId = removeInstanceFromPiles(state, instanceId);
     if (!removedCardId) return;

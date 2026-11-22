@@ -30,9 +30,12 @@ export function createShop(deps) {
 
   function rollShopInventory() {
     const state = getState();
-    const draftPool = Object.values(getCardDatabase()).filter((c) => !c.starter && c.draftable !== false);
+    const chaos = state.modifiers?.chaosDraft === true;
+    const draftPool = Object.values(getCardDatabase()).filter((c) =>
+      (chaos || !c.starter) && c.draftable !== false
+    );
     const cards = shuffle(draftPool).slice(0, 2).map((card) => card.id);
-    const relicPool = shuffle(getUnownedRelicIds());
+    const relicPool = shuffle(getUnownedRelicIds(chaos));
     state.shop = {
       cards,
       relic: relicPool.length > 0 ? relicPool[0] : null,
@@ -62,13 +65,14 @@ export function createShop(deps) {
     if (state.runStatus !== 'draft' || !state.shop || !state.shop.relic) return;
     const relic = getRelicDatabase()[state.shop.relic];
     if (!relic) return;
+    const chaos = state.modifiers?.chaosDraft === true;
     if (state.relics.includes(state.shop.relic)) {
       state.shop.relic = null;
       saveRunState();
       showRouting();
       return;
     }
-    if (relic.leaderId || state.merchTokens < SHOP_PRICES.relic) return;
+    if ((!chaos && relic.leaderId) || state.merchTokens < SHOP_PRICES.relic) return;
     state.merchTokens -= SHOP_PRICES.relic;
     state.relics.push(state.shop.relic);
     addLog(`🪙 Bought ${relic.name} for ${SHOP_PRICES.relic} Merch Tokens.`, 'text-amber-300');
@@ -82,6 +86,7 @@ export function createShop(deps) {
   function buyShopRemoval(instanceId) {
     const state = getState();
     if (state.runStatus !== 'draft' || !state.shop || state.shop.removalUsed) return;
+    if (state.modifiers?.limitedRemovals) return;
     if (state.merchTokens < SHOP_PRICES.removal) return;
     if (state.masterDeck.length <= 1) return;
     const removedCardId = removeInstanceFromPiles(state, instanceId);

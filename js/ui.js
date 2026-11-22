@@ -479,11 +479,11 @@ export function createGameUI({
       }
     };
     const stageEffectBadge = document.getElementById('enemyStageEffectBadge');
-    const stageEffect = stageEffects[e.stageEffect];
-    stageEffectBadge.classList.toggle('hidden', !stageEffect);
-    if (stageEffect) {
-      stageEffectBadge.textContent = `⚠️ ${stageEffect.label}`;
-      stageEffectBadge.title = stageEffect.description;
+    const activeHazards = [e.stageEffect, getState()?.secondHazard].filter(Boolean).map((key) => stageEffects[key]).filter(Boolean);
+    stageEffectBadge.classList.toggle('hidden', activeHazards.length === 0);
+    if (activeHazards.length > 0) {
+      stageEffectBadge.textContent = `⚠️ ${activeHazards.map((hazard) => hazard.label).join(' + ')}`;
+      stageEffectBadge.title = activeHazards.map((hazard) => hazard.description).join(' ');
     }
 
     const eBlockBadge = document.getElementById('enemyBlockBadge');
@@ -683,12 +683,14 @@ export function createGameUI({
       relicGrid.appendChild(empty);
     }
 
-    const canCut = state ? state.masterDeck.length > 1 : false;
+    const canCut = state ? state.masterDeck.length > 1 && !state.modifiers?.limitedRemovals : false;
     const removalAffordable = (tokens ?? 0) >= SHOP_PRICES.removal && !shop?.removalUsed && canCut;
     removalButton.disabled = !removalAffordable;
-    removalButton.textContent = shop?.removalUsed
-      ? 'REMOVAL USED'
-      : `✂️ REMOVE 1 CARD (${SHOP_PRICES.removal} 🪙)`;
+    removalButton.textContent = state?.modifiers?.limitedRemovals
+      ? 'REMOVALS SEALED'
+      : shop?.removalUsed
+        ? 'REMOVAL USED'
+        : `✂️ REMOVE 1 CARD (${SHOP_PRICES.removal} 🪙)`;
     removalButton.className = removalAffordable
       ? 'px-3 py-2 rounded-xl border border-rose-300/40 bg-rose-500/15 font-display text-[10px] font-bold text-rose-100 transition hover:bg-rose-500/25'
       : 'px-3 py-2 rounded-xl border border-white/10 bg-white/5 font-display text-[10px] font-bold text-slate-500 cursor-not-allowed';
@@ -1155,6 +1157,7 @@ export function createGameUI({
     showRunEndVoice,
     getSelectedLeader: progressionUI.getSelectedLeader,
     getSelectedEncoreLevel: progressionUI.getSelectedEncoreLevel,
+    getSelectedModifiers: progressionUI.getSelectedModifiers,
     spawnPopup,
     triggerKaijuHitAnim,
     triggerScreenShake

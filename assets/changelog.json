@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.20.0_266e800b",
+  "currentVersion": "v1.21.0_1304b0d9",
   "releases": [
+    {
+      "version": "v1.21.0_1304b0d9",
+      "date": "2026-11-22",
+      "changes": [
+        "Custom run modifiers: Chaos Draft, No Cuts, and Double Hazard.",
+        "Double hazards stack a second stage hazard onto every wave."
+      ]
+    },
     {
       "version": "v1.20.0_266e800b",
       "date": "2026-11-22",

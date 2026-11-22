@@ -676,7 +676,9 @@ modal is open or a rebind is listening.
   location for deck coverage. `routeChoices` is a unique subset of
   `TOUR_ROUTES` ids, `rewardMode` is `null` or a valid reward tab,
   `encounterOrder` is 10 ids, each a member of its wave slot's pool, matching
-  the built encounter list; `tourEventId` is `null` or a valid `TOUR_EVENTS` id,
+  the built encounter list; `modifiers` holds the three custom-run toggles
+  (`chaosDraft`, `limitedRemovals`, `doubleHazards`); `secondHazard` is `null`
+  or a second stage hazard; `tourEventId` is `null` or a valid `TOUR_EVENTS` id,
   `merchTokens` is an
   integer 0–9999, `shop` is `null` or `{ cards: [≤2 valid draftable ids],
   relic: null | valid unowned non-leader relic, removalUsed: bool,
@@ -803,7 +805,7 @@ card art mappings and tests across these files.
 Run through this before considering a change complete:
 
 1. Serve over HTTP; no console errors and no `#loadError`.
-2. New run: leader selection, Encore tier gating, leader-specific starter deck (10 cards, keyword intro), wave 1 (boss may be a drafted alternate).
+2. New run: leader selection, Encore tier gating, leader-specific starter deck (10 cards, keyword intro), optional custom modifiers (chaos draft, no cuts, double hazard), wave 1 (boss may be a drafted alternate).
 3. Play cards; verify cost, upgrades, exhaust, retain, status cards, and hand cap.
    Mark a card with the 📌 toggle and confirm it survives one turn and that the
    next hand is 4 + kept card. Use Kai'Sa's ability on a full hand and confirm
