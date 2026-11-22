@@ -56,11 +56,17 @@ jobs:
         with:
           path: _site
 
-      - name: Confirm Pages artifact
+      - name: Wait for Pages artifact
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[] | "\(.name) (\(.size_in_bytes) bytes, expired=\(.expired))"'
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            count=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '[.artifacts[] | select(.name=="github-pages" and .expired==false)] | length')
+            if [ "$count" -ge 1 ]; then echo "github-pages artifact visible."; exit 0; fi
+            echo "artifact not yet visible ($i/10), waiting 20s..."
+            sleep 20
+          done
+          echo "github-pages artifact never became visible."; exit 1
 
       - name: Deploy
         id: deployment
