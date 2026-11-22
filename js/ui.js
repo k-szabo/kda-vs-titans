@@ -132,6 +132,8 @@ export function createGameUI({
         ? 'text-purple-300 bg-purple-500/20 border-purple-400/40'
         : card.member === 'kaisa'
         ? 'text-indigo-300 bg-indigo-500/20 border-indigo-400/40'
+        : card.member === 'sona'
+        ? 'text-teal-300 bg-teal-500/20 border-teal-400/40'
         : 'text-amber-300 bg-amber-500/20 border-amber-400/40';
 
     const artAssets = getArtAssets();
@@ -226,7 +228,7 @@ export function createGameUI({
         <p class="mb-2">+${quartet.energy} Energy, +${quartet.block} Holo Shield, +${quartet.cheer}% Crowd Cheer.</p>
         <p class="font-display ${headingClass} font-black text-amber-200">SOLO SPOTLIGHT <span class="font-normal text-slate-400">— 3 cards from the same member in a row</span></p>
         <ul class="mt-1 list-disc space-y-0.5 pl-4">${rows}</ul>
-        <p class="mt-2 text-slate-400">A non-member card (e.g. K/DA SQUAD) breaks the consecutive chain but keeps members already played this turn.</p>
+        <p class="mt-2 text-slate-400">A non-member card (K/DA SQUAD or guest SONA cards) breaks the consecutive chain but keeps members already played this turn.</p>
       </div>`;
   }
 

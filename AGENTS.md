@@ -263,7 +263,7 @@ overview.
   - Akali: 6 piercing damage + draw 1
   - Evelynn: 1 Marked + steal up to 3 enemy Block
   - Kai'Sa: +8 shield +1 turn of Encore
-- A non-member card (e.g. `squad`) breaks the consecutive chain but does not
+- A non-member card (`squad`, guest `sona` support cards) breaks the consecutive chain but does not
   erase members already played this turn.
 
 ### Encore progression
@@ -353,6 +353,10 @@ overview.
   Spirit Bloom (Charm), Shadow Dagger / Neon Assault (Pierce via
   `pierce: 0..1` on damage), Siphon Hunger / Agony's Embrace (`stealBlock`),
   Evolve Burst / Second Skin (`when: player encore`).
+- Three neutral guest support cards (`member: "sona"`, DJ Sona splash art):
+  Aria of Perseverance (heal + Block), Crescendo (Energy + Cheer),
+  Diminuendo (cleanse Weak + heal). Draftable by every leader, never in
+  starter decks; they count as non-members for synergy (same as `squad`).
 - Engine: `damage.pierce` passes through to `dealDamageToEnemy`; preview in
   `app.js` is pierce-aware. `stealBlock` steals up to X Block and counts as
   `{stolen}`/`{block}` for logs. Conditional damage (`when`) sums for preview

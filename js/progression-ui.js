@@ -3,7 +3,8 @@ import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 import { fetchBoard } from './leaderboard.js';
 
-const MEMBER_ORDER = ['ahri', 'akali', 'evelynn', 'kaisa', 'squad'];
+const MEMBER_ORDER = ['ahri', 'akali', 'evelynn', 'kaisa', 'sona', 'squad'];
+const MEMBER_LABELS = { squad: 'K/DA SQUAD', kaisa: "KAI'SA", sona: 'SONA (GUEST)' };
 
 const ENCORE_TIERS = [
   { level: 0, name: 'Normal', description: 'Standard 10-wave setlist. No Encore modifiers.' },
@@ -321,7 +322,7 @@ export function createProgressionUI({
       if (group.length === 0) return;
       const groupTitle = document.createElement('h4');
       groupTitle.className = 'mt-3 mb-1.5 font-display text-[10px] font-black tracking-widest text-slate-300';
-      groupTitle.textContent = member === 'squad' ? 'K/DA SQUAD' : member === 'kaisa' ? "KAI'SA" : member.toUpperCase();
+      groupTitle.textContent = MEMBER_LABELS[member] || member.toUpperCase();
       const rows = document.createElement('div');
       rows.className = 'grid gap-1.5';
       group.sort((a, b) => a.name.localeCompare(b.name)).forEach((card) => {

@@ -729,6 +729,69 @@
         "template": "🔥 Burn seared K/DA for 3 HP.",
         "colorClass": "text-rose-300"
       }
+    },
+    {
+      "id": "sona_aria",
+      "name": "Aria of Perseverance",
+      "member": "sona",
+      "memberName": "SONA",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Sona_6.jpg",
+      "desc": "Restore <b>5 HP</b> and gain <b>5</b> Holo Shield.",
+      "upgrade": { "description": "Restore 7 HP and gain 7 Holo Shield." },
+      "effects": [
+        { "type": "healPlayer", "amount": 5, "upgradeAmount": 2 },
+        { "type": "gainBlock", "amount": 5, "upgradeAmount": 2 }
+      ],
+      "log": {
+        "template": "🎹 Sona wove Aria of Perseverance (+{heal} HP, +{block} Shield).",
+        "colorClass": "text-teal-300"
+      }
+    },
+    {
+      "id": "sona_crescendo",
+      "name": "Crescendo",
+      "member": "sona",
+      "memberName": "SONA",
+      "type": "SKILL",
+      "cost": 2,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Sona_6.jpg",
+      "desc": "Gain <b>2 Hype Energy</b> and <b>+10%</b> Crowd Cheer.",
+      "upgrade": { "description": "Gain 2 Hype Energy and +15% Crowd Cheer." },
+      "effects": [
+        { "type": "gainEnergy", "amount": 2 },
+        { "type": "addCheer", "amount": 10, "upgradeAmount": 5 }
+      ],
+      "log": {
+        "template": "🎹 Sona dropped Crescendo (+2 Energy, +10% Cheer)!",
+        "colorClass": "text-teal-300"
+      }
+    },
+    {
+      "id": "sona_diminuendo",
+      "name": "Diminuendo",
+      "member": "sona",
+      "memberName": "SONA",
+      "type": "SKILL",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "art": "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Sona_6.jpg",
+      "desc": "Remove player Weak and restore <b>4 HP</b>.",
+      "upgrade": { "description": "Remove player Weak and restore 6 HP." },
+      "effects": [
+        { "type": "clearPlayerStatus", "status": "weak" },
+        { "type": "healPlayer", "amount": 4, "upgradeAmount": 2 }
+      ],
+      "log": {
+        "template": "🎹 Sona softened into Diminuendo (Cleansed Weak, +{heal} HP).",
+        "colorClass": "text-teal-300"
+      }
     }
   ]
 }

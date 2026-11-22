@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.21.0_1304b0d9",
+  "currentVersion": "v1.22.0_73c24f62",
   "releases": [
+    {
+      "version": "v1.22.0_73c24f62",
+      "date": "2026-11-22",
+      "changes": [
+        "DJ Sona support cards: Aria of Perseverance, Crescendo, Diminuendo (neutral draft pool).",
+        "Teal Sona card styling plus Atelier grouping."
+      ]
+    },
     {
       "version": "v1.21.0_1304b0d9",
       "date": "2026-11-22",

@@ -11,7 +11,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Draftable cards, individual card upgrades, passive relics, shields, and status effects
 - Crowd Cheer-powered K/DA Joint Finale
 - Four selectable run leaders, each with a once-per-run special ability, a signature starter relic, and a flavored starter deck
-- Member keyword identities (Charm, Pierce, Drain, Encore) with keyword payoff cards
+- Member keyword identities (Charm, Pierce, Drain, Encore) with keyword payoff cards, plus neutral DJ Sona guest support cards in the draft pool
 - Member combos, voice lines, and stage buffs with speech-bubble callouts
 - Between-wave tour events, Leona tour routing, and a Merch Token shop (cards, relics, removal, healing, no free Cut/Rest)
 - Missions and achievements paying Spotlight Shards; Card Atelier with permanent shiny/platinum/holo card finishes
