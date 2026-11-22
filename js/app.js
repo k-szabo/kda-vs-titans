@@ -55,6 +55,10 @@ import { getUnlockedArtStyles, LEADERS } from './leader-data.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 import { testMission } from './missions.js';
 import { initBugReportLinks } from './bug-report.js';
+import { generateRoomCode, isValidRoomCode, pvpCoinFlip } from './pvp-protocol.js';
+import { createPvpRoom, createSupabasePvpBus } from './pvp-net.js';
+import { createPvpUI } from './pvp-ui.js';
+import { getBoardConfig } from './leaderboard.js';
 import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as submitLeaderboardScore } from './leaderboard.js';
 
 (function () {
@@ -79,6 +83,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
   let storageAvailable = true;
   let profileStorageAvailable = true;
   let pendingBuffHandIndex = null;
+  let pvpUI = null;
+  let pvp = null; // active duel session or null (ephemeral, never saved)
 
       function getUtcDateString(date = new Date()) {
         return date.toISOString().slice(0, 10);
@@ -689,6 +695,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       function useLeaderAbility() {
+
         if (!state.isPlayerTurn || state.leaderAbilityUsed) return;
 
         state.leaderAbilityUsed = true;
@@ -1659,6 +1666,149 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         leaveRewardPhase(`⬆️ Upgraded "${CARD_DB[instance.cardId].name}" for the rest of the run.`, 'text-amber-300');
       }
 
+      // =========================================================================
+      // PvP duel sessions (ephemeral: never saved, never restored)
+      // =========================================================================
+      function pvpViewModel(hint = '', error = '') {
+        if (!pvp) return { screen: 'choice', hint, error };
+        return {
+          screen: 'lobby',
+          role: pvp.role,
+          roomCode: pvp.roomCode,
+          myLeader: pvp.myLeader,
+          peerLeader: pvp.peerLeader,
+          peerPresent: pvp.peerPresent,
+          peerReady: pvp.peerReady,
+          iReady: pvp.iReady,
+          flip: pvp.flip,
+          hint,
+          error
+        };
+      }
+
+      async function createPvpSession(role, roomCode) {
+        const config = await getBoardConfig();
+        if (!config) {
+          throw new Error('PvP needs the community board backend (Supabase) configured. Check Options → Leaderboard.');
+        }
+        const playerId = `pvp-${Math.random().toString(36).slice(2, 10)}`;
+        const bus = await createSupabasePvpBus({
+          roomCode,
+          supabase: { url: config.url, publishableKey: config.publishableKey }
+        });
+        const session = {
+          role, roomCode, playerId, bus, room: null,
+          myLeader: null, peerLeader: null, peerPresent: false, peerReady: false,
+          iReady: false, flip: null, roundIndex: 0, pendingEvents: []
+        };
+        session.room = createPvpRoom({
+          roomCode, playerId, bus,
+          onEvent: (event) => handlePvpEvent(session, event)
+        });
+        return session;
+      }
+
+      function handlePvpEvent(session, event) {
+        if (session !== pvp) return; // stale session
+        if (event.type === 'peers' || event.type === 'opponentReady') {
+          const peer = (event.peers || []).find((p) => p.playerId !== session.playerId) ||
+            (event.peer && event.peer.playerId !== session.playerId ? event.peer : null);
+          session.peerPresent = Boolean(peer);
+          session.peerLeader = peer?.leader || null;
+          session.peerReady = peer?.ready === true;
+          if (session.peerPresent) checkPvpStart(session);
+          pvpUI?.setState(pvpViewModel(session.peerPresent ? '' : 'Waiting for rival to join…'));
+        } else if (event.type === 'opponentLeft') {
+          session.peerPresent = false;
+          session.peerLeader = null;
+          session.peerReady = false;
+          pvpUI?.setState(pvpViewModel('Rival left. Share the code again or leave.'));
+        } else if (event.type === 'action' || event.type === 'snapshot' || event.type === 'resync') {
+          session.pendingEvents.push(event); // consumed by the duel engine
+        }
+      }
+
+      function checkPvpStart(session) {
+        if (session.flip || !session.iReady || !session.peerReady) return;
+        if (!session.myLeader || !session.peerLeader) return;
+        session.flip = pvpCoinFlip(session.roomCode, session.roundIndex);
+        session.room.start();
+        pvpUI?.setState(pvpViewModel('Both ready — the duel engine lands next!'));
+      }
+
+      async function hostPvpDuel() {
+        try {
+          pvpUI?.setState({ screen: 'lobby', role: 'host', roomCode: '…', hint: 'Opening room…' });
+          pvp = await createPvpSession('host', generateRoomCode());
+          pvp.room.join(null);
+          pvpUI?.setState(pvpViewModel('Share the code with your rival.'));
+        } catch (error) {
+          pvp = null;
+          pvpUI?.setError(error?.message || 'Could not open the duel room.');
+        }
+      }
+
+      async function joinPvpDuel(code) {
+        if (!isValidRoomCode(code)) {
+          pvpUI?.setError('Enter the 4-letter room code.');
+          return;
+        }
+        try {
+          pvpUI?.setState({ screen: 'lobby', role: 'guest', roomCode: code, hint: 'Joining…' });
+          pvp = await createPvpSession('guest', code);
+          pvp.room.join(null);
+          pvpUI?.setState(pvpViewModel('Joined! Pick your leader.'));
+        } catch (error) {
+          pvp = null;
+          pvpUI?.setState({ screen: 'choice', hint: '', error: error?.message || 'Could not join the room.' });
+        }
+      }
+
+      function pickPvpLeader(leaderId) {
+        if (!pvp || !LEADERS.some(({ id }) => id === leaderId)) return;
+        pvp.myLeader = leaderId;
+        pvp.iReady = false;
+        try {
+          pvp.room.setReady(false, leaderId);
+        } catch { /* presence update is best-effort */ }
+        pvpUI?.setState(pvpViewModel(''));
+      }
+
+      function readyPvpDuel() {
+        if (!pvp || !pvp.myLeader || !pvp.peerPresent || pvp.iReady) return;
+        pvp.iReady = true;
+        try {
+          pvp.room.setReady(true, pvp.myLeader);
+        } catch { /* presence update is best-effort */ }
+        checkPvpStart(pvp);
+        pvpUI?.setState(pvpViewModel(pvp.flip ? '' : 'Waiting for rival to ready up…'));
+      }
+
+      function leavePvpDuel() {
+        try {
+          pvp?.room.close();
+        } catch { /* already closed */ }
+        pvp = null;
+        pvpUI?.hide();
+      }
+
+      function openPvpLobby() {
+        if (!pvpUI) {
+          pvpUI = createPvpUI({
+            onHost: hostPvpDuel,
+            onJoin: joinPvpDuel,
+            onPickLeader: pickPvpLeader,
+            onReady: readyPvpDuel,
+            onLeave: leavePvpDuel
+          });
+        }
+        if (pvp) {
+          try { pvp.room.close(); } catch { /* stale session */ }
+          pvp = null;
+        }
+        pvpUI.show('');
+      }
+
       function wireEvents() {
         document.getElementById('btnEndTurn').addEventListener('click', endPlayerTurn);
         document.getElementById('btnJointAttack').addEventListener('click', triggerJointAttack);
@@ -1686,6 +1836,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         document.getElementById('btnMenuHowToPlay').addEventListener('click', () => optionsUI.showHowToPlay());
 
         document.getElementById('btnDailyTour').addEventListener('click', startDailyRun);
+        document.getElementById('btnPvpDuel').addEventListener('click', openPvpLobby);
 
         document.getElementById('btnViewDraw').addEventListener('click', () => {
           ui.openPileModal('DRAW PILE', state.drawPile);
