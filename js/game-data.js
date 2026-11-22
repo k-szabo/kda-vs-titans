@@ -335,7 +335,7 @@ export async function loadGameData() {
     throw new Error('The mission file contains invalid or duplicate mission data.');
   }
 
-  const validEventRequires = new Set(['canCut', 'hasRelicAvailable', 'canTune', 'canUpgrade']);
+  const validEventRequires = new Set(['canCut', 'hasRelicAvailable', 'canTune', 'canUpgrade', 'canBleed']);
   if (
     !Array.isArray(TOUR_EVENTS) ||
     TOUR_EVENTS.length === 0 ||

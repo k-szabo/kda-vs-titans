@@ -767,7 +767,7 @@ export function createGameUI({
       tag.textContent = option.tag;
       card.append(title, tag);
       card.addEventListener('click', () => {
-        if (option.id === 'wardrobe_purge') {
+        if (option.id === 'wardrobe_purge' || option.id === 'flyer_duty') {
           showEventCutPicker(event, masterDeck);
           return;
         }

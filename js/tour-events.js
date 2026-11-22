@@ -86,6 +86,61 @@ export const TOUR_EVENTS = Object.freeze([
         requires: 'hasRelicAvailable'
       }
     ])
+  },
+  {
+    id: 'street_team',
+    name: 'STREET TEAM',
+    icon: '📣',
+    description: 'Local fans offer to hype the show — for a price, a favour, or a cut of the merch.',
+    options: Object.freeze([
+      {
+        id: 'hype_cannon',
+        label: 'HYPE CANNON',
+        summary: 'Gain +30% Crowd Cheer now and take a Micro-Oxygen curse.',
+        tag: '+CHEER + CURSE'
+      },
+      {
+        id: 'flyer_duty',
+        label: 'FLYER DUTY',
+        summary: 'Remove a card from your deck and heal 12 HP.',
+        tag: 'REMOVE +12 HP',
+        requires: 'canCut'
+      },
+      {
+        id: 'busk',
+        label: 'BUSK THE CROWD',
+        summary: 'Gain 15 Merch Tokens.',
+        tag: '+15 🪙'
+      }
+    ])
+  },
+  {
+    id: 'encore_rehearsal',
+    name: 'ENCORE REHEARSAL',
+    icon: '🎭',
+    description: 'An empty arena, a full rig, one night to get it right.',
+    options: Object.freeze([
+      {
+        id: 'dress_rehearsal',
+        label: 'DRESS REHEARSAL',
+        summary: 'Gain +25% Crowd Cheer now.',
+        tag: '+25% CHEER'
+      },
+      {
+        id: 'pyro_test',
+        label: 'PYRO TEST',
+        summary: 'Upgrade a random card and take a Burn curse.',
+        tag: 'UPGRADE + CURSE',
+        requires: 'canTune'
+      },
+      {
+        id: 'vocal_rest',
+        label: 'VOCAL REST',
+        summary: 'Gain +2 Max HP and lose 10 HP.',
+        tag: '+2 MAX HP',
+        requires: 'canBleed'
+      }
+    ])
   }
 ]);
 
@@ -143,6 +198,7 @@ export function createTourEvents(deps) {
     if (option.requires === 'canCut') return state.masterDeck.length > 1;
     if (option.requires === 'hasRelicAvailable') return getUnownedRelicIds().length > 0;
     if (option.requires === 'canUpgrade') return getUpgradeableInstances().length > 0;
+    if (option.requires === 'canBleed') return state.player.hp > 10;
     if (option.requires === 'canTune') {
       return getUpgradeableInstances().length > 0 && state.player.hp > 8;
     }
@@ -155,6 +211,8 @@ export function createTourEvents(deps) {
     const base = Array.isArray(event.options) ? event.options : [];
     return base.filter(isEventOptionAvailable);
   }
+
+  let pendingRemoval = null;
 
   function addCurseToDeck(cardId) {
     const state = getState();
@@ -202,7 +260,14 @@ export function createTourEvents(deps) {
       addLog('🎫 Leona rerouted K/DA: that event option sold out.', 'text-amber-300');
       return;
     }
-    if (optionId === 'wardrobe_purge') return;
+    if (optionId === 'wardrobe_purge') {
+      pendingRemoval = { heal: 8, label: 'Wardrobe purge' };
+      return;
+    }
+    if (optionId === 'flyer_duty') {
+      pendingRemoval = { heal: 12, label: 'Flyer duty' };
+      return;
+    }
     applyTourEventOption(optionId);
   }
 
@@ -283,6 +348,36 @@ export function createTourEvents(deps) {
         finishTourEvent(`🎛️ Cursed gear: gained ${relicDatabase[relicId].name} and took Micro-Oxygen!`);
         break;
       }
+      case 'hype_cannon': {
+        state.player.cheer = Math.min(100, state.player.cheer + 30);
+        addCurseToDeck('micro_oxygen');
+        finishTourEvent('📣 Hype cannon: +30% Crowd Cheer and a Micro-Oxygen curse in the deck!');
+        break;
+      }
+      case 'busk': {
+        state.merchTokens = Math.min(9999, state.merchTokens + 15);
+        finishTourEvent('📣 Busking paid off: +15 Merch Tokens!');
+        break;
+      }
+      case 'dress_rehearsal': {
+        state.player.cheer = Math.min(100, state.player.cheer + 25);
+        finishTourEvent('🎭 Dress rehearsal: +25% Crowd Cheer and a flawless run-through!');
+        break;
+      }
+      case 'pyro_test': {
+        const upgraded = upgradeRandomCard();
+        addCurseToDeck('burn');
+        finishTourEvent(upgraded
+          ? `🎭 Pyro test: upgraded ${cardDatabase[upgraded.cardId].name} and took a Burn curse!`
+          : '🎭 Pyro test fizzled into a Burn curse.');
+        break;
+      }
+      case 'vocal_rest': {
+        state.player.maxHp += 2;
+        state.player.hp = Math.max(1, state.player.hp - 10);
+        finishTourEvent('🎭 Vocal rest: +2 Max HP for 10 HP of strain.');
+        break;
+      }
       default:
         throw new Error(`Unknown tour event option: ${optionId}`);
     }
@@ -294,8 +389,10 @@ export function createTourEvents(deps) {
     if (state.masterDeck.length <= 1) return;
     const removedCardId = removeInstanceFromPiles(state, instanceId);
     if (!removedCardId) return;
-    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 8);
-    finishTourEvent(`🤝 Wardrobe purge: removed ${getCardDatabase()[removedCardId].name} and healed 8 HP!`);
+    const { heal, label } = pendingRemoval || { heal: 8, label: 'Wardrobe purge' };
+    pendingRemoval = null;
+    state.player.hp = Math.min(state.player.maxHp, state.player.hp + heal);
+    finishTourEvent(`🤝 ${label}: removed ${getCardDatabase()[removedCardId].name} and healed ${heal} HP!`);
   }
 
   return {

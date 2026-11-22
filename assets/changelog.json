@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.19.0_beaf9678",
+  "currentVersion": "v1.20.0_266e800b",
   "releases": [
+    {
+      "version": "v1.20.0_266e800b",
+      "date": "2026-11-22",
+      "changes": [
+        "Content pack: Street Team and Encore Rehearsal tour events.",
+        "New general relics Green Room and All Access Pass."
+      ]
+    },
     {
       "version": "v1.19.0_beaf9678",
       "date": "2026-11-21",

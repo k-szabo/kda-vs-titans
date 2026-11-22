@@ -115,6 +115,23 @@
       "effects": [
         { "trigger": "waveClear", "type": "heal", "amount": 10 }
       ]
+    },
+    {
+      "id": "green_room",
+      "name": "Green Room",
+      "description": "Restore 8 HP at the start of each wave.",
+      "effects": [
+        { "trigger": "stageStart", "type": "heal", "amount": 8 }
+      ]
+    },
+    {
+      "id": "all_access",
+      "name": "All Access Pass",
+      "description": "Start each wave with +1 Hype Energy and restore 4 HP whenever you clear a wave.",
+      "effects": [
+        { "trigger": "stageStart", "type": "startingEnergy", "amount": 1 },
+        { "trigger": "waveClear", "type": "heal", "amount": 4 }
+      ]
     }
   ]
 }

@@ -306,9 +306,10 @@ overview.
 
 - After each non-final wave, a seeded backstage event fires first
   (`js/tour-events.js` → `TOUR_EVENTS`): Meet & Greet, Rooftop Street Show,
-  Mysterious Sound Tech. Each offers 2–3 options with visible tradeoffs
-  (max HP, heal, Cheer, random upgrade, random relic, curse, removal).
-  Impossible options are hidden (`canCut`, `hasRelicAvailable`, `canTune`).
+  Mysterious Sound Tech, Street Team, Encore Rehearsal. Each offers 2–3 options
+  with visible tradeoffs (max HP, heal, Cheer, random upgrade, random relic,
+  curse, removal, Merch Tokens). Impossible options are hidden (`canCut`,
+  `hasRelicAvailable`, `canTune`, `canUpgrade`, `canBleed`).
 - `state.tourEventId` holds the pending event and persists with the run, so
   reloading mid-event reopens the event modal (`restoreRunModal()`). Curses
   reuse the STATUS path (`stage_fright`, `burn`, `micro_oxygen`) and are added
