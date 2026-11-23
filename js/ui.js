@@ -102,9 +102,12 @@ export function createGameUI({
       handIndex >= 0 &&
       card.member === chain.member &&
       chain.count === 2;
-    const damagePreview = !isDraftPreview && handIndex >= 0 && getCardDamagePreview
+    const rawDamagePreview = !isDraftPreview && handIndex >= 0 && getCardDamagePreview
       ? getCardDamagePreview(cardInstance)
       : null;
+    // Unmet conditionals preview as zero: hide the badge and the glow alike.
+    const damagePreview = rawDamagePreview && rawDamagePreview.total > 0 ? rawDamagePreview : null;
+    const bonusGlow = Boolean(damagePreview?.bonusActive);
     const damageLabel = damagePreview
       ? damagePreview.hits && damagePreview.hits > 1
         ? `⚔ ${damagePreview.perHit}×${damagePreview.hits}`
@@ -121,7 +124,7 @@ export function createGameUI({
     const finishLevel = getCardFinishLevel(getProfileStats().cardFinishes, card.id);
     el.className = `spire-card card-${card.member} p-2.5 sm:p-3 flex flex-col justify-between ${
       playable ? 'playable' : 'unplayable'
-    }${upgradeLevel > 0 ? ' card-upgraded' : ''}${isKept ? ' ring-2 ring-amber-300/70' : ''}${finishLevel > 0 ? ` ${getFinishClass(finishLevel)}` : ''}`;
+    }${upgradeLevel > 0 ? ' card-upgraded' : ''}${isKept ? ' ring-2 ring-amber-300/70' : ''}${finishLevel > 0 ? ` ${getFinishClass(finishLevel)}` : ''}${bonusGlow ? ' card-bonus-glow' : ''}`;
 
     const badgeColor =
       card.member === 'ahri'

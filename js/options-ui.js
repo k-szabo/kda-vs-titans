@@ -8,6 +8,7 @@ export function createOptionsUI({
   getEncounters,
   getAllEncounters,
   onSettingsChange,
+  onPlayerNameChange,
   isSoundSupported,
   onTestSound,
   changelog
@@ -56,6 +57,11 @@ export function createOptionsUI({
 
   function renderSettings() {
     const settings = getNormalizedSettings();
+    const nameInput = document.getElementById('optionsPlayerName');
+    if (nameInput && document.activeElement !== nameInput) {
+      nameInput.value = getProfileStats().playerName || '';
+    }
+    document.getElementById('playerNameStatus').textContent = '';
     const soundButton = document.getElementById('btnToggleSound');
     const supported = isSoundSupported();
     soundButton.disabled = !supported;
@@ -166,6 +172,14 @@ export function createOptionsUI({
     if (event.key === 'Escape') hideOptions();
   }
 
+  function cleanBoardName(raw) {
+    const clean = typeof raw === 'string' ? raw.trim() : '';
+    const length = Array.from(clean).length;
+    if (length < 3 || length > 16) return null;
+    if (!/^[\p{L}\p{N} _-]+$/u.test(clean)) return null;
+    return clean;
+  }
+
   document.getElementById('btnCloseOptions').addEventListener('click', hideOptions);
   document.getElementById('btnCloseHowToPlay').addEventListener('click', hideHowToPlay);
   document.getElementById('btnToggleSound').addEventListener('click', () => {
@@ -178,14 +192,27 @@ export function createOptionsUI({
     const settings = getSettings();
     onSettingsChange({ ...settings, shareScores: settings.shareScores === false });
   });
-  document.getElementById('btnResetKeybinds').addEventListener('click', () => {
-    onSettingsChange({
+  document.getElementById('btnResetKeybinds').addEventListener('click', () => {    onSettingsChange({
       ...getSettings(),
       keybinds: { ...defaultKeybinds }
     });
     listeningAction = null;
     document.getElementById('keybindStatus').textContent = 'Default keybinds restored.';
     renderSettings();
+  });
+  document.getElementById('btnSavePlayerName')?.addEventListener('click', () => {
+    const statusEl = document.getElementById('playerNameStatus');
+    const clean = cleanBoardName(document.getElementById('optionsPlayerName')?.value);
+    if (!clean) {
+      statusEl.textContent = 'Board name needs 3–16 characters: letters, numbers, space, _ or -.';
+      return;
+    }
+    if (clean === getProfileStats().playerName) {
+      statusEl.textContent = 'That is already your board name.';
+      return;
+    }
+    onPlayerNameChange(clean);
+    statusEl.textContent = `Board name updated to “${clean}” — your next daily submit keeps the same board row.`;
   });
   window.addEventListener('keydown', handleKeydown, true);
   renderChangelogEntries(document.getElementById('optionsChangelogEntries'), changelog);

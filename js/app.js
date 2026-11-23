@@ -18,6 +18,7 @@ import {
   getEncoreBossMaxHp,
   getEncoreInterruptThreshold,
   getEncorePhase2Ratio,
+  isWhenConditionMet,
   MAX_HAND_SIZE,
   MAX_HAND_LIMIT,
   MAX_BUFF_SLOTS,
@@ -325,7 +326,15 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       function getCardDamagePreview(cardInstance) {
         const card = CARD_DB[cardInstance?.cardId];
         if (!card) return null;
-        const damageEffects = (card.effects || []).filter((effect) => effect.type === 'damage');
+        const enemyStatuses = state.enemy?.statuses || {};
+        const playerStatuses = state.player?.statuses || {};
+        const bonusActive = (card.effects || []).some((effect) =>
+          effect.when && isWhenConditionMet(enemyStatuses, playerStatuses, effect.when)
+        );
+        const damageEffects = (card.effects || []).filter((effect) =>
+          effect.type === 'damage' &&
+          isWhenConditionMet(enemyStatuses, playerStatuses, effect.when)
+        );
         if (damageEffects.length === 0) return null;
         const upgradeLevel = cardInstance.upgradeLevel || 0;
         const parts = damageEffects.map((effect) => ({
@@ -346,6 +355,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           hits: single ? single.hits : null,
           total,
           hpDamage,
+          bonusActive,
           lethal: state.enemy.hp > 0 && hpDamage >= state.enemy.hp
         };
       }
@@ -1414,6 +1424,12 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           keybinds: normalizeKeybinds(settings.keybinds, defaultKeybinds)
         };
         setSoundEnabled(profileStats.settings.soundEnabled);
+        persistProfileStats();
+        optionsUI?.renderSettings();
+      }
+
+      function updateBoardName(name) {
+        profileStats.playerName = name;
         persistProfileStats();
         optionsUI?.renderSettings();
       }
@@ -2621,6 +2637,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
             getEncounters: () => ENCOUNTERS,
             getAllEncounters: () => ALL_ENCOUNTERS,
             onSettingsChange: updateProfileSettings,
+            onPlayerNameChange: updateBoardName,
             isSoundSupported,
             onTestSound: () => playSoundEffect(playSettingsTestSfx),
             changelog: gameData.changelog

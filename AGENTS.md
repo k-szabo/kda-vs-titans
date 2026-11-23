@@ -367,8 +367,10 @@ overview.
   starter decks; they count as non-members for synergy (same as `squad`).
 - Engine: `damage.pierce` passes through to `dealDamageToEnemy`; preview in
   `app.js` is pierce-aware. `stealBlock` steals up to X Block and counts as
-  `{stolen}`/`{block}` for logs. Conditional damage (`when`) sums for preview
-  (max potential); lethal uses pierce-adjusted Block.
+  `{stolen}`/`{block}` for logs. Conditional damage (`when`) counts for
+  preview only while its condition is met, and such cards glow
+  (`card-bonus-glow`) while the bonus is live; unmet conditionals preview as
+  zero with no badge. Lethal uses pierce-adjusted Block.
 
 ### Voice lines
 

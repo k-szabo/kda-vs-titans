@@ -22,6 +22,17 @@ export function getDeathLogEntries(logs, limit = 8) {
   return logs.slice(0, limit).reverse();
 }
 
+// Single source of truth for `when` gating: a conditional effect (or its
+// preview) fires only while the named status is active on its target.
+// enemyStatuses/playerStatuses are plain {status: turns} maps; unknown targets
+// never match so a typo fails closed instead of buffing everything.
+export function isWhenConditionMet(enemyStatuses, playerStatuses, when) {
+  if (!when) return true;
+  if (when.target === 'enemy') return (enemyStatuses?.[when.status] || 0) > 0;
+  if (when.target === 'player') return (playerStatuses?.[when.status] || 0) > 0;
+  return false;
+}
+
 export function createTurnMemberState() {
   return {
     turnMembersPlayed: [],

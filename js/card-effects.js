@@ -1,5 +1,6 @@
 function matchesCondition(condition, ctx) {
   if (!condition) return true;
+  if (condition.target !== 'enemy' && condition.target !== 'player') return false;
   return ctx.hasStatus(condition.target, condition.status);
 }
 

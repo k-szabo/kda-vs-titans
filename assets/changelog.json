@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.24.0_06ac89ef",
+  "currentVersion": "v1.25.0_346137bf",
   "releases": [
+    {
+      "version": "v1.25.0_346137bf",
+      "date": "2026-11-23",
+      "changes": [
+        "Conditional card bonuses preview honestly and glow while active.",
+        "Board name can be changed in Options; same board row, no duplicates.",
+        "Daily best-keep is waves-first (apply the new SQL migration)."
+      ]
+    },
     {
       "version": "v1.24.0_06ac89ef",
       "date": "2026-11-22",
