@@ -154,6 +154,14 @@ export async function loadGameData() {
       card.endTurnDamage !== undefined &&
         (!Number.isFinite(card.endTurnDamage) || card.endTurnDamage <= 0 || card.type !== 'STATUS' || card.ethereal !== true) ||
       card.art !== undefined && typeof card.art !== 'string' ||
+      card.requires !== undefined && (
+        !card.requires ||
+        typeof card.requires !== 'object' ||
+        Array.isArray(card.requires) ||
+        Object.keys(card.requires).some((key) => key !== 'firstCard' && key !== 'lastEnergy') ||
+        Object.values(card.requires).some((value) => value !== true) ||
+        Object.keys(card.requires).length === 0
+      ) ||
       (card.type === 'BUFF'
         ? !card.buff ||
           typeof card.buff !== 'object' ||

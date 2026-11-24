@@ -1,5 +1,5 @@
 import { getEffectiveCardCost } from './card-effects.js';
-import { getDeathLogEntries, MEMBER_SYNERGY } from './combat-rules.js';
+import { getDeathLogEntries, isPlayRequirementMet, MEMBER_SYNERGY } from './combat-rules.js';
 import { MEMBER_KEYWORDS } from './keywords.js';
 import { getCardFinishLevel, getFinishClass } from './card-finishes.js';
 import { pickVoiceLine } from './voice-lines.js';
@@ -93,7 +93,9 @@ export function createGameUI({
     const state = getState();
     const upgradeLevel = previewUpgrade ? 1 : (cardInstance?.upgradeLevel || 0);
     const cost = getEffectiveCardCost(card, upgradeLevel);
-    const playable = isDraftPreview || (state.isPlayerTurn && state.player.energy >= cost);
+    const finisherUnmet = !isDraftPreview && handIndex >= 0 && Boolean(card.requires) &&
+      !isPlayRequirementMet(card.requires, { cardsPlayedThisTurn: state.cardsPlayedThisTurn ?? 0, energy: state.player.energy, cost });
+    const playable = (isDraftPreview || (state.isPlayerTurn && state.player.energy >= cost)) && !finisherUnmet;
     const isKept = !isDraftPreview &&
       handIndex >= 0 &&
       cardInstance != null &&
@@ -166,6 +168,7 @@ export function createGameUI({
       </div>
       <div>
         ${spotlightReady ? '<div class="mb-1 font-display text-[8px] font-black tracking-wider text-amber-300">✨ SPOTLIGHT READY</div>' : ''}
+        ${finisherUnmet ? `<div class="mb-1 font-display text-[8px] font-black tracking-wider text-slate-400">⏳ ${card.requires?.firstCard ? 'FIRST CARD ONLY' : 'LAST ENERGY ONLY'}</div>` : ''}
         <p class="text-[11px] text-slate-300 leading-snug mb-1.5">${upgradeLevel > 0 ? card.upgrade.description : card.desc}</p>
         <div class="flex items-center justify-between gap-1">
           <span class="text-[9px] font-display tracking-widest text-slate-500 uppercase">
@@ -233,6 +236,7 @@ export function createGameUI({
         <p class="font-display ${headingClass} font-black text-amber-200">SOLO SPOTLIGHT <span class="font-normal text-slate-400">— 3 cards from the same member in a row</span></p>
         <ul class="mt-1 list-disc space-y-0.5 pl-4">${rows}</ul>
         <p class="mt-2 text-slate-400">A non-member card (K/DA SQUAD or guest SONA cards) breaks the consecutive chain but keeps members already played this turn.</p>
+        <p class="mt-1 text-slate-400">Finisher cards (⏳) demand sequencing: play them as your first card, or with your last Hype Energy.</p>
       </div>`;
   }
 

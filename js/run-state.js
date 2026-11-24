@@ -299,6 +299,9 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         skillsPlayedThisTurn: Number.isInteger(state.skillsPlayedThisTurn) && state.skillsPlayedThisTurn >= 0
           ? state.skillsPlayedThisTurn
           : 0,
+        cardsPlayedThisTurn: Number.isInteger(state.cardsPlayedThisTurn) && state.cardsPlayedThisTurn >= 0
+          ? state.cardsPlayedThisTurn
+          : 0,
         relicTriggersThisTurn: isRecord(state.relicTriggersThisTurn)
           ? Object.fromEntries(Object.entries(state.relicTriggersThisTurn).filter(([, used]) => used === true))
           : {},
@@ -385,6 +388,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     leaderAbilityUsed: oldState.leaderAbilityUsed === true,
     damageDealtThisTurn: 0,
     skillsPlayedThisTurn: 0,
+    cardsPlayedThisTurn: 0,
     startedAt: Number.isFinite(oldState.startedAt) ? oldState.startedAt : Date.now(),
     draftChoices: Array.isArray(oldState.draftChoices) ? oldState.draftChoices : [],
     relics,
@@ -557,6 +561,8 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.damageDealtThisTurn < 0 ||
     !Number.isInteger(saved.skillsPlayedThisTurn) ||
     saved.skillsPlayedThisTurn < 0 ||
+    !(saved.cardsPlayedThisTurn === undefined ||
+      (Number.isInteger(saved.cardsPlayedThisTurn) && saved.cardsPlayedThisTurn >= 0)) ||
     !(saved.relicTriggersThisTurn === undefined ||
       (isRecord(saved.relicTriggersThisTurn) &&
         Object.values(saved.relicTriggersThisTurn).every((used) => used === true))) ||

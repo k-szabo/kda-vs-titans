@@ -742,6 +742,9 @@ The version also drives cache clearing and JSON cache-busting.
    `starterDecks` entry if it belongs in a new run (10 IDs per leader).
 4. Provide `upgrade.description` if the card can be upgraded.
 5. Keep `log.template` placeholders limited to the supported set.
+6. For sequencing payoffs, add `requires: { firstCard: true }` and/or
+   `{ lastEnergy: true }` (validated; engine + preview share
+   `isPlayRequirementMet`); unmet finishers stay in hand with a ⏳ marker.
 
 ### Add a buff card
 

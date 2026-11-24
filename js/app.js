@@ -19,6 +19,7 @@ import {
   getEncoreInterruptThreshold,
   getEncorePhase2Ratio,
   isWhenConditionMet,
+  isPlayRequirementMet,
   MAX_HAND_SIZE,
   MAX_HAND_LIMIT,
   MAX_BUFF_SLOTS,
@@ -178,6 +179,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           damageDealtThisTurn: 0,
           peakSingleTurnDamage: 0,
           skillsPlayedThisTurn: 0,
+          cardsPlayedThisTurn: 0,
           relicTriggersThisTurn: {},
           handLimit: MAX_HAND_SIZE,
           keptCardInstanceId: null,
@@ -253,6 +255,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.turn = 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        state.cardsPlayedThisTurn = 0;
         state.relicTriggersThisTurn = {};
         state.handLimit = MAX_HAND_SIZE;
         state.keptCardInstanceId = null;
@@ -474,6 +477,12 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           return;
         }
 
+        if (!isPlayRequirementMet(card.requires, { cardsPlayedThisTurn: state.cardsPlayedThisTurn ?? 0, energy: state.player.energy, cost })) {
+          addLog(`⏳ ${card.name} can only be played ${card.requires?.firstCard ? 'as your first card this turn' : 'with your last Hype Energy'}!`, 'text-amber-300');
+          renderAll();
+          return;
+        }
+
         if (card.type === 'BUFF' && state.buffs.length >= MAX_BUFF_SLOTS) {
           pendingBuffHandIndex = handIdx;
           ui.openBuffReplaceModal(state.buffs.map((buff) => ({
@@ -487,6 +496,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         playSoundEffect(playCardSfx);
         state.player.energy -= cost;
         state.cardPlayCounts[card.id] = (state.cardPlayCounts[card.id] || 0) + 1;
+        state.cardsPlayedThisTurn = (state.cardsPlayedThisTurn ?? 0) + 1;
         state.player.cheer = Math.min(100, state.player.cheer + 5 + cost * 3);
         applyRelicEffects('cardPlayed', card, cost);
 
@@ -884,6 +894,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.turn += 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        state.cardsPlayedThisTurn = 0;
         state.relicTriggersThisTurn = {};
         state.handLimit = MAX_HAND_SIZE;
         state.enemy.reflectUsedThisTurn = false;
@@ -2216,6 +2227,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           damageDealtThisTurn: 0,
           peakSingleTurnDamage: 0,
           skillsPlayedThisTurn: 0,
+          cardsPlayedThisTurn: 0,
           relicTriggersThisTurn: {},
           handLimit: MAX_HAND_SIZE,
           keptCardInstanceId: null,
@@ -2296,6 +2308,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.turn += 1;
         state.damageDealtThisTurn = 0;
         state.skillsPlayedThisTurn = 0;
+        state.cardsPlayedThisTurn = 0;
         state.relicTriggersThisTurn = {};
         state.handLimit = MAX_HAND_SIZE;
         state.keptCardInstanceId = null;

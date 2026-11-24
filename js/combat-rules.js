@@ -22,6 +22,16 @@ export function getDeathLogEntries(logs, limit = 8) {
   return logs.slice(0, limit).reverse();
 }
 
+// Sequencing gate for finisher cards (`requires`): firstCard means no card
+// played yet this turn; lastEnergy means the cost spends your last energy.
+// Pure so the play path and the card preview share one rule.
+export function isPlayRequirementMet(requires, { cardsPlayedThisTurn = 0, energy = 0, cost = 0 } = {}) {
+  if (!requires) return true;
+  if (requires.firstCard === true && cardsPlayedThisTurn !== 0) return false;
+  if (requires.lastEnergy === true && cost !== energy) return false;
+  return true;
+}
+
 // Single source of truth for `when` gating: a conditional effect (or its
 // preview) fires only while the named status is active on its target.
 // enemyStatuses/playerStatuses are plain {status: turns} maps; unknown targets

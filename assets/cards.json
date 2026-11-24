@@ -621,6 +621,46 @@
       }
     },
     {
+      "id": "akali_first_strike",
+      "name": "First Strike",
+      "member": "akali",
+      "memberName": "AKALI",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "requires": { "firstCard": true },
+      "desc": "Deal <b>8</b> piercing damage. Can only be played as your <b>first card</b> this turn.",
+      "upgrade": { "description": "Deal 11 piercing damage. Can only be played as your first card this turn." },
+      "effects": [
+        { "type": "damage", "amount": 8, "upgradeAmount": 3, "pierce": 1 }
+      ],
+      "log": {
+        "template": "🥷 Akali opened with First Strike for {damage} DMG!",
+        "colorClass": "text-cyan-300"
+      }
+    },
+    {
+      "id": "ahri_encore_hit",
+      "name": "Encore Hit",
+      "member": "ahri",
+      "memberName": "AHRI",
+      "type": "ATTACK",
+      "cost": 1,
+      "starter": false,
+      "draftable": true,
+      "requires": { "lastEnergy": true },
+      "desc": "Deal <b>12</b> damage. Can only be played with your <b>last Hype Energy</b>.",
+      "upgrade": { "description": "Deal 16 damage. Can only be played with your last Hype Energy." },
+      "effects": [
+        { "type": "damage", "amount": 12, "upgradeAmount": 4 }
+      ],
+      "log": {
+        "template": "🦊 Ahri closed with Encore Hit for {damage} DMG!",
+        "colorClass": "text-pink-300"
+      }
+    },
+    {
       "id": "evelynn_siphon",
       "name": "Siphon Hunger",
       "member": "evelynn",
