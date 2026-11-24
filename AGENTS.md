@@ -166,7 +166,7 @@ overview.
 - New World Tour opens leader + Encore selection.
 - Daily World Tour starts the deterministic daily run at Encore 0.
 - Art Studio equips unlocked art and shows per-art ranks. Leader art tiers:
-  POP/STARS (default), MORE (1 clear), FIRESTARTER (2 clears), PRESTIGE
+  POP/STARS (default), ALL OUT (1 clear), FIRESTARTER (2 clears), PRESTIGE
   (3 clears, real Prestige splashes). Missing `artWaveClears` keys in old
   profiles normalize to 0, so no profile reset is needed for new tiers.
 - Holo card finishes are permanent profile unlocks, not run items: each wave
