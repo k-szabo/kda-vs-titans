@@ -1,3 +1,5 @@
+import { KDA_MEMBER_IDS } from './combat-rules.js';
+
 function matchesCondition(condition, ctx) {
   if (!condition) return true;
   if (condition.target !== 'enemy' && condition.target !== 'player') return false;
@@ -13,9 +15,18 @@ function formatLog(template, values) {
   });
 }
 
-export function getEffectiveCardCost(card, upgradeLevel = 0) {
+export function getEffectiveCardCost(card, upgradeLevel = 0, turnMembers = []) {
   const reduction = (card.upgrade?.costReduction || 0) * upgradeLevel;
-  return Math.max(0, card.cost - reduction);
+  let cost = Math.max(0, card.cost - reduction);
+  // Duet discount: cheaper when the partner member already played this turn.
+  // Unknown members fail closed (validated in game-data, enforced here too).
+  const duet = card.costReductionIf;
+  if (duet && typeof duet === 'object' && !Array.isArray(duet) &&
+    KDA_MEMBER_IDS.includes(duet.member) && Number.isInteger(duet.amount) && duet.amount > 0 &&
+    Array.isArray(turnMembers) && turnMembers.includes(duet.member)) {
+    cost = Math.max(0, cost - duet.amount);
+  }
+  return cost;
 }
 
 export function executeCardEffects(card, ctx, upgradeLevel = 0) {

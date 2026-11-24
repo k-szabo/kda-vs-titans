@@ -154,6 +154,15 @@ export async function loadGameData() {
       card.endTurnDamage !== undefined &&
         (!Number.isFinite(card.endTurnDamage) || card.endTurnDamage <= 0 || card.type !== 'STATUS' || card.ethereal !== true) ||
       card.art !== undefined && typeof card.art !== 'string' ||
+      card.costReductionIf !== undefined && (
+        !card.costReductionIf ||
+        typeof card.costReductionIf !== 'object' ||
+        Array.isArray(card.costReductionIf) ||
+        !['ahri', 'akali', 'evelynn', 'kaisa'].includes(card.costReductionIf.member) ||
+        !Number.isInteger(card.costReductionIf.amount) ||
+        card.costReductionIf.amount <= 0 ||
+        Object.keys(card.costReductionIf).some((key) => key !== 'member' && key !== 'amount')
+      ) ||
       card.requires !== undefined && (
         !card.requires ||
         typeof card.requires !== 'object' ||

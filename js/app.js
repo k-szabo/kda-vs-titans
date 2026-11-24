@@ -445,7 +445,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           renderAll();
           return;
         }
-        const cost = getEffectiveCardCost(card, cardInstance.upgradeLevel);
+        const cost = getEffectiveCardCost(card, cardInstance.upgradeLevel, state.turnMembersPlayed);
         if (state.player.energy < cost) {
           renderAll();
           return;
@@ -469,7 +469,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         const cardInstance = state.hand[handIdx];
         const card = CARD_DB[cardInstance?.cardId];
         if (!card) return;
-        const cost = getEffectiveCardCost(card, cardInstance.upgradeLevel);
+        const cost = getEffectiveCardCost(card, cardInstance.upgradeLevel, state.turnMembersPlayed);
 
         if (state.player.energy < cost) {
           addLog(`⚠️ Not enough Hype Energy for ${card.name}!`, 'text-amber-300');
@@ -497,6 +497,10 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.player.energy -= cost;
         state.cardPlayCounts[card.id] = (state.cardPlayCounts[card.id] || 0) + 1;
         state.cardsPlayedThisTurn = (state.cardsPlayedThisTurn ?? 0) + 1;
+        const fullCost = getEffectiveCardCost(card, cardInstance.upgradeLevel);
+        if (card.costReductionIf && cost < fullCost) {
+          addLog(`🎶 Duet harmony: ${card.name} cost ${cost} instead of ${fullCost}!`, 'text-amber-300');
+        }
         state.player.cheer = Math.min(100, state.player.cheer + 5 + cost * 3);
         applyRelicEffects('cardPlayed', card, cost);
 

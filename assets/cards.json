@@ -661,6 +661,47 @@
       }
     },
     {
+      "id": "ahri_duet_crossover",
+      "name": "Crossover Duet",
+      "member": "ahri",
+      "memberName": "AHRI",
+      "type": "SKILL",
+      "cost": 2,
+      "starter": false,
+      "draftable": true,
+      "costReductionIf": { "member": "akali", "amount": 1 },
+      "desc": "Gain <b>6</b> Holo Shield and draw <b>1</b> card. Costs <b>1</b> less if you played Akali this turn.",
+      "upgrade": { "description": "Gain 8 Holo Shield and draw 1 card. Costs 1 less if you played Akali this turn." },
+      "effects": [
+        { "type": "gainBlock", "amount": 6, "upgradeAmount": 2 },
+        { "type": "draw", "count": 1 }
+      ],
+      "log": {
+        "template": "🦊 Ahri wove Crossover Duet (+{block} Shield, +1 Card).",
+        "colorClass": "text-pink-300"
+      }
+    },
+    {
+      "id": "evelynn_duet_ambush",
+      "name": "Ambush Duet",
+      "member": "evelynn",
+      "memberName": "EVELYNN",
+      "type": "ATTACK",
+      "cost": 2,
+      "starter": false,
+      "draftable": true,
+      "costReductionIf": { "member": "kaisa", "amount": 1 },
+      "desc": "Deal <b>9</b> damage. Costs <b>1</b> less if you played Kai'Sa this turn.",
+      "upgrade": { "description": "Deal 12 damage. Costs 1 less if you played Kai'Sa this turn." },
+      "effects": [
+        { "type": "damage", "amount": 9, "upgradeAmount": 3 }
+      ],
+      "log": {
+        "template": "💜 Evelynn sprang Ambush Duet for {damage} DMG!",
+        "colorClass": "text-purple-300"
+      }
+    },
+    {
       "id": "evelynn_siphon",
       "name": "Siphon Hunger",
       "member": "evelynn",

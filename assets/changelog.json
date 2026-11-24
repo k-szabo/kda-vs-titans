@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.28.0_24153e18",
+  "currentVersion": "v1.29.0_47042c04",
   "releases": [
+    {
+      "version": "v1.29.0_47042c04",
+      "date": "2026-11-24",
+      "changes": [
+        "Duet cards: cheaper once their partner member played this turn (Crossover Duet, Ambush Duet)."
+      ]
+    },
     {
       "version": "v1.28.0_24153e18",
       "date": "2026-11-24",

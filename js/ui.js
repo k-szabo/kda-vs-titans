@@ -92,7 +92,7 @@ export function createGameUI({
   function createCardElement(card, isDraftPreview = false, handIndex = -1, cardInstance = null, previewUpgrade = false) {
     const state = getState();
     const upgradeLevel = previewUpgrade ? 1 : (cardInstance?.upgradeLevel || 0);
-    const cost = getEffectiveCardCost(card, upgradeLevel);
+    const cost = getEffectiveCardCost(card, upgradeLevel, state.turnMembersPlayed || []);
     const finisherUnmet = !isDraftPreview && handIndex >= 0 && Boolean(card.requires) &&
       !isPlayRequirementMet(card.requires, { cardsPlayedThisTurn: state.cardsPlayedThisTurn ?? 0, energy: state.player.energy, cost });
     const playable = (isDraftPreview || (state.isPlayerTurn && state.player.energy >= cost)) && !finisherUnmet;
@@ -237,6 +237,7 @@ export function createGameUI({
         <ul class="mt-1 list-disc space-y-0.5 pl-4">${rows}</ul>
         <p class="mt-2 text-slate-400">A non-member card (K/DA SQUAD or guest SONA cards) breaks the consecutive chain but keeps members already played this turn.</p>
         <p class="mt-1 text-slate-400">Finisher cards (⏳) demand sequencing: play them as your first card, or with your last Hype Energy.</p>
+        <p class="mt-1 text-slate-400">Duet cards cost less once their partner member played this turn (order does not matter).</p>
       </div>`;
   }
 

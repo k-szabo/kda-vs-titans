@@ -365,6 +365,9 @@ overview.
   Aria of Perseverance (heal + Block), Crescendo (Energy + Cheer),
   Diminuendo (cleanse Weak + heal). Draftable by every leader, never in
   starter decks; they count as non-members for synergy (same as `squad`).
+- Duet discount: `costReductionIf: { member, amount }` lowers effective cost
+  once the partner member played this turn (either order); engine, preview,
+  and playable-dim share `getEffectiveCardCost(card, level, turnMembers)`.
 - Engine: `damage.pierce` passes through to `dealDamageToEnemy`; preview in
   `app.js` is pierce-aware. `stealBlock` steals up to X Block and counts as
   `{stolen}`/`{block}` for logs. Conditional damage (`when`) counts for
