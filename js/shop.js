@@ -6,6 +6,16 @@ import { addInstanceToDeck, removeInstanceFromPiles } from './deck.js';
 
 export const SHOP_PRICES = Object.freeze({ card: 12, relic: 18, removal: 8, heal: 6 });
 export const SHOP_HEAL_AMOUNT = 15;
+export const SLOT_PRICE = 5;
+export const SLOT_HEAL_AMOUNT = 20;
+
+// Pure slots paytable: roll in [0, 1). Boundaries covered by harness.
+export function resolveSlotsOutcome(roll, hasRelic) {
+  if (roll < 0.45) return 'card';
+  if (roll < 0.70) return 'heal';
+  if (roll < 0.90) return hasRelic ? 'relic' : 'heal';
+  return 'jackpot';
+}
 
 export function createShop(deps) {
   const {
@@ -13,6 +23,7 @@ export function createShop(deps) {
     getCardDatabase,
     getRelicDatabase,
     shuffle,
+    nextRandom,
     addLog,
     saveRunState,
     renderAll,
@@ -113,12 +124,63 @@ export function createShop(deps) {
     renderAll();
   }
 
+  function pullSlots() {
+    const state = getState();
+    if (state.runStatus !== 'draft' || !state.shop) return;
+    if (state.merchTokens < SLOT_PRICE) return;
+    state.merchTokens -= SLOT_PRICE;
+    const chaos = state.modifiers?.chaosDraft === true;
+    const draftPool = Object.values(getCardDatabase()).filter((c) =>
+      (chaos || !c.starter) && c.draftable !== false
+    );
+    const unowned = shuffle(getUnownedRelicIds(chaos));
+    const outcome = resolveSlotsOutcome(nextRandom(), unowned.length > 0);
+    const won = [];
+    const takeCard = () => {
+      if (draftPool.length === 0) return;
+      const id = shuffle(draftPool)[0].id;
+      addInstanceToDeck(state, id);
+      won.push(`“${getCardDatabase()[id].name}”`);
+    };
+    const takeRelic = () => {
+      if (unowned.length === 0) return;
+      const id = shuffle(unowned)[0];
+      if (state.relics.includes(id)) return;
+      state.relics.push(id);
+      pruneStaleRelicChoices();
+      won.push(`✦ ${getRelicDatabase()[id].name}`);
+    };
+    const takeHeal = () => {
+      const healed = Math.min(state.player.maxHp - state.player.hp, SLOT_HEAL_AMOUNT);
+      state.player.hp += healed;
+      won.push(`+${healed} HP`);
+    };
+    if (outcome === 'card') takeCard();
+    else if (outcome === 'heal') takeHeal();
+    else if (outcome === 'relic') {
+      const before = won.length;
+      takeRelic();
+      if (won.length === before) takeHeal();
+    } else {
+      takeCard();
+      const before = won.length;
+      takeRelic();
+      if (won.length === before) takeHeal();
+    }
+    state.slotsLast = won.length > 0 ? won.join(' + ') : 'nothing';
+    addLog(`🎰 Backstage Slots (−${SLOT_PRICE} 🪙): won ${state.slotsLast}!`, 'text-amber-300 font-bold');
+    saveRunState();
+    showRouting();
+    renderAll();
+  }
+
   return {
     awardMerchTokens,
     rollShopInventory,
     buyShopCard,
     buyShopRelic,
     buyShopRemoval,
-    buyShopHeal
+    buyShopHeal,
+    pullSlots
   };
 }

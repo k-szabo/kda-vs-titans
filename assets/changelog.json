@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.26.0_e98fbf84",
+  "currentVersion": "v1.27.0_c8dd7433",
   "releases": [
+    {
+      "version": "v1.27.0_c8dd7433",
+      "date": "2026-11-24",
+      "changes": [
+        "Backstage Slots: 5-token pulls for cards, heals, relics, and jackpots."
+      ]
+    },
     {
       "version": "v1.26.0_e98fbf84",
       "date": "2026-11-24",

@@ -115,7 +115,8 @@ function normalizeShop(state, cardDatabase, relicDatabase) {
       cards,
       relic,
       removalUsed: raw.removalUsed === true,
-      healUsed: raw.healUsed === true
+      healUsed: raw.healUsed === true,
+      slotsLast: typeof raw.slotsLast === 'string' ? raw.slotsLast.slice(0, 200) : ''
     }
   };
 }
@@ -457,7 +458,8 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
           (saved.modifiers?.chaosDraft === true || !relicDatabase[saved.shop.relic].leaderId) &&
           !saved.relics.includes(saved.shop.relic))) &&
       typeof saved.shop.removalUsed === 'boolean' &&
-      typeof saved.shop.healUsed === 'boolean'
+      typeof saved.shop.healUsed === 'boolean' &&
+      (saved.shop.slotsLast === undefined || typeof saved.shop.slotsLast === 'string')
     )) ||
     !isRecord(saved.modifiers) ||
     !MODIFIER_IDS.every((id) => saved.modifiers[id] === true || saved.modifiers[id] === false) ||

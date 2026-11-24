@@ -8,7 +8,7 @@ import { DAILY_MODIFIERS } from './daily-challenge.js';
 import { renderChangelogEntries } from './changelog-ui.js';
 import { createProgressionUI } from './progression-ui.js';
 import { LEONA_MANAGER_ART } from './tour-routes.js';
-import { SHOP_HEAL_AMOUNT, SHOP_PRICES } from './shop.js';
+import { SHOP_HEAL_AMOUNT, SHOP_PRICES, SLOT_PRICE } from './shop.js';
 
 export function createGameUI({
   getState,
@@ -32,6 +32,7 @@ export function createGameUI({
   onBuyShopRelic,
   onBuyShopRemoval,
   onBuyShopHeal,
+  onPullSlots,
   onJumpToStage,
   onChooseDraftCard,
   onChooseRelic,
@@ -656,7 +657,9 @@ export function createGameUI({
     const cutGrid = document.getElementById('shopCutGrid');
     const healButton = document.getElementById('btnShopHeal');
     const removalButton = document.getElementById('btnShopRemoval');
-    if (!cardGrid || !relicGrid || !cutSection || !cutGrid || !healButton || !removalButton) return;
+    const slotsButton = document.getElementById('btnShopSlots');
+    const slotsResult = document.getElementById('shopSlotsResult');
+    if (!cardGrid || !relicGrid || !cutSection || !cutGrid || !healButton || !removalButton || !slotsButton) return;
     const cardDatabase = getCardDatabase();
     const relicDatabase = getRelicDatabase();
     const state = getState();
@@ -747,6 +750,15 @@ export function createGameUI({
       ? 'px-3 py-2 rounded-xl border border-emerald-300/40 bg-emerald-500/15 font-display text-[10px] font-bold text-emerald-100 transition hover:bg-emerald-500/25'
       : 'px-3 py-2 rounded-xl border border-white/10 bg-white/5 font-display text-[10px] font-bold text-slate-500 cursor-not-allowed';
     healButton.onclick = healAffordable ? () => onBuyShopHeal() : null;
+
+    const slotsAffordable = (tokens ?? 0) >= SLOT_PRICE;
+    slotsButton.disabled = !slotsAffordable;
+    slotsButton.textContent = `🎰 SLOTS (${SLOT_PRICE} 🪙)`;
+    slotsButton.className = slotsAffordable
+      ? 'px-3 py-2 rounded-xl border border-fuchsia-300/40 bg-fuchsia-500/15 font-display text-[10px] font-bold text-fuchsia-100 transition hover:bg-fuchsia-500/25'
+      : 'px-3 py-2 rounded-xl border border-white/10 bg-white/5 font-display text-[10px] font-bold text-slate-500 cursor-not-allowed';
+    slotsButton.onclick = slotsAffordable ? () => onPullSlots() : null;
+    if (slotsResult) slotsResult.textContent = shop?.slotsLast ? `🎰 Last pull: ${shop.slotsLast}` : '';
   }
 
   function showShopCutPicker() {

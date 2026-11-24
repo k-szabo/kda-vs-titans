@@ -394,8 +394,10 @@ After each non-final wave, `state.runStatus = 'draft'` and the player chooses:
 - **Relic**: one of 3 unowned, non-leader relics; heals 14 HP (10 at Encore 2+).
 - **Upgrade**: upgrade one unupgraded card instance (no heal).
 - **Shop** (alongside routing): Merch Tokens buy cards (12), relics (18),
-  deck removal (8, no heal), and +15 HP patch-ups (6). Cut and Rest have no
-  free version.
+  deck removal (8, no heal), and +15 HP patch-ups (6). Backstage Slots cost
+  5 per pull: 45% card, 25% +20 HP, 20% relic (or heal if the collection is
+  complete), 10% jackpot (card + relic); last result persists in
+  `shop.slotsLast`. Cut and Rest have no free version.
 
 Clearing wave 10 sets `runStatus = 'victory'`. Player death sets `'defeat'`.
 
