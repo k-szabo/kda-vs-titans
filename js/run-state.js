@@ -308,6 +308,7 @@ export function migrateSavedRun(savedRun, { cardDatabase, relicDatabase, encount
         energyPenalty: Number.isInteger(state.energyPenalty) && state.energyPenalty >= 0 && state.energyPenalty <= 3
           ? state.energyPenalty
           : 0,
+        endless: state.endless === true,
         nextCardInstanceId: Number.isInteger(state.nextCardInstanceId) && state.nextCardInstanceId > highestCardInstanceId
           ? state.nextCardInstanceId
           : highestCardInstanceId + 1,
@@ -440,7 +441,7 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.encounterOrder.length !== encounters.length ||
     saved.encounterOrder.some((id, index) => {
       if (typeof id !== 'string') return true;
-      const slot = encounterPools[index];
+      const slot = encounterPools[index % encounterPools.length];
       return !Array.isArray(slot) || !slot.includes(id);
     }) ||
     !Number.isInteger(saved.merchTokens) ||
@@ -561,6 +562,7 @@ export function isValidSavedRun(savedRun, { cardDatabase, relicDatabase, encount
     saved.damageDealtThisTurn < 0 ||
     !Number.isInteger(saved.skillsPlayedThisTurn) ||
     saved.skillsPlayedThisTurn < 0 ||
+    !(saved.endless === undefined || typeof saved.endless === 'boolean') ||
     !(saved.cardsPlayedThisTurn === undefined ||
       (Number.isInteger(saved.cardsPlayedThisTurn) && saved.cardsPlayedThisTurn >= 0)) ||
     !(saved.relicTriggersThisTurn === undefined ||

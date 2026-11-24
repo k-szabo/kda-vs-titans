@@ -403,6 +403,11 @@ After each non-final wave, `state.runStatus = 'draft'` and the player chooses:
   `shop.slotsLast`. Cut and Rest have no free version.
 
 Clearing wave 10 sets `runStatus = 'victory'`. Player death sets `'defeat'`.
+On non-daily victory the modal offers KEEP TOURING: endless mode appends a
+random boss from the cycling pools (`state.endless = true`), keeps scaling by
+wave index, and never shows another victory screen — the tour ends only in
+defeat. Save validation cycles pool slots by wave index, so grown orders
+reload cleanly.
 
 ### Missions
 

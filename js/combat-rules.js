@@ -5,6 +5,16 @@ export const MAX_HAND_LIMIT = 10;
 // Fixed number of buff slots on stage.
 export const MAX_BUFF_SLOTS = 3;
 
+// Single source of truth for wave scaling. HP handled at the call site;
+// this is the bonus Strength bosses start with. Endless waves (index 10+)
+// keep ramping: +1 per extra wave on top of the E5/E8 thresholds.
+export function getWaveStrengthBonus(stageIndex, encoreLevel) {
+  return (encoreLevel >= 3 ? 1 : 0) +
+    (stageIndex >= 4 ? 1 : 0) +
+    (stageIndex >= 7 ? 1 : 0) +
+    (stageIndex >= 10 ? stageIndex - 9 : 0);
+}
+
 // Single source of truth for member synergy numbers. The engine, the combat
 // legend, and How to Play all read from here so text cannot drift from effects.
 export const MEMBER_SYNERGY = Object.freeze({

@@ -18,6 +18,7 @@ import {
   getEncoreBossMaxHp,
   getEncoreInterruptThreshold,
   getEncorePhase2Ratio,
+  getWaveStrengthBonus,
   isWhenConditionMet,
   isPlayRequirementMet,
   MAX_HAND_SIZE,
@@ -292,7 +293,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           hp: bossMaxHp,
           maxHp: bossMaxHp,
           block: 0,
-          strength: (enc.strength || 0) + (state.encoreLevel >= 3 ? 1 : 0) + (stageIdx >= 4 ? 1 : 0) + (stageIdx >= 7 ? 1 : 0),
+          strength: (enc.strength || 0) + getWaveStrengthBonus(stageIdx, state.encoreLevel),
           stageEffect: enc.stageEffect,
           enrageTriggered: false,
           patternStep: 0,
@@ -695,6 +696,22 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       // Trigger K/DA 4-Member Joint Finale when Crowd Cheer hits 100%
+      function keepTouring() {
+        if (!state || state.runStatus !== 'victory' || state.dailyChallenge) return;
+        const nextIndex = state.stageIndex + 1;
+        const pool = ENCOUNTER_POOLS[nextIndex % ENCOUNTER_POOLS.length];
+        const id = pool[Math.floor(nextRandom() * pool.length) % pool.length];
+        const encounter = ENCOUNTERS_BY_ID[id];
+        if (!encounter) return;
+        ENCOUNTERS.push(encounter);
+        state.encounterOrder.push(id);
+        state.endless = true;
+        state.runStatus = 'playing';
+        ui.hideRunModals();
+        addLog(`🔁 ENDLESS TOUR: wave ${nextIndex + 1} approaches…`, 'text-amber-300 font-bold');
+        startStage(nextIndex);
+      }
+
       function triggerJointAttack() {
         if (!state.isPlayerTurn || state.player.cheer < 100) return;
 
@@ -1073,13 +1090,13 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         addLog(`🏆 ${state.enemy.name} CONTAINED!`, 'text-emerald-300 font-bold');
         recordStageClear();
 
-        if (state.stageIndex >= ENCOUNTERS.length - 1) {
+        if (state.stageIndex >= ENCOUNTERS.length - 1 && !state.endless) {
           state.runStatus = 'victory';
           recordDailyResult(true);
           recordRunHistory(true);
           evaluateMissions();
           saveRunState();
-          ui.showRunEndModal(true);
+          ui.showRunEndModal(true, { endless: !state.dailyChallenge });
           handleDailyRunEnd();
           return;
         }
@@ -2711,6 +2728,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
             onConsentOptOut: optOutConsentShare,
             onCheckCrowns: maybeCheckCrownsManual,
             onContinueTour: continueTour,
+            onKeepTouring: keepTouring,
             getDailyChallenge: getTodayDailyChallenge,
             onCopyReceipt: copyRunReceipt
           });

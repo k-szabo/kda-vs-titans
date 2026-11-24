@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.30.0_27e21f51",
+  "currentVersion": "v1.31.0_e0707564",
   "releases": [
+    {
+      "version": "v1.31.0_e0707564",
+      "date": "2026-11-24",
+      "changes": [
+        "Endless mode: keep touring past wave 10 with cycling bosses and ramping Strength."
+      ]
+    },
     {
       "version": "v1.30.0_27e21f51",
       "date": "2026-11-24",

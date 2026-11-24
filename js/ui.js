@@ -39,6 +39,7 @@ export function createGameUI({
   onUpgradeCard,
   onSelectLeaderArt,
   onContinueTour,
+  onKeepTouring,
   onCopyReceipt,
   onUpgradeCardFinish,
   onPreviewCard,
@@ -969,7 +970,7 @@ export function createGameUI({
     document.getElementById('battleLogToggleText').textContent = collapsed ? 'EXPAND' : 'COLLAPSE';
   }
 
-  function showRunEndModal(isVictory) {
+  function showRunEndModal(isVictory, options = {}) {
     const state = getState();
     const encounters = getEncounters();
     const cardDatabase = getCardDatabase();
@@ -1041,6 +1042,12 @@ export function createGameUI({
     }
     document.getElementById('receiptCopyStatus').textContent = '';
     document.getElementById('shareStatus').textContent = '';
+    const keepTouringButton = document.getElementById('btnKeepTouring');
+    if (keepTouringButton) {
+      const showEndless = Boolean(isVictory && options.endless);
+      keepTouringButton.classList.toggle('hidden', !showEndless);
+      keepTouringButton.onclick = showEndless ? () => onKeepTouring() : null;
+    }
     const deathSection = document.getElementById('deathLogSection');
     const deathList = document.getElementById('deathLogList');
     if (!isVictory && deathSection && deathList) {
