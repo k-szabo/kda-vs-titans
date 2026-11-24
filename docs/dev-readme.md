@@ -61,7 +61,7 @@ Boss encounters may define an optional `stageEffect` field. Supported hazards ar
 
 Daily World Tour uses the UTC date as a deterministic seed for its assigned leader, Relic, rule modifier, deck shuffles, encounter drafts, and rewards. Daily runs can auto-submit their score to the community leaderboard (opt out in Options); the board needs a configured Supabase backend — see “Leaderboard backend” below. Each wave drafts its boss from a rotating pool (29 kaiju across the 10 waves); standard runs roll randomly while Daily runs roll the same setlist all day. Acoustic Set starts with 4 max Energy and no starter Relic; Encore Pressure gives bosses +15% HP and a random starter Relic; Crowd Surf grants +15% Crowd Cheer at each wave start and a random starter Relic. Daily wins update current and best consecutive-day streaks in the existing profile.
 
-Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. These run metrics are stored with the v6 run state.
+Victory and defeat screens include a copyable Tour Receipt with waves cleared, the most-played card, and peak single-turn damage. Defeat adds a COACH SAYS tip derived from the lost run's own stats. These run metrics are stored with the v6 run state.
 
 The battle log can be collapsed from its header control. It defaults to collapsed on narrow screens to preserve combat and hand space.
 

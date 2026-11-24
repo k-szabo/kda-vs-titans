@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.29.0_47042c04",
+  "currentVersion": "v1.30.0_27e21f51",
   "releases": [
+    {
+      "version": "v1.30.0_27e21f51",
+      "date": "2026-11-24",
+      "changes": [
+        "Defeat screen now shows a COACH SAYS tip derived from the lost run."
+      ]
+    },
     {
       "version": "v1.29.0_47042c04",
       "date": "2026-11-24",

@@ -989,6 +989,30 @@ export function createGameUI({
       badge.className = 'inline-block px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-display text-[10px] tracking-widest mb-3';
       title.textContent = 'STAGE COLLAPSED';
       desc.textContent = `${state.enemy.name} shattered the concert dome on Wave ${state.stageIndex + 1}. Tweak your draft and try another run!`;
+      const membersPlayed = new Set();
+      let totalPlays = 0;
+      for (const [cardId, count] of Object.entries(state.cardPlayCounts || {})) {
+        if (count > 0) {
+          totalPlays += count;
+          const member = cardDatabase[cardId]?.member;
+          if (typeof member === 'string') membersPlayed.add(member);
+        }
+      }
+      const upgradesTaken = (state.masterDeck || []).filter((instance) => (instance?.upgradeLevel || 0) > 0).length;
+      const tip = pickDefeatTip({
+        wavesCleared: state.wavesCleared,
+        energyLeft: state.player.energy,
+        leaderAbilityUsed: state.leaderAbilityUsed,
+        peakDamage: state.peakSingleTurnDamage,
+        cheer: state.player.cheer,
+        distinctMembers: membersPlayed.size,
+        totalPlays,
+        upgradesTaken
+      });
+      const coach = document.createElement('p');
+      coach.className = 'mt-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 p-3 text-xs leading-relaxed text-cyan-100';
+      coach.textContent = `🧠 COACH SAYS: ${tip.text}`;
+      desc.after(coach);
     }
     const endVoice = pickVoiceLine(isVictory ? 'victory' : 'defeat');
     if (endVoice) showRunEndVoice(endVoice.speaker, endVoice.text);
