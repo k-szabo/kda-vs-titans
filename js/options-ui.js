@@ -105,10 +105,52 @@ export function createOptionsUI({
     });
   }
 
+  function renderRunHistory() {
+    const grid = document.getElementById('optionsRunHistory');
+    grid.replaceChildren();
+    const history = Array.isArray(getProfileStats().runHistory) ? getProfileStats().runHistory : [];
+    if (history.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'text-[11px] text-slate-500';
+      empty.textContent = 'No tours yet — finish a run and it will show up here.';
+      grid.appendChild(empty);
+      return;
+    }
+    history.forEach((entry) => {
+      const item = document.createElement('details');
+      item.className = 'rounded-xl border border-white/10 bg-black/30 px-3 py-2';
+      const summary = document.createElement('summary');
+      summary.className = 'cursor-pointer font-display text-[11px] font-bold text-slate-200';
+      const mins = Math.floor((entry.durationMs || 0) / 60000);
+      const secs = Math.floor(((entry.durationMs || 0) % 60000) / 1000);
+      summary.textContent = `${entry.victory ? '🏆' : '💀'} ${entry.date || ''} · ${(entry.leader || '').toUpperCase()} · ${entry.victory ? '10/10' : `${entry.waves || 0}/10`} · ${mins}m ${secs}s`;
+      const receipt = document.createElement('pre');
+      receipt.className = 'mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-[10px] leading-relaxed text-slate-300';
+      receipt.textContent = entry.receipt || '—';
+      const copy = document.createElement('button');
+      copy.type = 'button';
+      copy.className = 'mt-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1 font-display text-[9px] font-bold text-slate-200 hover:bg-white/10';
+      copy.textContent = 'COPY RECEIPT';
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(entry.receipt || '');
+          copy.textContent = 'COPIED ✓';
+          setTimeout(() => { copy.textContent = 'COPY RECEIPT'; }, 1500);
+        } catch {
+          copy.textContent = 'COPY FAILED';
+          setTimeout(() => { copy.textContent = 'COPY RECEIPT'; }, 1500);
+        }
+      });
+      item.append(summary, receipt, copy);
+      grid.appendChild(item);
+    });
+  }
+
   function showOptions() {
     listeningAction = null;
     renderSettings();
     renderCodex();
+    renderRunHistory();
     optionsModal.classList.remove('hidden');
   }
 

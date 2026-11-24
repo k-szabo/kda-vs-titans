@@ -1002,6 +1002,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         state.player.hp = 0;
         state.runStatus = 'defeat';
         recordDailyResult(false);
+        recordRunHistory(false);
         evaluateMissions();
         renderAll();
         ui.showRunEndModal(false);
@@ -1060,6 +1061,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         if (state.stageIndex >= ENCOUNTERS.length - 1) {
           state.runStatus = 'victory';
           recordDailyResult(true);
+          recordRunHistory(true);
           evaluateMissions();
           saveRunState();
           ui.showRunEndModal(true);
@@ -1230,6 +1232,23 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           profileStats.finishTokens += 3;
           addLog('✦ Tour victory bonus: +3 Spotlight Shards!', 'text-amber-300 font-bold');
         }
+        persistProfileStats();
+      }
+
+      function recordRunHistory(won) {
+        if (!state || state.runStatus === 'pvp') return;
+        const entry = {
+          date: getUtcDateString(),
+          mode: state.dailyChallenge ? 'daily' : 'standard',
+          leader: state.leader,
+          encore: state.encoreLevel,
+          victory: won === true,
+          waves: state.wavesCleared,
+          durationMs: Math.max(0, Date.now() - (state.startedAt || Date.now())),
+          receipt: getRunReceiptText()
+        };
+        const history = Array.isArray(profileStats.runHistory) ? profileStats.runHistory : [];
+        profileStats.runHistory = [entry, ...history].slice(0, 10);
         persistProfileStats();
       }
 

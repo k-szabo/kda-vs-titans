@@ -1,6 +1,13 @@
 {
-  "currentVersion": "v1.25.0_346137bf",
+  "currentVersion": "v1.26.0_e98fbf84",
   "releases": [
+    {
+      "version": "v1.26.0_e98fbf84",
+      "date": "2026-11-24",
+      "changes": [
+        "Recent Tours: last 10 runs with full receipts, viewable in Options."
+      ]
+    },
     {
       "version": "v1.25.0_346137bf",
       "date": "2026-11-23",

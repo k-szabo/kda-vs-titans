@@ -711,6 +711,7 @@ Profile fields: `settings` (`soundEnabled`, `keybinds`), `highestWaveCleared`,
 `lastDailyWinDate`, `unlockedKaiju`, `leaderWins`, `selectedArts`,
 `artWaveClears`, `maxEncoreWins` (leader id → 0–5), `finishTokens`,
 `cardFinishes` (card id → 0–3), `completedMissions` (unique mission ids),
+`runHistory` (≤10 recent-tour entries with receipts),
 `playerName` (null or string), `lastCrownCheck` (null or date),
 `shareScores` (default true).
 

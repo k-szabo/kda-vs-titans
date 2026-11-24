@@ -66,6 +66,7 @@ export function createDefaultProfileStats(defaultKeybinds) {
     finishTokens: 0,
     cardFinishes: {},
     completedMissions: [],
+    runHistory: [],
     playerName: null,
     lastCrownCheck: null
   };
@@ -115,6 +116,11 @@ export function loadProfileStats(defaultKeybinds) {
     )
   );
   const completed = profile.completedMissions;
+  const history = profile.runHistory;
+  // Append-only log: only the array shape is enforced here; malformed
+  // entries are filtered out by normalizeRunHistory instead of resetting
+  // the whole profile.
+  const hasRunHistory = history === undefined || history === null || Array.isArray(history);
   const hasMissions = completed === undefined || completed === null || (
     Array.isArray(completed) &&
     completed.every((id) => typeof id === 'string') &&
@@ -151,11 +157,37 @@ export function loadProfileStats(defaultKeybinds) {
     !hasCardFinishes ||
     !hasEncoreWins ||
     !hasMissions ||
+    !hasRunHistory ||
     (profile.playerName !== undefined && profile.playerName !== null && typeof profile.playerName !== 'string') ||
     (profile.lastCrownCheck !== undefined && profile.lastCrownCheck !== null &&
       (typeof profile.lastCrownCheck !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(profile.lastCrownCheck)))
   ) {
     throw new InvalidProfileStatsError('Saved profile stats have an unsupported shape.');
+  }
+
+  function normalizeRunHistory(raw) {
+    if (!Array.isArray(raw)) return [];
+    const leaders = new Set(LEADERS.map(({ id }) => id));
+    return raw.filter((entry) =>
+      entry !== null && typeof entry === 'object' && !Array.isArray(entry) &&
+      (typeof entry.date !== 'string' || entry.date.length <= 10) &&
+      (entry.mode === undefined || entry.mode === 'standard' || entry.mode === 'daily') &&
+      (!entry.leader || leaders.has(entry.leader)) &&
+      (entry.encore === undefined || (Number.isInteger(entry.encore) && entry.encore >= 0 && entry.encore <= 5)) &&
+      (entry.victory === undefined || typeof entry.victory === 'boolean') &&
+      (entry.waves === undefined || (Number.isInteger(entry.waves) && entry.waves >= 0 && entry.waves <= 10)) &&
+      (entry.durationMs === undefined || (Number.isFinite(entry.durationMs) && entry.durationMs >= 0)) &&
+      (entry.receipt === undefined || typeof entry.receipt === 'string')
+    ).slice(0, 10).map((entry) => ({
+      date: typeof entry.date === 'string' ? entry.date : '',
+      mode: entry.mode === 'daily' ? 'daily' : 'standard',
+      leader: leaders.has(entry.leader) ? entry.leader : '',
+      encore: Number.isInteger(entry.encore) ? entry.encore : 0,
+      victory: entry.victory === true,
+      waves: Number.isInteger(entry.waves) ? entry.waves : 0,
+      durationMs: Number.isFinite(entry.durationMs) && entry.durationMs >= 0 ? Math.round(entry.durationMs) : 0,
+      receipt: typeof entry.receipt === 'string' ? entry.receipt.slice(0, 8000) : ''
+    }));
   }
 
   return {
@@ -183,6 +215,7 @@ export function loadProfileStats(defaultKeybinds) {
     finishTokens: profile.finishTokens ?? 0,
     cardFinishes: { ...(profile.cardFinishes ?? {}) },
     completedMissions: [...(profile.completedMissions ?? [])],
+    runHistory: normalizeRunHistory(profile.runHistory),
     playerName: typeof profile.playerName === 'string' ? profile.playerName : null,
     lastCrownCheck: typeof profile.lastCrownCheck === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(profile.lastCrownCheck)
       ? profile.lastCrownCheck
