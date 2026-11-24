@@ -460,6 +460,14 @@ export function createGameUI({
     const intent = getCurrentEnemyIntent();
     document.getElementById('enemySubtitle').textContent = e.subtitle;
     document.getElementById('enemyName').textContent = e.name;
+    const vitalityLabel = document.getElementById('enemyVitalityLabel');
+    if (vitalityLabel) vitalityLabel.textContent = state.runStatus === 'pvp' ? '⚔️ RIVAL VITALS' : '☢️ TITAN VITALITY';
+    const intentCaption = document.getElementById('enemyIntentCaption');
+    if (intentCaption) intentCaption.textContent = state.runStatus === 'pvp' ? 'RIVAL STATUS' : 'NEXT INTENT';
+    const intentHint = document.getElementById('enemyIntentHint');
+    if (intentHint) intentHint.textContent = state.runStatus === 'pvp'
+      ? 'Rival acts on their own turn — watch their plays live.'
+      : 'Telegraphed attack resolves when you click End Turn.';
     document.getElementById('enemyIntentText').textContent = intent.displayText;
     const intentBox = document.getElementById('enemyIntentBox');
     const intentHints = [];

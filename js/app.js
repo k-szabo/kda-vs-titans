@@ -1743,7 +1743,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           rivalId: null, timerId: null, roundDecided: false, matchOver: false,
           abilityUsed: false, actionLog: createPvpActionLog(), isMyTurn: false,
           duelStarted: false, duelTimer: null, roundTimer: null,
-          rematchMe: false, rematchPeer: false
+          rematchMe: false, rematchPeer: false, advancedFromRound: -1
         };
         session.room = createPvpRoom({
           roomCode, playerId, bus,
@@ -1830,6 +1830,9 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
 
       function continuePvpRound() {
         if (!pvp || pvp.matchOver) return;
+        // Timer and CONTINUE button race — advance exactly once per round.
+        if (pvp.advancedFromRound === pvp.roundIndex) return;
+        pvp.advancedFromRound = pvp.roundIndex;
         clearTimeout(pvp.roundTimer);
         pvp.roundIndex += 1;
         pvp.roundDecided = false;
@@ -1876,6 +1879,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       function doRematchReset() {
         pvp.myWins = 0;
         pvp.peerWins = 0;
+        pvp.advancedFromRound = -1;
         pvp.roundIndex = 0;
         pvp.roundDecided = false;
         pvp.matchOver = false;
@@ -2073,31 +2077,91 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         document.getElementById('pvpTimerWrap')?.classList.add('hidden');
       }
 
-      function pvpStartTimer() {
-        pvpClearTimer();
+      // One persistent 1s match clock: countdown on your turn (auto-ends at
+      // zero), count-up while the rival thinks. Both players always see it.
+      function pvpStartClock() {
         if (!pvp) return;
-        const wrap = document.getElementById('pvpTimerWrap');
+        pvp.turnStartStamp = Date.now();
+        if (pvp.timerId) clearInterval(pvp.timerId);
+        document.getElementById('pvpTimerWrap')?.classList.remove('hidden');
+        pvpTickClock();
+        pvp.timerId = setInterval(pvpTickClock, 1000);
+      }
+
+      function pvpTickClock() {
         const banner = document.getElementById('pvpTimerBanner');
-        wrap?.classList.remove('hidden');
-        const deadline = Date.now() + PVP_TURN_MS;
-        const tick = () => {
-          if (!pvp || state?.runStatus !== 'pvp' || !pvp.isMyTurn) {
-            pvpClearTimer();
-            return;
-          }
-          const remaining = Math.max(0, deadline - Date.now());
+        if (!pvp || !state || state.runStatus !== 'pvp' || pvp.matchOver) {
+          pvpClearTimer();
+          return;
+        }
+        const elapsed = Date.now() - (pvp.turnStartStamp || Date.now());
+        if (pvp.isMyTurn) {
+          const remaining = Math.max(0, PVP_TURN_MS - elapsed);
           if (banner) {
             const secs = Math.ceil(remaining / 1000);
-            banner.textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+            banner.textContent = `⏳ ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+            banner.classList.toggle('text-rose-300', remaining <= 15000);
+            banner.classList.toggle('text-white', remaining > 15000);
           }
           if (remaining <= 0) {
-            pvpClearTimer();
             addLog('⏱️ Turn timer expired — turn auto-ended.', 'text-amber-300 font-bold');
             endPvpTurn();
           }
+        } else if (banner) {
+          const secs = Math.floor(elapsed / 1000);
+          banner.textContent = `⌛ RIVAL ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+          banner.classList.remove('text-rose-300');
+          banner.classList.add('text-white');
+        }
+      }
+
+      // Turn-boundary invariant check: every master-deck instance must live in
+      // exactly one pile (hand cap respected). Logs and self-heals instead of
+      // silently losing cards — the guest-side disappearance diagnostic.
+      function pvpVerifyPiles(where) {
+        if (!state || state.runStatus !== 'pvp' || !pvp) return;
+        const seen = new Map();
+        const problems = [];
+        const masterIds = new Set(state.masterDeck.map((instance) => instance?.instanceId));
+        const isExempt = (instance) => {
+          const card = instance && CARD_DB[instance.cardId];
+          return card && card.type === 'STATUS' && card.draftable === false;
         };
-        pvp.timerId = setInterval(tick, 1000);
-        tick();
+        const piles = [['draw', state.drawPile], ['hand', state.hand], ['discard', state.discardPile], ['exhaust', state.exhaustPile]];
+        for (const [name, pile] of piles) {
+          for (const instance of pile) {
+            if (!instance || (!masterIds.has(instance.instanceId) && !isExempt(instance))) {
+              problems.push(`${name} holds unknown instance ${instance?.instanceId}`);
+              continue;
+            }
+            if (seen.has(instance.instanceId)) problems.push(`instance ${instance.instanceId} in ${seen.get(instance.instanceId)} and ${name}`);
+            else seen.set(instance.instanceId, name);
+          }
+        }
+        for (const buff of state.buffs) {
+          if (seen.has(buff.instanceId)) problems.push(`buff ${buff.instanceId} also in ${seen.get(buff.instanceId)}`);
+          else seen.set(buff.instanceId, 'buffs');
+        }
+        for (const id of masterIds) {
+          if (!seen.has(id)) problems.push(`instance ${id} missing from all piles`);
+        }
+        if (state.hand.length > (state.handLimit ?? MAX_HAND_SIZE)) {
+          problems.push(`hand ${state.hand.length} over limit ${state.handLimit}`);
+        }
+        if (problems.length > 0) {
+          addLog(`⚠️ Duel state mismatch (${where}): ${problems.slice(0, 3).join('; ')}${problems.length > 3 ? '…' : ''}`, 'text-rose-300 font-bold');
+          const keep = new Set();
+          state.hand = state.hand.filter((instance) => {
+            if (!instance || keep.has(instance.instanceId)) {
+              if (instance) state.drawPile.push(instance);
+              return false;
+            }
+            keep.add(instance.instanceId);
+            return true;
+          });
+          while (state.hand.length > (state.handLimit ?? MAX_HAND_SIZE)) state.drawPile.push(state.hand.pop());
+          renderAll();
+        }
       }
 
       function pvpAdoptSnapshot(snap) {
@@ -2142,7 +2206,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           encoreLevel: 0,
           dailyChallenge: null,
           rngState: null,
-          leaderAbilityUsed: pvp.abilityUsed,
+          leaderAbilityUsed: false,
           startedAt: Date.now(),
           nextCardInstanceId: nextId,
           draftChoices: [],
@@ -2202,6 +2266,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           state.isPlayerTurn = false;
           pvpSyncButtons();
           pvpRefreshIntent();
+          pvpStartClock();
           renderAll();
         }
       }
@@ -2237,7 +2302,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         pvpSyncButtons();
         pvpRefreshIntent();
         drawCards(5);
-        pvpStartTimer();
+        pvpStartClock();
+        pvpVerifyPiles('turn start');
         renderAll();
       }
 
@@ -2254,12 +2320,16 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         }
         state.hand.push(...retained);
         state.keptCardInstanceId = null;
+        // Combos don't carry into the rival's turn — same as PvE turn flow.
+        Object.assign(state, createTurnMemberState());
         pvp.isMyTurn = false;
         state.isPlayerTurn = false;
+        pvp.turnStartStamp = Date.now();
         pvpSend('turnEnded', { snapshot: pvpPublicSnapshot() });
         addLog('⏳ Turn ended — rival is thinking…', 'text-sky-300');
         pvpRefreshIntent();
         pvpSyncButtons();
+        pvpVerifyPiles('turn end');
         renderAll();
       }
 
@@ -2332,6 +2402,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         }
         pvpAdoptSnapshot(remote);
         pvpCheckDefeat();
+        pvpVerifyPiles('rival play');
         renderAll();
       }
 
@@ -2358,12 +2429,11 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         pvp.roundDecided = true;
         pvpClearTimer();
         if (won) {
+          // Local kill detection is authoritative for our own wins; the
+          // broadcast score carries the final totals so the rival adopts.
           pvp.myWins += 1;
           pvpSend('roundEnd', { winner: pvp.playerId });
-        } else if (pvp.rivalId) {
-          pvpSend('roundEnd', { winner: pvp.rivalId });
         }
-        pvp.abilityUsed = state.leaderAbilityUsed;
         if (state.pvpRoundWinners) state.pvpRoundWinners[pvp.roundIndex] = won ? 'me' : 'rival';
         addLog(won ? `🏆 ROUND ${pvp.roundIndex + 1} YOURS! (${pvp.myWins} : ${pvp.peerWins})` : `💀 ROUND ${pvp.roundIndex + 1} LOST. (${pvp.myWins} : ${pvp.peerWins})`, 'text-amber-300 font-bold');
         if (pvp.myWins >= 2 || pvp.peerWins >= 2) {
@@ -2403,8 +2473,30 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       function pvpOnRoundEnd(payload) {
-        if (!pvp || pvp.roundDecided || pvp.matchOver) return;
-        pvpRoundEnd(payload.winner === pvp.playerId);
+        if (!pvp || pvp.matchOver || pvp.roundDecided) return;
+        // The winner's broadcast carries final totals — adopt, never increment
+        // here, or the win counts twice (once locally, once from the message).
+        pvpAdoptScore(payload?.score);
+        pvp.roundDecided = true;
+        const won = payload?.winner === pvp.playerId;
+        if (state.runStatus === 'pvp' && state.pvpRoundWinners) {
+          state.pvpRoundWinners[pvp.roundIndex] = won ? 'me' : 'rival';
+        }
+        addLog(won ? `🏆 ROUND ${pvp.roundIndex + 1} YOURS! (${pvp.myWins} : ${pvp.peerWins})` : `💀 ROUND ${pvp.roundIndex + 1} LOST. (${pvp.myWins} : ${pvp.peerWins})`, 'text-amber-300 font-bold');
+        if (pvp.myWins >= 2 || pvp.peerWins >= 2) {
+          pvpEndMatch(pvp.myWins >= 2);
+          return;
+        }
+        pvpUI?.show('');
+        pvpUI?.setState({ screen: 'roundresult', round: pvp.roundIndex + 1, won, myWins: pvp.myWins, peerWins: pvp.peerWins });
+        if (state.runStatus === 'pvp') {
+          state.isPlayerTurn = false;
+          pvp.isMyTurn = false;
+          pvpSyncButtons();
+          renderAll();
+        }
+        clearTimeout(pvp.roundTimer);
+        pvp.roundTimer = setTimeout(() => continuePvpRound(), 4000);
       }
 
       function broadcastPvpPlay(card, upgradeLevel) {
