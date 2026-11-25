@@ -112,6 +112,7 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/tour-events.js` | Tour-event data plus the between-wave event flow (`createTourEvents`). |
 | `js/tour-routes.js` | Leona tour-route definitions (upgrade/relic/card) mapping onto reward tabs. |
 | `js/shop.js` | Merch shop prices and purchase flow (`createShop`); single source for shop pricing. |
+| `js/shop-ui.js` | Merch shop rendering (`createShopUI`): stock grids, removal/heal/slots buttons, cut picker. |
 | `js/pvp-duel.js` | PvP duel controller (`createPvpDuel`): lobby, room flow, alternating-turn combat, timers, rounds; app owns state, combat primitives come via deps. |
 | `js/pvp-protocol.js` | PvP shared protocol: room codes, coin flip, seeded decks/relics, action envelopes. |
 | `js/pvp-net.js` | PvP transport: Realtime channel wrapper plus presence/action handling (`createPvpRoom`). |
