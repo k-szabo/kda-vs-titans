@@ -99,7 +99,8 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `css/tailwind.css` | **Generated and minified.** Do not hand-edit; regenerate from `css/tailwind.input.css`. |
 | `css/tailwind.input.css` | Tailwind source with `@source` globs for `index.html` and `js/**/*.js`. |
 | `css/styles.css` | Hand-written theme, card styling, log layout, and combat animations. |
-| `js/app.js` | Run lifecycle, combat engine, progression, persistence wiring, event binding, boot sequence. |
+| `js/app.js` | Run lifecycle, progression, persistence wiring, event binding, boot sequence. Combat lives in `js/combat-engine.js`, PvP duels in `js/pvp-duel.js`. |
+| `js/combat-engine.js` | Turn-based combat engine (`createCombatEngine`): playing cards, turns, intents, damage, synergies, buffs, Joint Finale, leader abilities, previews. |
 | `js/game-data.js` | Loads and validates the manifest, cards, relics, keybinds, changelog, and bosses; cache-busts by version. |
 | `js/combat-rules.js` | Pure-ish combat helpers: damage/shield/Cheer resolution, enemy Strength, interrupts, Encore scaling, member-chain tracking, hand cap, death-log slicing. |
 | `js/card-effects.js` | Interprets ordered card effect actions, upgrade deltas, conditions, and log templates. Supports `pierce` on damage and `stealBlock` (Drain). |
