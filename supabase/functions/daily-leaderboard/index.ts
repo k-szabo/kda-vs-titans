@@ -81,7 +81,6 @@ export async function handle(request: Request) {
         if (outcome?.error || outcome?.ok !== true) return response(request,400,{error:outcome?.error || 'unavailable'});
         return response(request,200,{weekly: outcome.weekly ?? null, monthly: outcome.monthly ?? null});
       }
-      const url = new URL(request.url);
       const range = periodRange(url.searchParams.get('period') || 'daily', url.searchParams.get('date') || '');
       if (!range) return response(request,400,{error:'invalid_score'});
       const path = range[0] === range[1]
