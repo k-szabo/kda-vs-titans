@@ -817,8 +817,12 @@ card art mappings and tests across these files.
   not hardcode `/`-rooted or absolute local paths.
 - **Data stays declarative.** No executable code, comments, or functions in
   JSON. Add engine support instead.
-- **Validate new data** in `js/game-data.js` and surface failures through the
-  existing load-error path.
+- **Validate new data** in `js/game-data.js` (`validateManifest`,
+  `validateCards`, `validateRelics`, `validateBosses`, `validateMissions`,
+  `validateTourEvents`, `validateChangelog`, `validateLeaderArts`) and surface
+  failures through the existing load-error path. Validators throw per-entry
+  messages (`file: entry: reason`); check them with
+  `node scripts/check-all.mjs`.
 - **Keep `state` serializable.** No DOM nodes or functions in run state.
 - **Avoid `innerHTML` for untrusted data.** Existing uses are for authored card
   HTML and known asset URLs. Use `textContent` for names/descriptions from data
@@ -843,7 +847,7 @@ card art mappings and tests across these files.
 
 Run through this before considering a change complete:
 
-1. Serve over HTTP; no console errors and no `#loadError`.
+1. Serve over HTTP; no console errors and no `#loadError`. Run `node scripts/check-all.mjs` — all suites green.
 2. New run: leader selection, Encore tier gating, leader-specific starter deck (10 cards, keyword intro), optional custom modifiers (chaos draft, no cuts, double hazard), wave 1 (boss may be a drafted alternate).
 3. Play cards; verify cost, upgrades, exhaust, retain, status cards, and hand cap.
    Mark a card with the 📌 toggle and confirm it survives one turn and that the
