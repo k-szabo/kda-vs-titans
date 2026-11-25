@@ -29,6 +29,10 @@ import {
 } from './audio.js';
 
 export function createCombatEngine(deps) {
+  const required = ['getState', 'getCardDB', 'applyRelicEffects', 'drawCards', 'getBuffAmount', 'discardBuffEntry', 'onEnemyDefeated', 'onPlayerDefeat', 'getPvp', 'showVoiceLine', 'popup', 'shake', 'kaijuHit', 'openBuffReplaceModal', 'closeBuffReplaceModal', 'addLog', 'renderAll'];
+  for (const key of required) {
+    if (typeof deps?.[key] !== 'function') throw new Error(`createCombatEngine: missing dependency "${key}"`);
+  }
   const {
     getState,
     getCardDB,

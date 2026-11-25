@@ -1244,6 +1244,8 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
             getCardDB: () => CARD_DB,
             applyRelicEffects: (trigger, card, cost) => applyRelicEffects(trigger, card, cost),
             drawCards: (count) => drawCards(count),
+            getBuffAmount,
+            discardBuffEntry,
             onEnemyDefeated: () => handleKaijuDefeated(),
             onPlayerDefeat: () => finishPlayerDefeat(),
             getPvp: () => pvpDuel,
@@ -1252,7 +1254,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
             shake: () => ui.triggerScreenShake(),
             kaijuHit: () => ui.triggerKaijuHitAnim(),
             openBuffReplaceModal: (buffs) => ui.openBuffReplaceModal(buffs),
-        closeBuffReplaceModal: () => ui.closeBuffReplaceModal(),
+            closeBuffReplaceModal: () => ui.closeBuffReplaceModal(),
             addLog,
             renderAll
           });
