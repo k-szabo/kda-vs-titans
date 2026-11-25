@@ -1,6 +1,14 @@
 {
-  "currentVersion": "v1.31.0_e0707564",
+  "currentVersion": "v1.32.0_dbd3f846",
   "releases": [
+    {
+      "version": "v1.32.0_dbd3f846",
+      "date": "2026-11-25",
+      "changes": [
+        "Endless tours can no longer strand past wave 11; full-HP slot heals convert to cards.",
+        "Defeat screen is guaranteed; no-name daily defeats defer sharing until a board name is set."
+      ]
+    },
     {
       "version": "v1.31.0_e0707564",
       "date": "2026-11-24",

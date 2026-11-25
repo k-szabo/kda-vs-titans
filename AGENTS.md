@@ -399,15 +399,17 @@ After each non-final wave, `state.runStatus = 'draft'` and the player chooses:
 - **Shop** (alongside routing): Merch Tokens buy cards (12), relics (18),
   deck removal (8, no heal), and +15 HP patch-ups (6). Backstage Slots cost
   5 per pull: 45% card, 25% +20 HP, 20% relic (or heal if the collection is
-  complete), 10% jackpot (card + relic); last result persists in
-  `shop.slotsLast`. Cut and Rest have no free version.
+  complete), 10% jackpot (card + relic); a heal win at full HP converts to a
+  card so a pull never fizzles. Last result persists in `shop.slotsLast`. Cut and Rest have no free version.
 
 Clearing wave 10 sets `runStatus = 'victory'`. Player death sets `'defeat'`.
 On non-daily victory the modal offers KEEP TOURING: endless mode appends a
 random boss from the cycling pools (`state.endless = true`), keeps scaling by
 wave index, and never shows another victory screen — the tour ends only in
 defeat. Save validation cycles pool slots by wave index, so grown orders
-reload cleanly.
+reload cleanly. The next boss is pushed when each endless draft phase opens,
+and `startStage` re-pushes if the encounter is somehow missing, so a run can
+never strand on a wave with no boss.
 
 ### Missions
 

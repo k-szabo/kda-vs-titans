@@ -88,6 +88,15 @@ function makeShop(rolls, { tokens, ownedRelics, hp, maxHp } = {}) {
   assert.equal(state.player.hp, 60, 'relic fallback heals when collection complete');
 }
 {
+  // Full HP: a heal win would look like nothing happened — deal a card instead.
+  const { shop, state } = makeShop([0.5], { hp: 80 });
+  const before = state.masterDeck.length;
+  shop.pullSlots();
+  assert.equal(state.player.hp, 80);
+  assert.equal(state.masterDeck.length, before + 1, 'full-HP heal converts to card');
+  assert.ok(!state.slotsLast.includes('HP'), 'no phantom +0 HP win: ' + state.slotsLast);
+}
+{
   // Broke players cannot pull.
   const { shop, state } = makeShop([0.1], { tokens: 3 });
   shop.pullSlots();

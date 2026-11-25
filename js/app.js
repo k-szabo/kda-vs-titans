@@ -244,8 +244,17 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       function startStage(stageIdx) {
-        const enc = ENCOUNTERS[stageIdx];
-        if (!enc) return;
+        let enc = ENCOUNTERS[stageIdx];
+        if (!enc && state && state.endless) {
+          // Self-heal for saves stranded mid-transition: draft the missing
+          // boss on the spot instead of stranding the tour.
+          pushEndlessBoss();
+          enc = ENCOUNTERS[stageIdx];
+        }
+        if (!enc) {
+          addLog('⚠️ Missing encounter data — the tour cannot continue past this wave.', 'text-rose-300 font-bold');
+          return;
+        }
         const encoreMaxHp = getEncoreBossMaxHp(enc.maxHp, state.encoreLevel);
         const waveMaxHp = Math.ceil(encoreMaxHp * (1 + 0.03 * stageIdx));
         const bossMaxHp = state.dailyChallenge?.modifier === 'encore_pressure'
@@ -696,16 +705,28 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
       }
 
       // Trigger K/DA 4-Member Joint Finale when Crowd Cheer hits 100%
-      function keepTouring() {
-        if (!state || state.runStatus !== 'victory' || state.dailyChallenge) return;
+      // Endless tours draft the next boss from the cycling pools. Called when
+      // entering every endless draft phase (and by startStage as a self-heal
+      // for saves stranded mid-transition), so the setlist never runs dry.
+      function pushEndlessBoss() {
+        if (!state || !state.endless) return false;
+        if (!Array.isArray(ENCOUNTER_POOLS) || ENCOUNTER_POOLS.length === 0) return false;
         const nextIndex = state.stageIndex + 1;
         const pool = ENCOUNTER_POOLS[nextIndex % ENCOUNTER_POOLS.length];
+        if (!Array.isArray(pool) || pool.length === 0) return false;
         const id = pool[Math.floor(nextRandom() * pool.length) % pool.length];
         const encounter = ENCOUNTERS_BY_ID[id];
-        if (!encounter) return;
+        if (!encounter) return false;
         ENCOUNTERS.push(encounter);
         state.encounterOrder.push(id);
+        return true;
+      }
+
+      function keepTouring() {
+        if (!state || state.runStatus !== 'victory' || state.dailyChallenge) return;
         state.endless = true;
+        if (!pushEndlessBoss()) return;
+        const nextIndex = state.stageIndex + 1;
         state.runStatus = 'playing';
         ui.hideRunModals();
         addLog(`🔁 ENDLESS TOUR: wave ${nextIndex + 1} approaches…`, 'text-amber-300 font-bold');
@@ -1033,11 +1054,15 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         }
         state.player.hp = 0;
         state.runStatus = 'defeat';
-        recordDailyResult(false);
-        recordRunHistory(false);
-        evaluateMissions();
-        renderAll();
-        ui.showRunEndModal(false);
+        try {
+          recordDailyResult(false);
+          recordRunHistory(false);
+          evaluateMissions();
+          renderAll();
+        } finally {
+          // The defeat screen must appear even if a bookkeeping step above throws.
+          ui.showRunEndModal(false);
+        }
         handleDailyRunEnd();
         return true;
       }
@@ -1104,6 +1129,9 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         const chaos = state.modifiers?.chaosDraft === true;
         const draftPool = Object.values(CARD_DB).filter((c) => (chaos || !c.starter) && c.draftable !== false);
         state.runStatus = 'draft';
+        // Endless tours draft the next boss up front so the reward phase can
+        // never strand the run on a missing encounter.
+        if (state.endless) pushEndlessBoss();
         state.draftChoices = shuffle(draftPool).slice(0, 3).map((card) => card.id);
         const ownedRelics = new Set(state.relics);
         state.relicChoices = shuffle(Object.keys(RELIC_DB).filter((relicId) =>
@@ -1395,6 +1423,13 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         if (!state.dailyChallenge) return;
         if (profileStats.settings.shareScores === false) return;
         if (!profileStats.playerName) {
+          if (state.runStatus === 'defeat') {
+            // Don't cover the defeat screen with the consent modal: remember
+            // the pending share and submit it once a board name is set.
+            pendingDailySubmit = true;
+            ui.showShareStatus('Daily score not shared yet — set a board name in Options to share it.');
+            return;
+          }
           ui.openConsentModal(suggestDancerName());
           return;
         }
@@ -1480,9 +1515,15 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         optionsUI?.renderSettings();
       }
 
+      let pendingDailySubmit = false;
+
       function updateBoardName(name) {
         profileStats.playerName = name;
         persistProfileStats();
+        if (pendingDailySubmit && state?.dailyChallenge && state.runStatus === 'defeat') {
+          pendingDailySubmit = false;
+          void submitDailyScore();
+        }
         optionsUI?.renderSettings();
       }
 
@@ -1619,6 +1660,7 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
         ) return;
         encoreLevel = Number.isInteger(encoreLevel) ? Math.min(5, Math.max(0, encoreLevel)) : 0;
         if (encoreLevel > (profileStats.maxEncoreLevel ?? 0)) return;
+        pendingDailySubmit = false;
         ui.hideRunModals();
         ui.hideMainMenu();
         mainMenuOpen = false;

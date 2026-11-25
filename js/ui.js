@@ -1011,8 +1011,10 @@ export function createGameUI({
         upgradesTaken
       });
       const coach = document.createElement('p');
+      coach.id = 'coachTip';
       coach.className = 'mt-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 p-3 text-xs leading-relaxed text-cyan-100';
       coach.textContent = `🧠 COACH SAYS: ${tip.text}`;
+      document.getElementById('coachTip')?.remove();
       desc.after(coach);
     }
     const endVoice = pickVoiceLine(isVictory ? 'victory' : 'defeat');

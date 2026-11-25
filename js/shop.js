@@ -152,6 +152,11 @@ export function createShop(deps) {
     };
     const takeHeal = () => {
       const healed = Math.min(state.player.maxHp - state.player.hp, SLOT_HEAL_AMOUNT);
+      if (healed <= 0) {
+        // Full HP: a heal win would look like nothing happened — deal a card instead.
+        takeCard();
+        return;
+      }
       state.player.hp += healed;
       won.push(`+${healed} HP`);
     };
