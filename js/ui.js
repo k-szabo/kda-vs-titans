@@ -936,8 +936,10 @@ export function createGameUI({
     }
     document.getElementById('receiptCopyStatus').textContent = '';
     document.getElementById('shareStatus').textContent = '';
-    const exportButton = document.getElementById('btnExportImage');
-    if (exportButton) exportButton.onclick = () => exportResultsImage(isVictory);
+    const copyButton = document.getElementById('btnCopyImage');
+    if (copyButton) copyButton.onclick = () => exportResultsImage(isVictory, 'copy');
+    const saveButton = document.getElementById('btnSaveImage');
+    if (saveButton) saveButton.onclick = () => exportResultsImage(isVictory, 'save');
     const keepTouringButton = document.getElementById('btnKeepTouring');
     if (keepTouringButton) {
       const showEndless = Boolean(isVictory && options.endless);
@@ -987,9 +989,19 @@ export function createGameUI({
     };
   }
 
-  async function exportResultsImage(isVictory) {
+  async function exportResultsImage(isVictory, mode) {
     const status = document.getElementById('receiptCopyStatus');
     const setStatus = (text) => { if (status) status.textContent = text; };
+    const download = (blob, fileName) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    };
     try {
       const state = getState();
       const parts = scorePartsForRun(state, isVictory);
@@ -1005,25 +1017,23 @@ export function createGameUI({
         version: typeof getGameVersion === 'function' ? getGameVersion() : '',
         isVictory
       });
-      setStatus('Loading leader art…');
+      setStatus('Rendering results image…');
       const blob = await canvasToPngBlob(renderResultsImage(model, await loadLeaderArt(model.leaderLoadingArt)));
       const fileName = `kda-results-${model.date}-${model.wavesCleared}w.png`;
-      const file = typeof File === 'function'
-        ? new File([blob], fileName, { type: 'image/png' })
-        : null;
-      if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'K/DA Tour Results' });
-        setStatus('Results image shared.');
+      if (mode === 'copy') {
+        // Clipboard-first: the PNG lands on the clipboard as image data, so
+        // Ctrl+V pastes it directly (the OS share sheet "copy" only moves a
+        // file reference, which most targets reject).
+        if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          setStatus('Results image copied — paste it anywhere (Ctrl+V).');
+          return;
+        }
+        download(blob, fileName);
+        setStatus('Clipboard unavailable — image downloaded instead (1080×1080 PNG).');
         return;
       }
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      download(blob, fileName);
       setStatus('Results image downloaded (1080×1080 PNG).');
     } catch (error) {
       console.error('Unable to export the results image.', error);

@@ -13,6 +13,15 @@ assert.match(src, /leaderLoadingArt/, 'model carries the leader portrait URL');
 assert.match(src, /loadLeaderArt/, 'CORS-safe portrait loader with offline fallback');
 assert.match(src, /crossOrigin = 'anonymous'/, 'portrait loads CORS-clean so PNG export stays untainted');
 assert.ok(!src.includes('+ win ${'), 'no score-breakdown line on the card');
+
+// Export UX (#52 follow-up): explicit clipboard-copy + PNG-download buttons,
+// no OS share sheet (its "copy" moves a file reference most targets reject).
+const uiSrc = fs.readFileSync(path.join(root, 'js', 'ui.js'), 'utf8');
+const indexSrc = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+assert.ok(indexSrc.includes('btnCopyImage') && indexSrc.includes('btnSaveImage'), 'COPY IMAGE and SAVE PNG buttons exist');
+assert.ok(!indexSrc.includes('btnExportImage'), 'share-sheet export button is gone');
+assert.match(uiSrc, /new ClipboardItem\(\{ 'image\/png': blob \}\)/, 'image lands on the clipboard as PNG data');
+assert.ok(!uiSrc.includes('navigator.share'), 'no OS share sheet in the export flow');
 assert.ok(!/https?:\/\//.test(src), 'renderer must not reference external URLs');
 assert.match(src, /RESULTS_IMAGE_SIZE = 1080/, 'square 1080 export');
 

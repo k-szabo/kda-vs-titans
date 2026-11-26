@@ -40,7 +40,7 @@ const GLOBALS = new Set([
   'navigator', 'locationbar', 'open', 'close', 'addEventListener', 'removeEventListener',
   'AudioContext', 'OfflineAudioContext',
   'Deno',
-  'Image', 'ImageBitmap',
+  'Image', 'ImageBitmap', 'ClipboardItem',
   'HTMLElement', 'SVGElement', 'Element', 'Node', 'Event', 'CustomEvent',
   'KeyboardEvent', 'MouseEvent', 'HTMLDialogElement', 'HTMLButtonElement',
   'HTMLInputElement', 'Document', 'Window',

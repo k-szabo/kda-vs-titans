@@ -1,11 +1,11 @@
 {
-  "currentVersion": "v1.34.0_e573fe5f",
+  "currentVersion": "v1.34.0_8390cb9c",
   "releases": [
     {
-      "version": "v1.34.0_e573fe5f",
+      "version": "v1.34.0_8390cb9c",
       "date": "2026-11-26",
       "changes": [
-        "Exportable results image: 1080x1080 shareable PNG on the run-end screen (native share where supported, download otherwise).",
+        "Exportable results image: 1080x1080 PNG via clipboard copy (paste with Ctrl+V) or file download, no OS share sheet.",
         "Results card shows victory/defeat, leader portrait, wave dots, daily score breakdown, most-played card, peak damage, run time, and version.",
         "Leader portrait uses CORS-open Data Dragon loading art matching the selected skin tier, with an offline fallback medallion."
       ]
