@@ -42,7 +42,7 @@ import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 import { testMission } from './missions.js';
 import { initBugReportLinks } from './bug-report.js';
 import { createPvpDuel } from './pvp-duel.js';
-import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as submitLeaderboardScore } from './leaderboard.js';
+import { buildScorePayload, checkCrowns, computeDailyScore, getMostPlayedCard, submitDailyScore as submitLeaderboardScore } from './leaderboard.js';
 
 (function () {
   'use strict';
@@ -682,6 +682,16 @@ import { buildScorePayload, checkCrowns, getMostPlayedCard, submitDailyScore as 
           `Peak Single-Turn Damage: ${state.peakSingleTurnDamage}`,
           `Merch Tokens: ${state.merchTokens ?? 0}`
         ];
+        if (state.dailyChallenge) {
+          const seconds = Math.max(1, Math.round((Date.now() - state.startedAt) / 1000));
+          const parts = computeDailyScore({
+            wavesCleared: state.wavesCleared,
+            victory: state.runStatus === 'victory',
+            peakSingleTurnDamage: state.peakSingleTurnDamage,
+            seconds
+          });
+          lines.push(`Daily Score: ${parts.score} (waves ${parts.wavePts} + win ${parts.victoryPts} + peak ${parts.peakPts} + speed ${parts.speedPts})`);
+        }
         if (state.runStatus === 'defeat') {
           const deathEntries = getDeathLogEntries(state.logs, 8);
           lines.push('Death Log // Final Moments:');

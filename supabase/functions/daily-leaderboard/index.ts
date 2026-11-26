@@ -101,7 +101,7 @@ export async function handle(request: Request) {
     if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).length !== submitKeys.length || submitKeys.some(key => !Object.hasOwn(body,key))) return response(request,400,{error:'invalid_score'});
     if (typeof body.name !== 'string' || Array.from(body.name).length < 3 || Array.from(body.name).length > 16 || body.name !== body.name.trim() || !/^[\p{L}\p{N} _-]+$/u.test(body.name)) return response(request,400,{error:'invalid_name'});
     if (typeof body.day !== 'string' || !isoDay.test(body.day)
-      || !integer(body.score,0,9999) || !integer(body.waves,0,10) || typeof body.victory !== 'boolean'
+      || !integer(body.score,0,99999) || !integer(body.waves,0,10) || typeof body.victory !== 'boolean'
       || !['ahri','akali','evelynn','kaisa'].includes(body.leader)
       || !integer(body.encore,0,5) || !integer(body.seconds,1,86400)
       || typeof body.mostPlayed !== 'string' || body.mostPlayed.length < 1 || body.mostPlayed.length > 64

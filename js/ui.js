@@ -10,6 +10,7 @@ import { createProgressionUI } from './progression-ui.js';
 import { LEONA_MANAGER_ART } from './tour-routes.js';
 import { createShopUI } from './shop-ui.js';
 import { pickDefeatTip } from './coach-tips.js';
+import { computeDailyScore } from './leaderboard.js';
 
 export function createGameUI({
   getState,
@@ -908,6 +909,17 @@ export function createGameUI({
       : '—';
     document.getElementById('receiptPeakDamage').textContent =
       String(state.peakSingleTurnDamage || 0);
+    {
+      const seconds = Math.max(1, Math.round((Date.now() - (state.startedAt || Date.now())) / 1000));
+      const parts = computeDailyScore({
+        wavesCleared: state.wavesCleared,
+        victory: isVictory,
+        peakSingleTurnDamage: state.peakSingleTurnDamage,
+        seconds
+      });
+      document.getElementById('receiptScore').textContent =
+        `${parts.score} (waves ${parts.wavePts} + win ${parts.victoryPts} + peak ${parts.peakPts} + speed ${parts.speedPts})`;
+    }
     document.getElementById('receiptTokens').textContent =
       String(state.merchTokens ?? 0);
     const dailyDetails = document.getElementById('receiptDailyDetails');

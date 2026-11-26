@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.32.0_dbd3f846",
+  "currentVersion": "v1.33.0_ae2478b1",
   "releases": [
+    {
+      "version": "v1.33.0_ae2478b1",
+      "date": "2026-11-26",
+      "changes": [
+        "Daily scoring is waves-dominant: wave-0 defeat scores 0, otherwise waves x 3000 + victory 2000 + capped peak/speed bonuses.",
+        "Daily board ranks by waves, then victory, then score, then time; score cap raised to 99999.",
+        "Tour receipt shows the daily score breakdown (waves + victory + peak + speed)."
+      ]
+    },
     {
       "version": "v1.32.0_dbd3f846",
       "date": "2026-11-25",

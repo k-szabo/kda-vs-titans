@@ -137,12 +137,37 @@ export function getMostPlayedCard(cardPlayCounts, cardDatabase) {
   return { cardId, name: cardDatabase[cardId]?.name || cardId, count };
 }
 
+export const DAILY_SCORE_RULES = Object.freeze({
+  wavePoints: 3000,
+  victoryBonus: 2000,
+  maxPeakBonus: 300,
+  maxSpeedBonus: 300,
+  speedWindowSeconds: 900,
+  maxScore: 99999
+});
+
+export function computeDailyScore({ wavesCleared, victory, peakSingleTurnDamage, seconds }) {
+  const waves = Math.max(0, wavesCleared || 0);
+  const won = victory === true;
+  // A W0 defeat is always 0 points: no peak/speed participation may lift it.
+  if (waves === 0 && !won) return { score: 0, wavePts: 0, victoryPts: 0, peakPts: 0, speedPts: 0 };
+  const wavePts = waves * DAILY_SCORE_RULES.wavePoints;
+  const victoryPts = won ? DAILY_SCORE_RULES.victoryBonus : 0;
+  const peakPts = Math.min(Math.max(0, peakSingleTurnDamage || 0), DAILY_SCORE_RULES.maxPeakBonus);
+  const speedPts = Math.min(Math.max(0, DAILY_SCORE_RULES.speedWindowSeconds - (seconds || 0)), DAILY_SCORE_RULES.maxSpeedBonus);
+  return { score: wavePts + victoryPts + peakPts + speedPts, wavePts, victoryPts, peakPts, speedPts };
+}
+
 export function buildScorePayload(state, cardDatabase, version, now = Date.now()) {
   const seconds = Math.max(1, Math.round((now - state.startedAt) / 1000));
   const mostPlayed = getMostPlayedCard(state.cardPlayCounts, cardDatabase);
   const victory = state.runStatus === 'victory';
-  const score = state.wavesCleared * 100 + (victory ? 500 : 0) +
-    (state.peakSingleTurnDamage || 0) + Math.max(0, 1800 - seconds);
+  const { score } = computeDailyScore({
+    wavesCleared: state.wavesCleared,
+    victory,
+    peakSingleTurnDamage: state.peakSingleTurnDamage,
+    seconds
+  });
   return {
     score,
     waves: state.wavesCleared,

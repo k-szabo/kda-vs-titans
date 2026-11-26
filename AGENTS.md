@@ -105,7 +105,7 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/combat-rules.js` | Pure-ish combat helpers: damage/shield/Cheer resolution, enemy Strength, interrupts, Encore scaling, member-chain tracking, hand cap, death-log slicing. |
 | `js/card-effects.js` | Interprets ordered card effect actions, upgrade deltas, conditions, and log templates. Supports `pierce` on damage and `stealBlock` (Drain). |
 | `js/keywords.js` | Single source of truth for member keyword identities (Charm/Pierce/Drain/Encore). |
-| `js/leaderboard.js` | Supabase leaderboard client (boards fetch, anon auth, score submit, scoring). |
+| `js/leaderboard.js` | Supabase leaderboard client (boards fetch, anon auth, score submit, waves-dominant daily scoring). |
 | `js/missions.js` | Mission condition-DSL interpreter (requiresAll/requiresAny over run/profile stats). |
 | `assets/missions.json` | Mission definitions (id, reward, requires clauses); validated in `js/game-data.js`. |
 | `js/voice-lines.js` | Cosmetic voice-line pools and picker for combos, finales, and run endings. |
@@ -284,6 +284,11 @@ overview.
   `maxEncoreLevel = min(5, max(maxEncoreLevel, encoreLevel + 1))`. There is no
   skip — clearing tier 0 five times never unlocks tier 2.
 - Daily World Tour wins never advance Encore; they only update the daily streak.
+- Daily scoring (`computeDailyScore` in `js/leaderboard.js`) is waves-dominant:
+  a wave-0 defeat scores 0, otherwise `waves × 3000 + victory 2000 +
+  peak (capped 300) + speed (up to 300 for runs under 15 minutes)`.
+  The daily board ranks by waves, then victory, then score, then time
+  (`supabase/202611260001_fix_board_ordering.sql`); score cap is 99999.
 - `maxEncoreLevel` is the highest unlocked tier and is validated 0–5 in
   `profile-storage.js`. Never derive it from `leaderWins`; doing so let repeated
   clears unlock every tier at once.

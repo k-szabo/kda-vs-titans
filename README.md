@@ -7,7 +7,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 ## Features
 
 - Ten boss encounters per tour, drafted per wave from rotating pools, with telegraphed attacks and distinct artwork
-- Daily World Tour with community leaderboards (daily/weekly/monthly), score auto-submit, and opt-out
+- Daily World Tour with community leaderboards (daily/weekly/monthly), waves-dominant scoring (wave-0 defeat = 0), score auto-submit, and opt-out
 - Draftable cards, individual card upgrades, passive relics, shields, and status effects
 - Crowd Cheer-powered K/DA Joint Finale
 - Four selectable run leaders, each with a once-per-run special ability, a signature starter relic, and a flavored starter deck
