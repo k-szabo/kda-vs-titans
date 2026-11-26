@@ -4,3 +4,5 @@
 /docs/main_menu_how_to_play_options_guide.md
 # Deployment-generated browser configuration. Never committed.
 /assets/config/leaderboard-public.json
+# Dev-only tooling for repo harnesses (installed on demand, never shipped).
+/node_modules/

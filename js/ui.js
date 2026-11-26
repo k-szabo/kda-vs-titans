@@ -9,6 +9,7 @@ import { renderChangelogEntries } from './changelog-ui.js';
 import { createProgressionUI } from './progression-ui.js';
 import { LEONA_MANAGER_ART } from './tour-routes.js';
 import { createShopUI } from './shop-ui.js';
+import { pickDefeatTip } from './coach-tips.js';
 
 export function createGameUI({
   getState,
