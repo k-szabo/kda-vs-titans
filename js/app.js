@@ -1310,6 +1310,7 @@ import { buildScorePayload, checkCrowns, computeDailyScore, getMostPlayedCard, s
             onContinueTour: continueTour,
             onKeepTouring: keepTouring,
             getDailyChallenge: getTodayDailyChallenge,
+            getGameVersion: () => GAME_VERSION,
             onCopyReceipt: copyRunReceipt
           });
           ui.setChangelog(gameData.changelog);

@@ -11,6 +11,7 @@ import { LEONA_MANAGER_ART } from './tour-routes.js';
 import { createShopUI } from './shop-ui.js';
 import { pickDefeatTip } from './coach-tips.js';
 import { computeDailyScore } from './leaderboard.js';
+import { buildResultsModel, canvasToPngBlob, loadLeaderArt, renderResultsImage } from './results-image.js';
 
 export function createGameUI({
   getState,
@@ -24,6 +25,7 @@ export function createGameUI({
   getAllEncounters,
   getCurrentEnemyIntent,
   getDailyChallenge,
+  getGameVersion,
   getMissions,
   onPlayCard,
   onToggleKeep,
@@ -934,6 +936,8 @@ export function createGameUI({
     }
     document.getElementById('receiptCopyStatus').textContent = '';
     document.getElementById('shareStatus').textContent = '';
+    const exportButton = document.getElementById('btnExportImage');
+    if (exportButton) exportButton.onclick = () => exportResultsImage(isVictory);
     const keepTouringButton = document.getElementById('btnKeepTouring');
     if (keepTouringButton) {
       const showEndless = Boolean(isVictory && options.endless);
@@ -967,6 +971,64 @@ export function createGameUI({
       deathSection.classList.add('hidden');
     }
     modal.classList.remove('hidden');
+  }
+
+  function scorePartsForRun(state, isVictory) {
+    if (!state?.dailyChallenge) return null;
+    const seconds = Math.max(1, Math.round((Date.now() - (state.startedAt || Date.now())) / 1000));
+    return {
+      seconds,
+      ...computeDailyScore({
+        wavesCleared: state.wavesCleared,
+        victory: isVictory,
+        peakSingleTurnDamage: state.peakSingleTurnDamage,
+        seconds
+      })
+    };
+  }
+
+  async function exportResultsImage(isVictory) {
+    const status = document.getElementById('receiptCopyStatus');
+    const setStatus = (text) => { if (status) status.textContent = text; };
+    try {
+      const state = getState();
+      const parts = scorePartsForRun(state, isVictory);
+      const splashArt = getArtAssets?.()?.[state?.leader];
+      const model = buildResultsModel({
+        state: parts ? { ...state, dailyScore: parts.score, dailyScoreParts: parts } : state,
+        cardDatabase: getCardDatabase(),
+        encounters: getEncounters(),
+        leaderName: LEADERS.find(({ id }) => id === state?.leader)?.name,
+        leaderLoadingArt: typeof splashArt === 'string' && splashArt.includes('/champion/splash/')
+          ? splashArt.replace('/champion/splash/', '/champion/loading/')
+          : null,
+        version: typeof getGameVersion === 'function' ? getGameVersion() : '',
+        isVictory
+      });
+      setStatus('Loading leader art…');
+      const blob = await canvasToPngBlob(renderResultsImage(model, await loadLeaderArt(model.leaderLoadingArt)));
+      const fileName = `kda-results-${model.date}-${model.wavesCleared}w.png`;
+      const file = typeof File === 'function'
+        ? new File([blob], fileName, { type: 'image/png' })
+        : null;
+      if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'K/DA Tour Results' });
+        setStatus('Results image shared.');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setStatus('Results image downloaded (1080×1080 PNG).');
+    } catch (error) {
+      console.error('Unable to export the results image.', error);
+      setStatus('Image export failed in this browser.');
+    }
   }
 
   let voiceBubbleTimer = null;

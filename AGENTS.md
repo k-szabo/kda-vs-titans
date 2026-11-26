@@ -106,6 +106,7 @@ GitHub's hosted MCP server (`https://api.githubcopilot.com/mcp/`) with the
 | `js/card-effects.js` | Interprets ordered card effect actions, upgrade deltas, conditions, and log templates. Supports `pierce` on damage and `stealBlock` (Drain). |
 | `js/keywords.js` | Single source of truth for member keyword identities (Charm/Pierce/Drain/Encore). |
 | `js/leaderboard.js` | Supabase leaderboard client (boards fetch, anon auth, score submit, waves-dominant daily scoring). |
+| `js/results-image.js` | Shareable 1080×1080 results-image model builder + canvas renderer (CORS-clean leader loading art, offline medallion fallback). |
 | `js/missions.js` | Mission condition-DSL interpreter (requiresAll/requiresAny over run/profile stats). |
 | `assets/missions.json` | Mission definitions (id, reward, requires clauses); validated in `js/game-data.js`. |
 | `js/voice-lines.js` | Cosmetic voice-line pools and picker for combos, finales, and run endings. |
@@ -878,7 +879,7 @@ Run through this before considering a change complete:
     finish in the Card Atelier (with preview), confirm the sheen shows on the
     card everywhere; reload and confirm profile progress persists.
 8. Reload mid-combat and mid-draft; confirm state, piles, logs, boss identity, and modal. Start several runs to see alternates rotate.
-9. Win and lose a run; copy the Tour Receipt; verify profile stats, codex (counts all drafted kaiju), Encore unlock, and Art Studio progress.
+9. Win and lose a run; copy the Tour Receipt; export the results image (native share or 1080×1080 PNG download); verify profile stats, codex (counts all drafted kaiju), Encore unlock, and Art Studio progress.
 10. Daily World Tour: same date → same leader/relic/modifier/encounters; streak updates. With sharing on, run end submits the score (or asks for a name first); opt out in Options and confirm no submit happens.
 11. Options: sound toggle (including muting active tones), rebind/swap/reset,
     How to Play, Codex, changelog.

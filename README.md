@@ -20,7 +20,7 @@ Play at [GitHub Pages](https://k-szabo.github.io/kda-vs-titans/).
 - Unlockable POP/STARS, ALL OUT, FIRESTARTER, and PRESTIGE leader art with ranked portrait borders
 - In-game bug reporting: REPORT ISSUE links (main menu + Options) open a prefilled form — no sign-in, auto-filed to the issue tracker
 - Collapsible battle log, compact by default on smaller screens
-- Death log on defeat, copyable Tour Receipt, persistent run records / Kaiju codex
+- Death log on defeat, copyable Tour Receipt, exportable 1080×1080 results image, persistent run records / Kaiju codex
 - Synthesized sound effects and persistent profile statistics
 - In-app version number and release changelog
 - Keyboard shortcuts (`1`–`5` play, `E` end turn, `Q` finale, `R` leader ability) and a testing-only wave selector on the `#devtools` subpage
