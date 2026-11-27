@@ -290,6 +290,11 @@ overview.
   peak (capped 300) + speed (up to 300 for runs under 15 minutes)`.
   The daily board ranks by waves, then victory, then score, then time
   (`supabase/202611260001_fix_board_ordering.sql`); score cap is 99999.
+- Daily tours are one attempt per day (`getDailyAttemptStatus` in
+  `js/daily-challenge.js`, `dailyLock` in profile v3 — no version bump):
+  every finished run locks the date, win or lose; only a wave-0 defeat
+  leaves a single retry, and an unfinished daily tour resumes from the
+  menu instead of restarting.
 - `maxEncoreLevel` is the highest unlocked tier and is validated 0–5 in
   `profile-storage.js`. Never derive it from `leaderWins`; doing so let repeated
   clears unlock every tier at once.
@@ -879,8 +884,8 @@ Run through this before considering a change complete:
     finish in the Card Atelier (with preview), confirm the sheen shows on the
     card everywhere; reload and confirm profile progress persists.
 8. Reload mid-combat and mid-draft; confirm state, piles, logs, boss identity, and modal. Start several runs to see alternates rotate.
-9. Win and lose a run; copy the Tour Receipt; export the results image (native share or 1080×1080 PNG download); verify profile stats, codex (counts all drafted kaiju), Encore unlock, and Art Studio progress.
-10. Daily World Tour: same date → same leader/relic/modifier/encounters; streak updates. With sharing on, run end submits the score (or asks for a name first); opt out in Options and confirm no submit happens.
+9. Win and lose a run; copy the Tour Receipt; export the results image (clipboard copy or 1080×1080 PNG download); verify profile stats, codex (counts all drafted kaiju), Encore unlock, and Art Studio progress.
+10. Daily World Tour: same date → same leader/relic/modifier/encounters; streak updates. One attempt per day (retry only after a W0 defeat); with sharing on, run end submits the score (or asks for a name first); opt out in Options and confirm no submit happens.
 11. Options: sound toggle (including muting active tones), rebind/swap/reset,
     How to Play, Codex, changelog.
 12. `#devtools` wave selector; return to game.

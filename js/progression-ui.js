@@ -1,5 +1,5 @@
 import { getArtRank, getUnlockedArtStyles, LEADERS, LEADER_ART_STYLES } from './leader-data.js';
-import { DAILY_MODIFIERS } from './daily-challenge.js';
+import { DAILY_MODIFIERS, getDailyAttemptStatus } from './daily-challenge.js';
 import { getCardFinishLevel, getNextFinishLevel } from './card-finishes.js';
 import { fetchBoard } from './leaderboard.js';
 
@@ -190,6 +190,18 @@ export function createProgressionUI({
     document.getElementById('menuDailyDetails').textContent =
       `${dailyChallenge.date} UTC // ${dailyLeader.name} // ${dailyRelic}`;
     document.getElementById('menuDailyRule').textContent = modifier.description;
+    const dailyStatus = getDailyAttemptStatus(profileStats, dailyChallenge.date);
+    const dailyButton = document.getElementById('btnDailyTour');
+    const dailySub = document.getElementById('menuDailyDetails');
+    if (dailyStatus === 'locked') {
+      dailyButton.disabled = true;
+      dailyButton.classList.add('opacity-55', 'cursor-not-allowed');
+      dailySub.textContent = `${dailyChallenge.date} UTC // already played — next tour tomorrow`;
+    } else {
+      dailyButton.disabled = false;
+      dailyButton.classList.remove('opacity-55', 'cursor-not-allowed');
+      if (dailyStatus === 'retry') dailySub.textContent += ' // 💔 one retry left (W0 wipe)';
+    }
     const missions = getMissions();
     const missionsDone = missions.filter((mission) =>
       (profileStats.completedMissions ?? []).includes(mission.id)).length;

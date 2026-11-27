@@ -68,7 +68,8 @@ export function createDefaultProfileStats(defaultKeybinds) {
     completedMissions: [],
     runHistory: [],
     playerName: null,
-    lastCrownCheck: null
+    lastCrownCheck: null,
+    dailyLock: null
   };
 }
 
@@ -115,6 +116,14 @@ export function loadProfileStats(defaultKeybinds) {
       (Number.isInteger(encoreWins[id]) && encoreWins[id] >= 0 && encoreWins[id] <= 5)
     )
   );
+  const hasDailyLock = profile.dailyLock === undefined || profile.dailyLock === null || (
+    typeof profile.dailyLock === 'object' && !Array.isArray(profile.dailyLock) &&
+    (profile.dailyLock.date === undefined || isDailyDate(profile.dailyLock.date) || profile.dailyLock.date === null) &&
+    (profile.dailyLock.finishes === undefined || isNonNegativeInteger(profile.dailyLock.finishes)) &&
+    (profile.dailyLock.lastWaves === undefined || isNonNegativeInteger(profile.dailyLock.lastWaves)) &&
+    (profile.dailyLock.lastVictory === undefined || typeof profile.dailyLock.lastVictory === 'boolean') &&
+    (profile.dailyLock.w0RetriesUsed === undefined || profile.dailyLock.w0RetriesUsed === 0 || profile.dailyLock.w0RetriesUsed === 1)
+  );
   const completed = profile.completedMissions;
   const history = profile.runHistory;
   // Append-only log: only the array shape is enforced here; malformed
@@ -158,6 +167,7 @@ export function loadProfileStats(defaultKeybinds) {
     !hasEncoreWins ||
     !hasMissions ||
     !hasRunHistory ||
+    !hasDailyLock ||
     (profile.playerName !== undefined && profile.playerName !== null && typeof profile.playerName !== 'string') ||
     (profile.lastCrownCheck !== undefined && profile.lastCrownCheck !== null &&
       (typeof profile.lastCrownCheck !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(profile.lastCrownCheck)))
@@ -219,6 +229,15 @@ export function loadProfileStats(defaultKeybinds) {
     playerName: typeof profile.playerName === 'string' ? profile.playerName : null,
     lastCrownCheck: typeof profile.lastCrownCheck === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(profile.lastCrownCheck)
       ? profile.lastCrownCheck
+      : null,
+    dailyLock: profile.dailyLock?.date
+      ? {
+        date: profile.dailyLock.date,
+        finishes: profile.dailyLock.finishes ?? 0,
+        lastWaves: profile.dailyLock.lastWaves ?? 0,
+        lastVictory: profile.dailyLock.lastVictory === true,
+        w0RetriesUsed: profile.dailyLock.w0RetriesUsed === 1 ? 1 : 0
+      }
       : null
   };
 }

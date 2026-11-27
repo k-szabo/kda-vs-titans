@@ -1,6 +1,15 @@
 {
-  "currentVersion": "v1.34.0_8390cb9c",
+  "currentVersion": "v1.35.0_716b2005",
   "releases": [
+    {
+      "version": "v1.35.0_716b2005",
+      "date": "2026-11-27",
+      "changes": [
+        "Daily World Tour is one attempt per day: a finished run locks the date, win or lose.",
+        "A wave-0 defeat grants exactly one retry; unfinished daily tours resume instead of restarting.",
+        "Menu shows the lock state (already played, or one retry left after a W0 wipe)."
+      ]
+    },
     {
       "version": "v1.34.0_8390cb9c",
       "date": "2026-11-26",

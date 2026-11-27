@@ -13,7 +13,7 @@ import {
 } from './combat-rules.js';
 import { createCombatEngine } from './combat-engine.js';
 import { loadGameData } from './game-data.js';
-import { createDailyChallenge, nextSeededRandom } from './daily-challenge.js';
+import { createDailyChallenge, getDailyAttemptStatus, nextSeededRandom } from './daily-challenge.js';
 import {
   createDefaultProfileStats,
   InvalidProfileStatsError,
@@ -641,6 +641,15 @@ import { buildScorePayload, checkCrowns, computeDailyScore, getMostPlayedCard, s
       function recordDailyResult(won) {
         if (!state.dailyChallenge) return;
         const date = state.dailyChallenge.date;
+        // One attempt per day: every finished daily run consumes it, except a
+        // wave-0 defeat which grants exactly one retry (claimed at restart).
+        profileStats.dailyLock = {
+          date,
+          finishes: (profileStats.dailyLock?.date === date ? profileStats.dailyLock.finishes ?? 0 : 0) + 1,
+          lastWaves: state.wavesCleared || 0,
+          lastVictory: won === true,
+          w0RetriesUsed: profileStats.dailyLock?.date === date && profileStats.dailyLock.w0RetriesUsed === 1 ? 1 : 0
+        };
         if (won) {
           if (
             profileStats.lastDailyWinDate !== date &&
@@ -1010,6 +1019,26 @@ import { buildScorePayload, checkCrowns, computeDailyScore, getMostPlayedCard, s
 
       function startDailyRun() {
         const challenge = getTodayDailyChallenge();
+        // An unfinished daily tour resumes instead of restarting: replacing
+        // it would dodge the one-attempt lock.
+        if (
+          state && ['playing', 'draft'].includes(state.runStatus) &&
+          state.dailyChallenge?.date === challenge.date
+        ) {
+          continueTour();
+          return;
+        }
+        const status = getDailyAttemptStatus(profileStats, challenge.date);
+        if (status === 'locked') {
+          ui.showSaveNotice('Daily tour already played today — come back tomorrow.');
+          showMainMenu();
+          return;
+        }
+        if (status === 'retry') {
+          profileStats.dailyLock = { ...profileStats.dailyLock, w0RetriesUsed: 1 };
+          persistProfileStats();
+          addLog('💔 W0 wipe forgiven: one retry granted.', 'text-amber-300');
+        }
         startNewRun(challenge.leader, 0, challenge);
       }
 

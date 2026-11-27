@@ -64,3 +64,16 @@ export function createDailyChallenge(date, leaderIds, relicIds) {
     rngState: generator.rngState
   };
 }
+
+// Daily one-attempt lock (pure, testable). Profile tracks
+// `dailyLock: { date, finishes, lastWaves, lastVictory, w0RetriesUsed }`.
+// Exactly one retry is granted, and only for a wave-0 defeat:
+// 'open' (fresh day or no finish yet) | 'retry' (W0 wipe, retry unused) | 'locked'.
+export function getDailyAttemptStatus(profile, date) {
+  const lock = profile?.dailyLock;
+  if (!lock || lock.date !== date) return 'open';
+  if (!Number.isInteger(lock.finishes) || lock.finishes <= 0) return 'open';
+  const w0Wipe = (lock.lastWaves ?? 0) === 0 && lock.lastVictory === false;
+  if (lock.finishes === 1 && w0Wipe && (lock.w0RetriesUsed ?? 0) === 0) return 'retry';
+  return 'locked';
+}
